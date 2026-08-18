@@ -41,6 +41,7 @@ const BlocklyWorkspace = forwardRef<BlocklyWorkspaceHandle>(
         trashcan: true,
         renderer: "zelos",
         theme: Blockly.Theme.defineTheme("hindiKids", {
+          name: "hindiKids",
           base: Blockly.Themes.Zelos,
           fontStyle: {
             family: "'Noto Sans Devanagari', 'Segoe UI', sans-serif",

@@ -1,13 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { Play } from "lucide-react";
-import GameCanvas, { type GameCanvasHandle } from "@/components/GameCanvas";
-import BlocklyWorkspace, {
-  type BlocklyWorkspaceHandle,
-} from "@/components/BlocklyWorkspace";
+import type GameCanvasComponent from "@/components/GameCanvas";
+import type BlocklyWorkspaceComponent from "@/components/BlocklyWorkspace";
+import type { GameCanvasHandle } from "@/components/GameCanvas";
+import type { BlocklyWorkspaceHandle } from "@/components/BlocklyWorkspace";
 import type { GameCommand } from "@/lib/blockly-config";
+
+const GameCanvas = dynamic(() => import("@/components/GameCanvas"), {
+  ssr: false,
+}) as typeof GameCanvasComponent;
+
+const BlocklyWorkspace = dynamic(() => import("@/components/BlocklyWorkspace"), {
+  ssr: false,
+}) as typeof BlocklyWorkspaceComponent;
 
 const STEP_DELAY_MS = 120;
 
