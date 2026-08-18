@@ -1,186 +1,281 @@
-"use client";
+'use client';
 
-import dynamic from "next/dynamic";
-import { useCallback, useRef, useState } from "react";
-import confetti from "canvas-confetti";
-import { Play } from "lucide-react";
-import type GameCanvasComponent from "@/components/GameCanvas";
-import type BlocklyWorkspaceComponent from "@/components/BlocklyWorkspace";
-import type { GameCanvasHandle } from "@/components/GameCanvas";
-import type { BlocklyWorkspaceHandle } from "@/components/BlocklyWorkspace";
-import type { GameCommand } from "@/lib/blockly-config";
+import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { LEVELS, Level } from '../lib/levels';
+import { speakHindi, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 
-const GameCanvas = dynamic(() => import("@/components/GameCanvas"), {
-  ssr: false,
-}) as typeof GameCanvasComponent;
+const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
+const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
 
-const BlocklyWorkspace = dynamic(() => import("@/components/BlocklyWorkspace"), {
-  ssr: false,
-}) as typeof BlocklyWorkspaceComponent;
+export default function HomePage() {
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+  const currentLevel: Level = LEVELS[currentLevelIndex];
 
-const STEP_DELAY_MS = 120;
+  const [playerPos, setPlayerPos] = useState({
+    x: currentLevel.startPos.x,
+    y: currentLevel.startPos.y,
+    dir: currentLevel.startDir,
+  });
+  const [collectedTargets, setCollectedTargets] = useState<{ x: number; y: number }[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
+  const [message, setMessage] = useState('');
+  const [showHint, setShowHint] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
-function delay(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
-function fireVictoryConfetti() {
-  const duration = 2200;
-  const end = Date.now() + duration;
-
-  const frame = () => {
-    confetti({
-      particleCount: 4,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0, y: 0.65 },
-      colors: ["#22C55E", "#FACC15", "#F97316", "#3B82F6"],
+  const resetGameState = () => {
+    setPlayerPos({
+      x: currentLevel.startPos.x,
+      y: currentLevel.startPos.y,
+      dir: currentLevel.startDir,
     });
-    confetti({
-      particleCount: 4,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1, y: 0.65 },
-      colors: ["#22C55E", "#FACC15", "#F97316", "#3B82F6"],
-    });
-    if (Date.now() < end) {
-      requestAnimationFrame(frame);
+    setCollectedTargets([]);
+    setIsVictory(false);
+    setShowHint(false);
+    setMessage(currentLevel.instruction);
+  };
+
+  useEffect(() => {
+    resetGameState();
+    if (isAudioEnabled) {
+      speakHindi(currentLevel.voiceText);
+    }
+  }, [currentLevelIndex, isAudioEnabled]);
+
+  const handleHintClick = () => {
+    setShowHint(true);
+    if (isAudioEnabled) {
+      speakHindi(`संकेत: ${currentLevel.hint}`);
     }
   };
 
-  confetti({
-    particleCount: 120,
-    spread: 90,
-    origin: { y: 0.55 },
-  });
-  frame();
-}
-
-async function runCommand(
-  canvas: GameCanvasHandle,
-  command: GameCommand,
-): Promise<boolean> {
-  switch (command) {
-    case "moveForward":
-      await canvas.moveForward();
-      return false;
-    case "turnLeft":
-      await canvas.turnLeft();
-      return false;
-    case "turnRight":
-      await canvas.turnRight();
-      return false;
-    case "collect":
-      return canvas.collect();
-  }
-}
-
-export default function Home() {
-  const canvasRef = useRef<GameCanvasHandle>(null);
-  const blocklyRef = useRef<BlocklyWorkspaceHandle>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showVictory, setShowVictory] = useState(false);
-
-  const handleRunCode = useCallback(async () => {
-    if (isRunning || !canvasRef.current || !blocklyRef.current) return;
-
+  const handleRunCode = async (actions: string[]) => {
+    if (isRunning || actions.length === 0) return;
     setIsRunning(true);
-    setShowVictory(false);
-    canvasRef.current.reset();
+    setMessage('कोड चल रहा है...');
 
-    const commands = blocklyRef.current.getCommands();
-    let won = false;
+    let curX = currentLevel.startPos.x;
+    let curY = currentLevel.startPos.y;
+    let curDir = currentLevel.startDir;
+    let collected: { x: number; y: number }[] = [];
 
-    for (const command of commands) {
-      const collected = await runCommand(canvasRef.current, command);
-      if (collected) {
-        won = true;
-        break;
+    // Ensure clean start
+    setPlayerPos({ x: curX, y: curY, dir: curDir });
+    setCollectedTargets([]);
+
+    const directions = ['NORTH', 'EAST', 'SOUTH', 'WEST'] as const;
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await sleep(200);
+
+    let hasCollided = false;
+
+    for (let i = 0; i < actions.length; i++) {
+      const act = actions[i];
+
+      if (act === 'MOVE_FORWARD') {
+        let nextX = curX;
+        let nextY = curY;
+
+        if (curDir === 'NORTH') nextY -= 1;
+        if (curDir === 'EAST') nextX += 1;
+        if (curDir === 'SOUTH') nextY += 1;
+        if (curDir === 'WEST') nextX -= 1;
+
+        // Grid boundary check
+        if (nextX < 0 || nextX >= currentLevel.gridSize || nextY < 0 || nextY >= currentLevel.gridSize) {
+          playBumpSound();
+          setMessage('अरे! आप ग्रिड से बाहर चले गए! वापस शुरुआत पर जा रहे हैं...');
+          if (isAudioEnabled) speakHindi('अरे! आप ग्रिड से बाहर चले गए!');
+          hasCollided = true;
+          break;
+        }
+
+        // Obstacle check
+        const hitObs = currentLevel.obstacles.some((obs) => obs.x === nextX && obs.y === nextY);
+        if (hitObs) {
+          playBumpSound();
+          setMessage('अरे! रास्ते में पत्थर 🪨 है! वापस शुरुआत पर जा रहे हैं...');
+          if (isAudioEnabled) speakHindi('अरे! आगे पत्थर है!');
+          hasCollided = true;
+          break;
+        }
+
+        curX = nextX;
+        curY = nextY;
+        const newPos = { x: curX, y: curY, dir: curDir };
+        setPlayerPos(() => newPos);
+        playStepSound();
+        await sleep(500);
+
+      } else if (act === 'TURN_RIGHT') {
+        const idx = directions.indexOf(curDir);
+        curDir = directions[(idx + 1) % 4];
+        const newPos = { x: curX, y: curY, dir: curDir };
+        setPlayerPos(() => newPos);
+        await sleep(350);
+
+      } else if (act === 'TURN_LEFT') {
+        const idx = directions.indexOf(curDir);
+        curDir = directions[(idx + 3) % 4];
+        const newPos = { x: curX, y: curY, dir: curDir };
+        setPlayerPos(() => newPos);
+        await sleep(350);
+
+      } else if (act === 'COLLECT_ITEM') {
+        const found = currentLevel.targets.find(
+          (t) => t.x === curX && t.y === curY && !collected.some((c) => c.x === t.x && c.y === t.y)
+        );
+
+        if (found) {
+          collected = [...collected, found];
+          const newCollected = [...collected];
+          setCollectedTargets(() => newCollected);
+          playCollectSound();
+          await sleep(350);
+
+          if (collected.length === currentLevel.targets.length) {
+            break;
+          }
+        } else {
+          setMessage('यहाँ कोई फल नहीं है!');
+          await sleep(350);
+        }
       }
-      await delay(STEP_DELAY_MS);
     }
 
-    if (won) {
-      fireVictoryConfetti();
-      setShowVictory(true);
+    // Auto-reset position back to start on collision error
+    if (hasCollided) {
+      await sleep(1000);
+      setPlayerPos({
+        x: currentLevel.startPos.x,
+        y: currentLevel.startPos.y,
+        dir: currentLevel.startDir,
+      });
+      setCollectedTargets([]);
+      setMessage('फिर से प्रयास करें!');
+    } else if (collected.length === currentLevel.targets.length) {
+      playWinSound();
+      setIsVictory(true);
+      setMessage('🎉 शाबाश! आपने यह स्तर पूरा कर लिया!');
+      if (isAudioEnabled) {
+        speakHindi('शाबाश! आपने यह स्तर पूरा कर लिया!');
+      }
+    } else {
+      setMessage('प्रयास अच्छा था! एक बार फिर कोड जांचें।');
     }
 
     setIsRunning(false);
-  }, [isRunning]);
+  };
+
+  const handleNextLevel = () => {
+    if (currentLevelIndex < LEVELS.length - 1) {
+      setCurrentLevelIndex((prev) => prev + 1);
+    }
+  };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-50/40 to-sky-50">
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-emerald-100 bg-white/90 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
-        <div className="min-w-0">
-          <h1 className="truncate text-lg font-bold text-emerald-900 sm:text-xl">
-            Young Researcher - कोडिंग सीखें
-          </h1>
-          <p className="text-sm font-medium text-emerald-700/80">
-            स्तर 1: पहला कदम
-          </p>
+    <main className="min-h-screen bg-slate-50 flex flex-col items-center p-4">
+      <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🐵</span>
+          <div>
+            <h1 className="text-lg font-bold text-slate-800 leading-tight">Young Researcher - कोडिंग खेल</h1>
+            <p className="text-xs text-green-700 font-medium">{currentLevel.concept}</p>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleRunCode}
-          disabled={isRunning}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:text-base"
-        >
-          <Play className="h-4 w-4 fill-current" aria-hidden />
-          ▶ कोड चलाएं (Run Code)
-        </button>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-semibold text-slate-600">स्तर चुनें:</label>
+          <select
+            value={currentLevelIndex}
+            onChange={(e) => setCurrentLevelIndex(Number(e.target.value))}
+            className="bg-slate-100 text-slate-800 font-medium py-1.5 px-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+          >
+            {LEVELS.map((lvl, i) => (
+              <option key={lvl.id} value={i}>
+                {lvl.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+              isAudioEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'
+            }`}
+          >
+            {isAudioEnabled ? '🔊 आवाज़ ऑन' : '🔇 आवाज़ बंद'}
+          </button>
+          <button
+            onClick={handleHintClick}
+            className="bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-1"
+          >
+            💡 संकेत
+          </button>
+        </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <section className="flex h-[45vh] min-h-[280px] w-full flex-col border-b border-emerald-100 lg:h-auto lg:w-[40%] lg:border-b-0 lg:border-r">
-          <div className="border-b border-emerald-100 bg-white/70 px-4 py-2 text-sm font-medium text-emerald-800">
-            गेम ग्रिड — बंदर को केले तक पहुँचाएँ
+      <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-2 shadow-sm">
+        <div>
+          <span className="font-bold text-slate-800 text-sm mr-2">{currentLevel.title}:</span>
+          <span className="text-slate-700 text-sm">{currentLevel.instruction}</span>
+        </div>
+        {showHint && (
+          <div className="text-xs bg-amber-50 text-amber-800 border border-amber-300 rounded px-2.5 py-1">
+            💡 {currentLevel.hint}
           </div>
-          <div className="min-h-0 flex-1">
-            <GameCanvas ref={canvasRef} />
-          </div>
-        </section>
+        )}
+      </section>
 
-        <section className="flex min-h-0 flex-1 flex-col lg:w-[60%]">
-          <div className="border-b border-slate-200 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700">
-            ब्लॉक्स खींचें और जोड़ें — फिर कोड चलाएं
-          </div>
-          <div className="min-h-0 flex-1">
-            <BlocklyWorkspace ref={blocklyRef} />
-          </div>
-        </section>
-      </main>
-
-      {showVictory && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="victory-title"
-        >
-          <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
-            <div className="mb-4 text-5xl" aria-hidden>
-              🎉
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+        <div className="lg:col-span-5 flex flex-col items-center">
+          <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />
+          {message && (
+            <div className="mt-3 text-center text-sm font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm w-full">
+              {message}
             </div>
-            <h2
-              id="victory-title"
-              className="mb-2 text-2xl font-bold text-emerald-800"
-            >
-              शाबाश!
-            </h2>
-            <p className="mb-6 text-lg text-emerald-700">
-              आपने स्तर 1 पूरा कर लिया!
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowVictory(false)}
-              className="rounded-xl bg-emerald-500 px-6 py-2.5 font-semibold text-white transition hover:bg-emerald-600"
-            >
-              बंद करें
-            </button>
+          )}
+        </div>
+
+        <div className="lg:col-span-7 flex flex-col bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+          <BlocklyWorkspace
+            onRunCode={handleRunCode}
+            onReset={resetGameState}
+            isRunning={isRunning}
+            hasRepeat={currentLevel.hasRepeatBlock}
+          />
+        </div>
+      </div>
+
+      {isVictory && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl">
+            <div className="text-6xl mb-3">🎉 🌟 🍌</div>
+            <h2 className="text-2xl font-black text-slate-800 mb-2">शानदार! स्तर पूरा हुआ!</h2>
+            <p className="text-slate-600 text-sm mb-6">आपने सफलतापूर्वक सभी लक्ष्य प्राप्त कर लिए हैं।</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={resetGameState}
+                className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-xl text-slate-700 transition text-sm"
+              >
+                फिर से खेलें
+              </button>
+              {currentLevelIndex < LEVELS.length - 1 && (
+                <button
+                  onClick={handleNextLevel}
+                  className="px-6 py-2.5 bg-green-600 hover:bg-green-700 font-bold rounded-xl text-white shadow-lg shadow-green-600/30 transition text-sm"
+                >
+                  अगला स्तर ➔
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
