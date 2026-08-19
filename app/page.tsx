@@ -5,13 +5,13 @@ import dynamic from 'next/dynamic';
 import { LEVELS, Level, AgeGroup } from '../lib/levels';
 import { speakHindi, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 import { ActionItem } from '../components/BlocklyWorkspace';
-import { supabase } from '../lib/supabaseClient';
 
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
 
 export default function HomePage() {
-  const [user, setUser] = useState<any>(null);
+  const [studentName, setStudentName] = useState<string | null>(null);
+  const [inputName, setInputName] = useState('');
   const [selectedAge, setSelectedAge] = useState<AgeGroup>('junior');
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [unlockedLevels, setUnlockedLevels] = useState<{ [key: string]: number }>({
@@ -38,27 +38,25 @@ export default function HomePage() {
   const [showHint, setShowHint] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
+  // Load saved profile & progress
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) setUser(data.user);
-    });
-
+    const savedName = localStorage.getItem('yr_student_name');
     const savedProgress = localStorage.getItem('yr_unlocked_tracks');
     const savedStars = localStorage.getItem('yr_level_stars');
+    if (savedName) setStudentName(savedName);
     if (savedProgress) setUnlockedLevels(JSON.parse(savedProgress));
     if (savedStars) setLevelStars(JSON.parse(savedStars));
   }, []);
 
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: window.location.origin },
-    });
+  const handleLogin = (name: string) => {
+    const finalName = name.trim() || 'युवा शोधकर्ता';
+    setStudentName(finalName);
+    localStorage.setItem('yr_student_name', finalName);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+  const handleLogout = () => {
+    localStorage.removeItem('yr_student_name');
+    setStudentName(null);
   };
 
   const resetGameState = () => {
@@ -207,39 +205,51 @@ export default function HomePage() {
     setIsRunning(false);
   };
 
-  if (!user) {
+  // 1. Student / Child Friendly Sign-in Screen
+  if (!studentName) {
     return (
       <main className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-200">
-          <div className="text-5xl mb-3">🐵 💻 🚀</div>
+          <div className="text-6xl mb-3">🐵 💻 🚀</div>
           <h1 className="text-2xl font-black text-slate-800 mb-1">Young Researcher</h1>
-          <p className="text-slate-600 text-sm mb-6">हिंदी कोडिंग खेल में आपका स्वागत है! शुरू करने के लिए लॉगिन करें।</p>
+          <p className="text-slate-600 text-sm mb-6">हिंदी कोडिंग खेल में आपका स्वागत है!</p>
 
-          <div className="space-y-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin(inputName);
+            }}
+            className="space-y-4"
+          >
+            <input
+              type="text"
+              placeholder="विद्यार्थी का नाम लिखें..."
+              value={inputName}
+              onChange={(e) => setInputName(e.target.value)}
+              className="w-full px-4 py-3 border border-slate-300 rounded-xl text-center font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-base"
+              autoFocus
+            />
+
             <button
-              onClick={() => handleSocialLogin('google')}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-slate-300 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+              type="submit"
+              className="w-full py-3.5 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold rounded-xl transition shadow-lg shadow-green-600/30 text-base"
             >
-              <span>🌐</span> Google से लॉगिन करें
+              खेल शुरू करें ➔
             </button>
-            <button
-              onClick={() => handleSocialLogin('github')}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition shadow-sm"
-            >
-              <span>🐙</span> GitHub से लॉगिन करें
-            </button>
-            <button
-              onClick={() => setUser({ email: 'guest@youngresearcher.in', user_metadata: { full_name: 'अतिथि छात्र' } })}
-              className="w-full py-2.5 text-xs text-slate-500 font-semibold hover:underline"
-            >
-              अतिथि के रूप में जारी रखें (Guest Mode) ➔
-            </button>
-          </div>
+          </form>
+
+          <button
+            onClick={() => handleLogin('अतिथि छात्र')}
+            className="mt-4 text-xs text-slate-500 hover:text-slate-800 font-semibold"
+          >
+            बिना नाम के सीधे खेलें (Guest)
+          </button>
         </div>
       </main>
     );
   }
 
+  // 2. Main Game Interface
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
@@ -247,10 +257,11 @@ export default function HomePage() {
           <span className="text-2xl">🐵</span>
           <div>
             <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher कोडिंग</h1>
-            <p className="text-xs text-green-700 font-medium">{currentLevel.concept}</p>
+            <p className="text-xs text-green-700 font-semibold">विद्यार्थी: {studentName}</p>
           </div>
         </div>
 
+        {/* Age Track Buttons */}
         <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
           <button
             onClick={() => { setSelectedAge('junior'); setCurrentLevelIndex(0); }}
@@ -285,11 +296,12 @@ export default function HomePage() {
             onClick={handleLogout}
             className="text-xs text-red-600 bg-red-50 hover:bg-red-100 font-bold px-2.5 py-1 rounded-lg border border-red-200"
           >
-            लॉगआउट
+            बदलें
           </button>
         </div>
       </header>
 
+      {/* Level Selection Bar */}
       <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-2 shadow-sm">
         <div className="flex items-center gap-3">
           <label className="text-xs md:text-sm font-bold text-slate-700">स्तर चुनें:</label>
@@ -314,6 +326,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Main Canvas & Blockly Grid */}
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
         <div className="lg:col-span-5 flex flex-col items-center">
           <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />
