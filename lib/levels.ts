@@ -1,171 +1,129 @@
-export interface Coordinate {
-  x: number;
-  y: number;
-}
+export type AgeGroup = 'junior' | 'intermediate' | 'senior';
 
 export interface Level {
   id: number;
+  ageGroup: AgeGroup;
   title: string;
   concept: string;
   instruction: string;
-  hint: string;
   voiceText: string;
+  hint: string;
   gridSize: number;
-  startPos: Coordinate;
+  startPos: { x: number; y: number };
   startDir: 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
-  targets: Coordinate[];
-  obstacles: Coordinate[];
-  hasRepeatBlock?: boolean;
+  targets: { x: number; y: number }[];
+  obstacles: { x: number; y: number }[];
+  allowedBlocks: {
+    moveForward?: boolean;
+    turnLeft?: boolean;
+    turnRight?: boolean;
+    collectItem?: boolean;
+    repeat?: boolean;
+    condition?: boolean;
+  };
+  optimalBlocks: number;
 }
 
 export const LEVELS: Level[] = [
+  // --- JUNIOR TRACK (Ages 5-7): Sequence & Basic Turns ---
   {
     id: 1,
-    title: 'स्तर 1: पहला कदम',
+    ageGroup: 'junior',
+    title: 'स्तर 1: सीधी रेखा',
     concept: 'क्रमबद्धता (Sequence)',
-    instruction: 'बंदर को केला 🍌 तक पहुँचाने के लिए "आगे बढ़ो" ब्लॉक का उपयोग करें।',
-    hint: 'केला 3 कदम की दूरी पर है। 3 बार "आगे बढ़ो" लगाएं और फिर "केला उठाओ" लगाएं।',
-    voiceText: 'स्तर एक में आपका स्वागत है! आगे बढ़कर केला उठाइए।',
-    gridSize: 8,
-    startPos: { x: 1, y: 1 },
+    instruction: 'बंदर को सीधा आगे बढ़ाकर केला उठाएं।',
+    voiceText: 'बंदर को आगे ले जाएं और केला उठाएं।',
+    hint: '2 बार "आगे बढ़ो" और "केला उठाओ" लगाएं।',
+    gridSize: 5,
+    startPos: { x: 1, y: 2 },
     startDir: 'EAST',
-    targets: [{ x: 4, y: 1 }],
+    targets: [{ x: 3, y: 2 }],
     obstacles: [],
-    hasRepeatBlock: false,
+    allowedBlocks: { moveForward: true, collectItem: true },
+    optimalBlocks: 3,
   },
   {
     id: 2,
-    title: 'स्तर 2: सही मोड़',
-    concept: 'दिशा और मोड़ (Turns)',
-    instruction: 'आगे बढ़ें, दाएँ मुड़ें और केला इकट्ठा करें।',
-    hint: '2 कदम आगे बढ़ें, फिर दाएँ मुड़ें, 2 कदम आगे बढ़ें और केला उठाएं।',
-    voiceText: 'स्तर दो! आगे बढ़ें और दाएँ मुड़कर फल प्राप्त करें।',
-    gridSize: 8,
+    ageGroup: 'junior',
+    title: 'स्तर 2: दायाँ मोड़',
+    concept: 'दिशा ज्ञान (Right Turn)',
+    instruction: 'आगे बढ़ें और केला लेने के लिए दाएँ मुड़ें।',
+    voiceText: 'आगे बढ़ें और दाएँ मुड़ें।',
+    hint: 'आगे बढ़ो, दाएँ मुड़ो, आगे बढ़ो और केला उठाओ।',
+    gridSize: 5,
     startPos: { x: 1, y: 1 },
     startDir: 'EAST',
-    targets: [{ x: 3, y: 3 }],
+    targets: [{ x: 2, y: 3 }],
     obstacles: [],
-    hasRepeatBlock: false,
+    allowedBlocks: { moveForward: true, turnRight: true, collectItem: true },
+    optimalBlocks: 5,
   },
+
+  // --- INTERMEDIATE TRACK (Ages 8-10): Loops & Multi-step Patterns ---
   {
     id: 3,
-    title: 'स्तर 3: बाएँ और दाएँ',
-    concept: 'एकाधिक मोड़ (Multiple Turns)',
-    instruction: 'जिग-जैग रास्ते से होते हुए केले तक पहुंचें।',
-    hint: 'आगे बढ़ें, बाएँ मुड़ें, आगे बढ़ें, फिर दाएँ मुड़कर आगे बढ़ें।',
-    voiceText: 'स्तर तीन! बाएँ और दाएँ मुड़ने का सही क्रम बनाएं।',
-    gridSize: 8,
-    startPos: { x: 1, y: 4 },
+    ageGroup: 'intermediate',
+    title: 'स्तर 3: लूप का जादू',
+    concept: 'दोहराव (Repeat Loops)',
+    instruction: '5 कदम चलने के लिए दोहराव ब्लॉक (Loop) का प्रयोग करें।',
+    voiceText: 'दोहराव लूप का प्रयोग करें।',
+    hint: '"🔁 बार दोहराओ" में संख्या 5 डालें।',
+    gridSize: 7,
+    startPos: { x: 0, y: 3 },
     startDir: 'EAST',
-    targets: [{ x: 4, y: 2 }],
+    targets: [{ x: 5, y: 3 }],
     obstacles: [],
-    hasRepeatBlock: false,
+    allowedBlocks: { moveForward: true, collectItem: true, repeat: true },
+    optimalBlocks: 3,
   },
   {
     id: 4,
-    title: 'स्तर 4: दोहराव का जादू (Loop)',
-    concept: 'लूप्स (Repeat Block)',
-    instruction: '5 कदम चलने के लिए "दोहराओ" (Repeat) ब्लॉक का उपयोग करें।',
-    hint: '"दोहराओ" ब्लॉक के अंदर "आगे बढ़ो" रखें और संख्या 5 सेट करें।',
-    voiceText: 'स्तर चार! दोहराओ ब्लॉक का जादू सीखिए।',
-    gridSize: 8,
-    startPos: { x: 1, y: 1 },
+    ageGroup: 'intermediate',
+    title: 'स्तर 4: सीढ़ीनुमा सफर',
+    concept: 'पैटर्न लूप (Pattern Loops)',
+    instruction: 'सीढ़ी जैसे रास्ते को दोहराव ब्लॉक में डालकर हल करें।',
+    voiceText: 'सीढ़ीदार पैटर्न को दोहराएं।',
+    hint: 'लूप में [आगे, बाएँ, आगे, दाएँ] रखें।',
+    gridSize: 7,
+    startPos: { x: 1, y: 5 },
     startDir: 'EAST',
-    targets: [{ x: 6, y: 1 }],
-    obstacles: [],
-    hasRepeatBlock: true,
+    targets: [{ x: 5, y: 1 }],
+    obstacles: [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }],
+    allowedBlocks: { moveForward: true, turnLeft: true, turnRight: true, collectItem: true, repeat: true },
+    optimalBlocks: 6,
   },
+
+  // --- SENIOR TRACK (Ages 11+): Conditions & Logic ---
   {
     id: 5,
-    title: 'स्तर 5: पहली रुकावट',
-    concept: 'रुकावट से बचना (Obstacle Avoidance)',
-    instruction: 'रास्ते में पत्थर 🪨 है! उसके चारों ओर घूमकर केला प्राप्त करें।',
-    hint: 'सीधे मत जाएं! पहले ऊपर या नीचे मुड़कर पत्थर से बचें।',
-    voiceText: 'स्तर पांच! सावधान, रास्ते में पत्थर है।',
-    gridSize: 8,
-    startPos: { x: 1, y: 2 },
+    ageGroup: 'senior',
+    title: 'स्तर 5: अगर आगे पत्थर हो',
+    concept: 'शर्त (If Condition)',
+    instruction: 'शर्त ब्लॉक लगाएं: अगर पत्थर आए तो बाएँ मुड़ें!',
+    voiceText: 'अगर आगे पत्थर हो तो बाएँ मुड़ें।',
+    hint: '"❓ अगर आगे पत्थर हो" के अंदर "बाएँ मुड़ो" रखें।',
+    gridSize: 7,
+    startPos: { x: 1, y: 3 },
     startDir: 'EAST',
-    targets: [{ x: 5, y: 2 }],
-    obstacles: [{ x: 3, y: 2 }],
-    hasRepeatBlock: true,
+    targets: [{ x: 3, y: 1 }],
+    obstacles: [{ x: 3, y: 3 }],
+    allowedBlocks: { moveForward: true, turnLeft: true, turnRight: true, collectItem: true, condition: true },
+    optimalBlocks: 5,
   },
   {
     id: 6,
-    title: 'स्तर 6: दोहरे फल',
-    concept: 'एकाधिक लक्ष्य (Multi-Target)',
-    instruction: 'नक्शे पर दोनों केलों को क्रम से उठाएं।',
-    hint: 'पहले पास वाले केले पर जाएं, फिर घूमकर दूसरे केले तक पहुंचें।',
-    voiceText: 'स्तर छह! दोनों केलों को एक ही कोड से इकट्ठा करें।',
-    gridSize: 8,
-    startPos: { x: 1, y: 1 },
+    ageGroup: 'senior',
+    title: 'स्तर 6: स्वचालित रोबोट (Loop + Condition)',
+    concept: 'लूप के साथ शर्त (Loop with If)',
+    instruction: 'लूप में आगे बढ़ें और पत्थर आने पर रास्ता बदलें।',
+    voiceText: 'लूप और शर्त का एक साथ प्रयोग करें।',
+    hint: 'लूप के अंदर "आगे बढ़ो" और "अगर पत्थर हो তো मुड़ो" दोनों लगाएं।',
+    gridSize: 7,
+    startPos: { x: 0, y: 2 },
     startDir: 'EAST',
-    targets: [{ x: 3, y: 1 }, { x: 3, y: 4 }],
-    obstacles: [{ x: 2, y: 3 }],
-    hasRepeatBlock: true,
+    targets: [{ x: 5, y: 4 }],
+    obstacles: [{ x: 3, y: 2 }],
+    allowedBlocks: { moveForward: true, turnLeft: true, turnRight: true, collectItem: true, repeat: true, condition: true },
+    optimalBlocks: 7,
   },
-  {
-    id: 7,
-    title: 'स्तर 7: सीढ़ीदार रास्ता',
-    concept: 'लूप के अंदर क्रम (Nested Patterns)',
-    instruction: 'सीढ़ी जैसे पैटर्न को लूप का उपयोग करके पार करें।',
-    hint: '3 बार दोहराएं: (आगे बढ़ो -> दाएँ मुड़ो -> आगे बढ़ो -> बाएँ मुड़ो)।',
-    voiceText: 'स्तर सात! सीढ़ीदार रास्ते के पैटर्न को पहचानें।',
-    gridSize: 8,
-    startPos: { x: 1, y: 1 },
-    startDir: 'EAST',
-    targets: [{ x: 4, y: 4 }],
-    obstacles: [{ x: 1, y: 2 }, { x: 2, y: 3 }],
-    hasRepeatBlock: true,
-  },
-  {
-    id: 8,
-    title: 'स्तर 8: भूलभुलैया (Mini Maze)',
-    concept: 'भूलभुलैया समाधान (Pathfinding)',
-    instruction: 'दीवारों से बचते हुए सुरक्षित रास्ता खोजें।',
-    hint: 'खुली गलियों पर नज़र रखें और सही समय पर मुड़ें।',
-    voiceText: 'स्तर आठ! भूलभुलैया में रास्ता खोजें।',
-    gridSize: 8,
-    startPos: { x: 1, y: 1 },
-    startDir: 'EAST',
-    targets: [{ x: 6, y: 6 }],
-    obstacles: [
-      { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 4, y: 3 },
-      { x: 4, y: 4 }, { x: 5, y: 4 }, { x: 3, y: 6 }
-    ],
-    hasRepeatBlock: true,
-  },
-  {
-    id: 9,
-    title: 'स्तर 9: लंबा सफर',
-    concept: 'लूप दक्षता (Loop Efficiency)',
-    instruction: 'पूरे बोर्ड के किनारे-किनारे घूमकर फल प्राप्त करें।',
-    hint: 'लंबे रास्तों के लिए दोहराव (Repeat) ब्लॉक का पूरा फायदा उठाएं।',
-    voiceText: 'स्तर नौ! कम से कम ब्लॉक में लंबा सफर तय करें।',
-    gridSize: 8,
-    startPos: { x: 0, y: 0 },
-    startDir: 'EAST',
-    targets: [{ x: 6, y: 6 }],
-    obstacles: [
-      { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 },
-      { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }
-    ],
-    hasRepeatBlock: true,
-  },
-  {
-    id: 10,
-    title: 'स्तर 10: मास्टर रिसर्चर 🎓',
-    concept: 'महा-चुनौती (Master Challenge)',
-    instruction: 'सभी 3 फल इकट्ठा करें और रुकावटों को चकमा दें!',
-    hint: 'पूरा रास्ता पहले मन में सोचें, फिर लूप और मोड़ों का संयोजन करें।',
-    voiceText: 'बधाई हो, आप अंतिम स्तर पर हैं! अपनी पूरी कोडिंग क्षमता दिखाएं।',
-    gridSize: 8,
-    startPos: { x: 0, y: 0 },
-    startDir: 'EAST',
-    targets: [{ x: 0, y: 6 }, { x: 6, y: 0 }, { x: 6, y: 6 }],
-    obstacles: [
-      { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 5 }, { x: 3, y: 6 },
-      { x: 1, y: 3 }, { x: 5, y: 3 }
-    ],
-    hasRepeatBlock: true,
-  }
 ];

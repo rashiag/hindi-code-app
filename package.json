@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "blockly": "^13.2.1",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.31.0",
