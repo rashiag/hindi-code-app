@@ -9,10 +9,25 @@ import { ActionItem } from '../components/BlocklyWorkspace';
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
 
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/ap1nemn50td2f';
+
 export default function HomePage() {
-  const [studentName, setStudentName] = useState<string | null>(null);
-  const [inputName, setInputName] = useState('');
-  const [selectedAge, setSelectedAge] = useState<AgeGroup>('junior');
+  const [studentProfile, setStudentProfile] = useState<{
+    name: string;
+    ageGroup: AgeGroup;
+    school: string;
+    email: string;
+  } | null>(null);
+
+  // Form inputs
+  const [formData, setFormData] = useState({
+    name: '',
+    ageGroup: 'junior' as AgeGroup,
+    school: '',
+    email: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [unlockedLevels, setUnlockedLevels] = useState<{ [key: string]: number }>({
     junior: 0,
@@ -22,6 +37,7 @@ export default function HomePage() {
   const [levelStars, setLevelStars] = useState<{ [key: number]: number }>({});
   const [speed, setSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
 
+  const selectedAge = studentProfile?.ageGroup || 'junior';
   const filteredLevels = LEVELS.filter((lvl) => lvl.ageGroup === selectedAge);
   const currentLevel: Level = filteredLevels[currentLevelIndex] || filteredLevels[0] || LEVELS[0];
 
@@ -40,23 +56,64 @@ export default function HomePage() {
 
   // Load saved profile & progress
   useEffect(() => {
-    const savedName = localStorage.getItem('yr_student_name');
+    const savedProfile = localStorage.getItem('yr_student_profile');
     const savedProgress = localStorage.getItem('yr_unlocked_tracks');
     const savedStars = localStorage.getItem('yr_level_stars');
-    if (savedName) setStudentName(savedName);
+    if (savedProfile) {
+      const parsed = JSON.parse(savedProfile);
+      setStudentProfile(parsed);
+      setFormData(parsed);
+    }
     if (savedProgress) setUnlockedLevels(JSON.parse(savedProgress));
     if (savedStars) setLevelStars(JSON.parse(savedStars));
   }, []);
 
-  const handleLogin = (name: string) => {
-    const finalName = name.trim() || 'युवा शोधकर्ता';
-    setStudentName(finalName);
-    localStorage.setItem('yr_student_name', finalName);
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      alert('कृपया विद्यार्थी का नाम दर्ज करें।');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const record = {
+      Timestamp: new Date().toLocaleString('en-IN'),
+      Name: formData.name.trim(),
+      'Age Group':
+        formData.ageGroup === 'junior'
+          ? 'Junior (5-7)'
+          : formData.ageGroup === 'intermediate'
+          ? 'Explorer (8-10)'
+          : 'Researcher (11+)',
+      School: formData.school.trim() || 'Not specified',
+      Email: formData.email.trim() || 'Not specified',
+    };
+
+    // Save locally
+    setStudentProfile(formData);
+    localStorage.setItem('yr_student_profile', JSON.stringify(formData));
+
+    // Send to Google Sheets via SheetDB
+    try {
+      await fetch(SHEETDB_URL, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: [record] }),
+      });
+    } catch (err) {
+      console.warn('Google Sheet sync error:', err);
+    }
+
+    setIsSubmitting(false);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('yr_student_name');
-    setStudentName(null);
+    localStorage.removeItem('yr_student_profile');
+    setStudentProfile(null);
   };
 
   const resetGameState = () => {
@@ -205,51 +262,79 @@ export default function HomePage() {
     setIsRunning(false);
   };
 
-  // 1. Student / Child Friendly Sign-in Screen
-  if (!studentName) {
+  // 1. Mandatory Student Registration Form
+  if (!studentProfile) {
     return (
       <main className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-200">
-          <div className="text-6xl mb-3">🐵 💻 🚀</div>
-          <h1 className="text-2xl font-black text-slate-800 mb-1">Young Researcher</h1>
-          <p className="text-slate-600 text-sm mb-6">हिंदी कोडिंग खेल में आपका स्वागत है!</p>
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full border border-slate-200">
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-2">🐵 💻 🎓</div>
+            <h1 className="text-2xl font-black text-slate-800">Young Researcher</h1>
+            <p className="text-slate-500 text-xs mt-1">कोडिंग यात्रा शुरू करने के लिए छात्र विवरण भरें</p>
+          </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin(inputName);
-            }}
-            className="space-y-4"
-          >
-            <input
-              type="text"
-              placeholder="विद्यार्थी का नाम लिखें..."
-              value={inputName}
-              onChange={(e) => setInputName(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl text-center font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500 text-base"
-              autoFocus
-            />
+          <form onSubmit={handleRegister} className="space-y-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">विद्यार्थी का नाम (Full Name) *</label>
+              <input
+                type="text"
+                required
+                placeholder="उदा. आरव शर्मा"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">आयु वर्ग (Age Bracket) *</label>
+              <select
+                value={formData.ageGroup}
+                onChange={(e) => setFormData({ ...formData, ageGroup: e.target.value as AgeGroup })}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:ring-2 focus:ring-green-500 focus:outline-none"
+              >
+                <option value="junior">आयु 5–7 वर्ष (Junior Track - बुनियादी)</option>
+                <option value="intermediate">आयु 8–10 वर्ष (Explorer Track - लूप)</option>
+                <option value="senior">आयु 11+ वर्ष (Researcher Track - शर्त & तर्क)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">विद्यालय का नाम (School Name)</label>
+              <input
+                type="text"
+                placeholder="उदा. DPS / Campus School"
+                value={formData.school}
+                onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">ईमेल या अभिभावक संपर्क (Email / Phone)</label>
+              <input
+                type="text"
+                placeholder="उदा. parent@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+              />
+            </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold rounded-xl transition shadow-lg shadow-green-600/30 text-base"
+              disabled={isSubmitting}
+              className="w-full py-3.5 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold rounded-xl transition shadow-lg shadow-green-600/30 text-sm mt-4 flex items-center justify-center gap-2"
             >
-              खेल शुरू करें ➔
+              {isSubmitting ? 'पंजीकरण हो रहा है...' : 'कोडिंग शुरू करें ➔'}
             </button>
           </form>
-
-          <button
-            onClick={() => handleLogin('अतिथि छात्र')}
-            className="mt-4 text-xs text-slate-500 hover:text-slate-800 font-semibold"
-          >
-            बिना नाम के सीधे खेलें (Guest)
-          </button>
         </div>
       </main>
     );
   }
 
-  // 2. Main Game Interface
+  // 2. Main Game Workspace
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
@@ -257,33 +342,17 @@ export default function HomePage() {
           <span className="text-2xl">🐵</span>
           <div>
             <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher कोडिंग</h1>
-            <p className="text-xs text-green-700 font-semibold">विद्यार्थी: {studentName}</p>
+            <p className="text-xs text-slate-600">
+              छात्र: <strong className="text-green-700">{studentProfile.name}</strong> ({studentProfile.school || 'विद्यार्थी'})
+            </p>
           </div>
         </div>
 
-        {/* Age Track Buttons */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
-          <button
-            onClick={() => { setSelectedAge('junior'); setCurrentLevelIndex(0); }}
-            className={`px-3 py-1.5 rounded-lg transition ${selectedAge === 'junior' ? 'bg-green-600 text-white shadow' : 'text-slate-600'}`}
-          >
-            आयु 5-7 (Junior)
-          </button>
-          <button
-            onClick={() => { setSelectedAge('intermediate'); setCurrentLevelIndex(0); }}
-            className={`px-3 py-1.5 rounded-lg transition ${selectedAge === 'intermediate' ? 'bg-green-600 text-white shadow' : 'text-slate-600'}`}
-          >
-            आयु 8-10 (Explorer)
-          </button>
-          <button
-            onClick={() => { setSelectedAge('senior'); setCurrentLevelIndex(0); }}
-            className={`px-3 py-1.5 rounded-lg transition ${selectedAge === 'senior' ? 'bg-green-600 text-white shadow' : 'text-slate-600'}`}
-          >
-            आयु 11+ (Researcher)
-          </button>
-        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-xs font-bold px-3 py-1 bg-green-50 text-green-800 border border-green-200 rounded-lg">
+            {selectedAge === 'junior' ? 'आयु 5–7' : selectedAge === 'intermediate' ? 'आयु 8–10' : 'आयु 11+'}
+          </div>
 
-        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
             className={`px-2.5 py-1 rounded-lg text-xs md:text-sm font-semibold transition ${
@@ -294,7 +363,7 @@ export default function HomePage() {
           </button>
           <button
             onClick={handleLogout}
-            className="text-xs text-red-600 bg-red-50 hover:bg-red-100 font-bold px-2.5 py-1 rounded-lg border border-red-200"
+            className="text-xs text-slate-500 hover:text-red-600 font-semibold px-2 py-1"
           >
             बदलें
           </button>
