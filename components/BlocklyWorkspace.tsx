@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as Blockly from 'blockly';
+import { Level } from '../lib/levels';
 
 function initCustomBlocks() {
   if (!Blockly.Blocks['when_run']) {
@@ -72,22 +73,45 @@ function initCustomBlocks() {
       },
     };
   }
+
+  if (!Blockly.Blocks['if_obstacle_ahead']) {
+    Blockly.Blocks['if_obstacle_ahead'] = {
+      init: function () {
+        this.appendDummyInput().appendField('❓ अगर आगे पत्थर हो');
+        this.appendStatementInput('DO').appendField('तो करें');
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#E53935');
+      },
+    };
+  }
 }
 
-function parseBlocks(block: Blockly.Block | null): string[] {
-  const list: string[] = [];
+export type ActionItem =
+  | { type: 'MOVE_FORWARD' }
+  | { type: 'TURN_LEFT' }
+  | { type: 'TURN_RIGHT' }
+  | { type: 'COLLECT_ITEM' }
+  | { type: 'IF_OBSTACLE'; branch: ActionItem[] };
+
+function parseBlockHierarchy(block: Blockly.Block | null): ActionItem[] {
+  const list: ActionItem[] = [];
   let curr = block;
   while (curr) {
-    if (curr.type === 'move_forward') list.push('MOVE_FORWARD');
-    if (curr.type === 'turn_left') list.push('TURN_LEFT');
-    if (curr.type === 'turn_right') list.push('TURN_RIGHT');
-    if (curr.type === 'collect_item') list.push('COLLECT_ITEM');
+    if (curr.type === 'move_forward') list.push({ type: 'MOVE_FORWARD' });
+    if (curr.type === 'turn_left') list.push({ type: 'TURN_LEFT' });
+    if (curr.type === 'turn_right') list.push({ type: 'TURN_RIGHT' });
+    if (curr.type === 'collect_item') list.push({ type: 'COLLECT_ITEM' });
+    if (curr.type === 'if_obstacle_ahead') {
+      const branchBlock = curr.getInputTargetBlock('DO');
+      list.push({ type: 'IF_OBSTACLE', branch: parseBlockHierarchy(branchBlock) });
+    }
     if (curr.type === 'repeat_times') {
       const times = parseInt(curr.getFieldValue('TIMES') || '1', 10);
       const inner = curr.getInputTargetBlock('DO');
-      const innerList = parseBlocks(inner);
+      const innerActions = parseBlockHierarchy(inner);
       for (let i = 0; i < times; i++) {
-        list.push(...innerList);
+        list.push(...innerActions);
       }
     }
     curr = curr.getNextBlock();
@@ -96,17 +120,17 @@ function parseBlocks(block: Blockly.Block | null): string[] {
 }
 
 interface BlocklyWorkspaceProps {
-  onRunCode: (actions: string[]) => void;
+  onRunCode: (actions: ActionItem[], blockCount: number) => void;
   onReset: () => void;
   isRunning: boolean;
-  hasRepeat?: boolean;
+  allowedBlocks: Level['allowedBlocks'];
 }
 
 export default function BlocklyWorkspace({
   onRunCode,
   onReset,
   isRunning,
-  hasRepeat = false,
+  allowedBlocks,
 }: BlocklyWorkspaceProps) {
   const blocklyDivRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
@@ -115,15 +139,15 @@ export default function BlocklyWorkspace({
     initCustomBlocks();
     if (!blocklyDivRef.current) return;
 
-    const toolboxXml = `
-      <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
-        <block type="move_forward"></block>
-        <block type="turn_left"></block>
-        <block type="turn_right"></block>
-        <block type="collect_item"></block>
-        ${hasRepeat ? '<block type="repeat_times"></block>' : ''}
-      </xml>
-    `;
+    let blocksXml = '';
+    if (allowedBlocks?.moveForward) blocksXml += '<block type="move_forward"></block>';
+    if (allowedBlocks?.turnLeft) blocksXml += '<block type="turn_left"></block>';
+    if (allowedBlocks?.turnRight) blocksXml += '<block type="turn_right"></block>';
+    if (allowedBlocks?.collectItem) blocksXml += '<block type="collect_item"></block>';
+    if (allowedBlocks?.repeat) blocksXml += '<block type="repeat_times"></block>';
+    if (allowedBlocks?.condition) blocksXml += '<block type="if_obstacle_ahead"></block>';
+
+    const toolboxXml = `<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">${blocksXml}</xml>`;
 
     if (!workspaceRef.current) {
       workspaceRef.current = Blockly.inject(blocklyDivRef.current, {
@@ -132,7 +156,7 @@ export default function BlocklyWorkspace({
         trashcan: true,
         sounds: false,
         grid: { spacing: 20, length: 3, colour: '#e2e8f0', snap: true },
-        zoom: { controls: true, wheel: true, startScale: 0.9, maxScale: 1.5, minScale: 0.6 },
+        zoom: { controls: true, wheel: true, startScale: 0.85, maxScale: 1.4, minScale: 0.6 },
       });
 
       const startBlock = workspaceRef.current.newBlock('when_run');
@@ -144,14 +168,7 @@ export default function BlocklyWorkspace({
     } else {
       workspaceRef.current.updateToolbox(toolboxXml);
     }
-
-    return () => {
-      if (workspaceRef.current) {
-        workspaceRef.current.dispose();
-        workspaceRef.current = null;
-      }
-    };
-  }, [hasRepeat]);
+  }, [allowedBlocks]);
 
   const handleExecute = () => {
     if (!workspaceRef.current || isRunning) return;
@@ -165,8 +182,9 @@ export default function BlocklyWorkspace({
       return;
     }
 
-    const actions = parseBlocks(first);
-    onRunCode(actions);
+    const totalBlocksUsed = all.length - 1;
+    const actionPlan = parseBlockHierarchy(first);
+    onRunCode(actionPlan, totalBlocksUsed);
   };
 
   const handleReset = () => {

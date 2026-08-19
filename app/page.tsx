@@ -22,7 +22,6 @@ export default function HomePage() {
   const [levelStars, setLevelStars] = useState<{ [key: number]: number }>({});
   const [speed, setSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
 
-  // Filter levels according to selected age track
   const filteredLevels = LEVELS.filter((lvl) => lvl.ageGroup === selectedAge);
   const currentLevel: Level = filteredLevels[currentLevelIndex] || filteredLevels[0] || LEVELS[0];
 
@@ -39,7 +38,6 @@ export default function HomePage() {
   const [showHint, setShowHint] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
-  // Authentication & Progress Hydration
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) setUser(data.user);
@@ -209,7 +207,6 @@ export default function HomePage() {
     setIsRunning(false);
   };
 
-  // 1. Social Login Screen if Not Signed In
   if (!user) {
     return (
       <main className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
@@ -243,7 +240,6 @@ export default function HomePage() {
     );
   }
 
-  // 2. Main Game Interface with Age Filters
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
@@ -255,7 +251,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Age Track Selector */}
         <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
           <button
             onClick={() => { setSelectedAge('junior'); setCurrentLevelIndex(0); }}
@@ -277,7 +272,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* User Profile & Logout */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsAudioEnabled(!isAudioEnabled)}
@@ -296,7 +290,6 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Level Selection Bar */}
       <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-2 shadow-sm">
         <div className="flex items-center gap-3">
           <label className="text-xs md:text-sm font-bold text-slate-700">स्तर चुनें:</label>
@@ -321,7 +314,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Main Canvas & Blockly Grid */}
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
         <div className="lg:col-span-5 flex flex-col items-center">
           <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />

@@ -113,11 +113,11 @@ export const LEVELS: Level[] = [
   {
     id: 6,
     ageGroup: 'senior',
-    title: 'स्तर 6: स्वचालित रोबोट (Loop + Condition)',
+    title: 'स्तर 6: रोबोट और बाधा (Loop + Condition)',
     concept: 'लूप के साथ शर्त (Loop with If)',
     instruction: 'लूप में आगे बढ़ें और पत्थर आने पर रास्ता बदलें।',
     voiceText: 'लूप और शर्त का एक साथ प्रयोग करें।',
-    hint: 'लूप के अंदर "आगे बढ़ो" और "अगर पत्थर हो তো मुड़ो" दोनों लगाएं।',
+    hint: 'लूप के अंदर आगे बढ़ो और अगर पत्थर हो ब्लॉक लगाएं।',
     gridSize: 7,
     startPos: { x: 0, y: 2 },
     startDir: 'EAST',
