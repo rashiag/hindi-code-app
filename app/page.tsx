@@ -8,10 +8,13 @@ import { ActionItem } from '../components/BlocklyWorkspace';
 
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
+const HindiMLStudio = dynamic(() => import('../components/HindiMLStudio'), { ssr: false });
 
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/ap1nemn50td2f';
 
 export default function HomePage() {
+  const [activeTab, setActiveTab] = useState<'coding' | 'ml'>('coding');
+
   const [studentProfile, setStudentProfile] = useState<{
     name: string;
     ageGroup: AgeGroup;
@@ -19,7 +22,6 @@ export default function HomePage() {
     email: string;
   } | null>(null);
 
-  // Form inputs
   const [formData, setFormData] = useState({
     name: '',
     ageGroup: 'junior' as AgeGroup,
@@ -51,10 +53,8 @@ export default function HomePage() {
   const [isVictory, setIsVictory] = useState(false);
   const [earnedStars, setEarnedStars] = useState(3);
   const [message, setMessage] = useState('');
-  const [showHint, setShowHint] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
-  // Load saved profile & progress
   useEffect(() => {
     const savedProfile = localStorage.getItem('yr_student_profile');
     const savedProgress = localStorage.getItem('yr_unlocked_tracks');
@@ -70,13 +70,9 @@ export default function HomePage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      alert('कृपया विद्यार्थी का नाम दर्ज करें।');
-      return;
-    }
+    if (!formData.name.trim()) return;
 
     setIsSubmitting(true);
-
     const record = {
       Timestamp: new Date().toLocaleString('en-IN'),
       Name: formData.name.trim(),
@@ -90,24 +86,18 @@ export default function HomePage() {
       Email: formData.email.trim() || 'Not specified',
     };
 
-    // Save locally
     setStudentProfile(formData);
     localStorage.setItem('yr_student_profile', JSON.stringify(formData));
 
-    // Send to Google Sheets via SheetDB
     try {
       await fetch(SHEETDB_URL, {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: [record] }),
       });
     } catch (err) {
-      console.warn('Google Sheet sync error:', err);
+      console.warn(err);
     }
-
     setIsSubmitting(false);
   };
 
@@ -124,16 +114,15 @@ export default function HomePage() {
     });
     setCollectedTargets([]);
     setIsVictory(false);
-    setShowHint(false);
     setMessage(currentLevel.instruction);
   };
 
   useEffect(() => {
     resetGameState();
-    if (isAudioEnabled) {
+    if (isAudioEnabled && activeTab === 'coding') {
       speakHindi(currentLevel.voiceText);
     }
-  }, [currentLevelIndex, selectedAge, isAudioEnabled]);
+  }, [currentLevelIndex, selectedAge, isAudioEnabled, activeTab]);
 
   const handleRunCode = async (actions: ActionItem[], blockCount: number) => {
     if (isRunning || actions.length === 0) return;
@@ -171,7 +160,6 @@ export default function HomePage() {
         if (item.type === 'MOVE_FORWARD') {
           let nextX = curX;
           let nextY = curY;
-
           if (curDir === 'NORTH') nextY -= 1;
           if (curDir === 'EAST') nextX += 1;
           if (curDir === 'SOUTH') nextY += 1;
@@ -180,7 +168,6 @@ export default function HomePage() {
           if (nextX < 0 || nextX >= currentLevel.gridSize || nextY < 0 || nextY >= currentLevel.gridSize) {
             playBumpSound();
             setMessage('अरे! आप ग्रिड से बाहर चले गए!');
-            if (isAudioEnabled) speakHindi('अरे! आप ग्रिड से बाहर चले गए!');
             hasCollided = true;
             return false;
           }
@@ -189,7 +176,6 @@ export default function HomePage() {
           if (hitObs) {
             playBumpSound();
             setMessage('अरे! रास्ते में पत्थर 🪨 है!');
-            if (isAudioEnabled) speakHindi('अरे! आगे पत्थर है!');
             hasCollided = true;
             return false;
           }
@@ -199,24 +185,20 @@ export default function HomePage() {
           setPlayerPos({ x: curX, y: curY, dir: curDir });
           playStepSound();
           await sleep(delay);
-
         } else if (item.type === 'TURN_RIGHT') {
           const idx = directions.indexOf(curDir);
           curDir = directions[(idx + 1) % 4];
           setPlayerPos({ x: curX, y: curY, dir: curDir });
           await sleep(delay * 0.7);
-
         } else if (item.type === 'TURN_LEFT') {
           const idx = directions.indexOf(curDir);
           curDir = directions[(idx + 3) % 4];
           setPlayerPos({ x: curX, y: curY, dir: curDir });
           await sleep(delay * 0.7);
-
         } else if (item.type === 'COLLECT_ITEM') {
           const found = currentLevel.targets.find(
             (t) => t.x === curX && t.y === curY && !collected.some((c) => c.x === t.x && c.y === t.y)
           );
-
           if (found) {
             collected = [...collected, found];
             setCollectedTargets([...collected]);
@@ -245,7 +227,6 @@ export default function HomePage() {
       else if (blockCount > currentLevel.optimalBlocks) stars = 2;
 
       setEarnedStars(stars);
-
       const nextTrackUnlocked = Math.max(unlockedLevels[selectedAge] || 0, currentLevelIndex + 1);
       const updatedTracks = { ...unlockedLevels, [selectedAge]: nextTrackUnlocked };
       setUnlockedLevels(updatedTracks);
@@ -262,15 +243,14 @@ export default function HomePage() {
     setIsRunning(false);
   };
 
-  // 1. Mandatory Student Registration Form
   if (!studentProfile) {
     return (
       <main className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full border border-slate-200">
           <div className="text-center mb-6">
-            <div className="text-5xl mb-2">🐵 💻 🎓</div>
+            <div className="text-5xl mb-2">🐵 💻 🧠</div>
             <h1 className="text-2xl font-black text-slate-800">Young Researcher</h1>
-            <p className="text-slate-500 text-xs mt-1">कोडिंग यात्रा शुरू करने के लिए छात्र विवरण भरें</p>
+            <p className="text-slate-500 text-xs mt-1">कोडिंग और AI यात्रा शुरू करने के लिए छात्र विवरण भरें</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-3.5">
@@ -285,7 +265,6 @@ export default function HomePage() {
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               />
             </div>
-
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">आयु वर्ग (Age Bracket) *</label>
               <select
@@ -293,23 +272,21 @@ export default function HomePage() {
                 onChange={(e) => setFormData({ ...formData, ageGroup: e.target.value as AgeGroup })}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:ring-2 focus:ring-green-500 focus:outline-none"
               >
-                <option value="junior">आयु 5–7 वर्ष (Junior Track - बुनियादी)</option>
-                <option value="intermediate">आयु 8–10 वर्ष (Explorer Track - लूप)</option>
-                <option value="senior">आयु 11+ वर्ष (Researcher Track - शर्त & तर्क)</option>
+                <option value="junior">आयु 5–7 वर्ष (Junior Track)</option>
+                <option value="intermediate">आयु 8–10 वर्ष (Explorer Track)</option>
+                <option value="senior">आयु 11+ वर्ष (Researcher Track)</option>
               </select>
             </div>
-
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">विद्यालय का नाम (School Name)</label>
               <input
                 type="text"
-                placeholder="उदा. DPS / Campus School"
+                placeholder="उदा. Campus School"
                 value={formData.school}
                 onChange={(e) => setFormData({ ...formData, school: e.target.value })}
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               />
             </div>
-
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">ईमेल या अभिभावक संपर्क (Email / Phone)</label>
               <input
@@ -320,13 +297,12 @@ export default function HomePage() {
                 className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               />
             </div>
-
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold rounded-xl transition shadow-lg shadow-green-600/30 text-sm mt-4 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold rounded-xl transition shadow-lg shadow-green-600/30 text-sm mt-4"
             >
-              {isSubmitting ? 'पंजीकरण हो रहा है...' : 'कोडिंग शुरू करें ➔'}
+              {isSubmitting ? 'पंजीकरण हो रहा है...' : 'शुरू करें ➔'}
             </button>
           </form>
         </div>
@@ -334,87 +310,98 @@ export default function HomePage() {
     );
   }
 
-  // 2. Main Game Workspace
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
+      {/* Top Header with Module Switcher */}
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🐵</span>
           <div>
-            <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher कोडिंग</h1>
+            <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher AI & Code</h1>
             <p className="text-xs text-slate-600">
-              छात्र: <strong className="text-green-700">{studentProfile.name}</strong> ({studentProfile.school || 'विद्यार्थी'})
+              छात्र: <strong className="text-green-700">{studentProfile.name}</strong>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-xs font-bold px-3 py-1 bg-green-50 text-green-800 border border-green-200 rounded-lg">
-            {selectedAge === 'junior' ? 'आयु 5–7' : selectedAge === 'intermediate' ? 'आयु 8–10' : 'आयु 11+'}
-          </div>
-
+        {/* Studio Module Switcher */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
           <button
-            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
-            className={`px-2.5 py-1 rounded-lg text-xs md:text-sm font-semibold transition ${
-              isAudioEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'
+            onClick={() => setActiveTab('coding')}
+            className={`px-3.5 py-2 rounded-lg transition ${
+              activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600'
             }`}
           >
-            {isAudioEnabled ? '🔊 आवाज़' : '🔇 बंद'}
+            🎮 कोडिंग खेल (Code Arena)
           </button>
           <button
-            onClick={handleLogout}
-            className="text-xs text-slate-500 hover:text-red-600 font-semibold px-2 py-1"
+            onClick={() => setActiveTab('ml')}
+            className={`px-3.5 py-2 rounded-lg transition ${
+              activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600'
+            }`}
           >
-            बदलें
+            🧠 AI मशीन ट्रेनर (Teachable Machine)
           </button>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="text-xs text-slate-500 hover:text-red-600 font-semibold px-2 py-1"
+        >
+          प्रोफ़ाइल बदलें
+        </button>
       </header>
 
-      {/* Level Selection Bar */}
-      <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-2 shadow-sm">
-        <div className="flex items-center gap-3">
-          <label className="text-xs md:text-sm font-bold text-slate-700">स्तर चुनें:</label>
-          <select
-            value={currentLevelIndex}
-            onChange={(e) => setCurrentLevelIndex(Number(e.target.value))}
-            className="bg-slate-100 text-slate-800 font-medium py-1 px-2.5 rounded-lg border border-slate-300 text-xs md:text-sm"
-          >
-            {filteredLevels.map((lvl, i) => {
-              const isLocked = i > (unlockedLevels[selectedAge] || 0);
-              const stars = levelStars[lvl.id] ? '⭐'.repeat(levelStars[lvl.id]) : '';
-              return (
-                <option key={lvl.id} value={i} disabled={isLocked}>
-                  {isLocked ? `🔒 ${lvl.title}` : `${lvl.title} ${stars}`}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-        <div className="text-xs text-slate-600 font-medium">
-          {currentLevel.instruction}
-        </div>
-      </section>
-
-      {/* Main Canvas & Blockly Grid */}
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
-        <div className="lg:col-span-5 flex flex-col items-center">
-          <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />
-          {message && (
-            <div className="mt-3 text-center text-sm font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm w-full">
-              {message}
+      {/* Render Active Studio */}
+      {activeTab === 'ml' ? (
+        <HindiMLStudio />
+      ) : (
+        <>
+          {/* Level Selection Bar */}
+          <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-2 shadow-sm">
+            <div className="flex items-center gap-3">
+              <label className="text-xs md:text-sm font-bold text-slate-700">स्तर चुनें:</label>
+              <select
+                value={currentLevelIndex}
+                onChange={(e) => setCurrentLevelIndex(Number(e.target.value))}
+                className="bg-slate-100 text-slate-800 font-medium py-1 px-2.5 rounded-lg border border-slate-300 text-xs md:text-sm"
+              >
+                {filteredLevels.map((lvl, i) => {
+                  const isLocked = i > (unlockedLevels[selectedAge] || 0);
+                  const stars = levelStars[lvl.id] ? '⭐'.repeat(levelStars[lvl.id]) : '';
+                  return (
+                    <option key={lvl.id} value={i} disabled={isLocked}>
+                      {isLocked ? `🔒 ${lvl.title}` : `${lvl.title} ${stars}`}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
-          )}
-        </div>
+            <div className="text-xs text-slate-600 font-medium">{currentLevel.instruction}</div>
+          </section>
 
-        <div className="lg:col-span-7 flex flex-col bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-          <BlocklyWorkspace
-            onRunCode={handleRunCode}
-            onReset={resetGameState}
-            isRunning={isRunning}
-            allowedBlocks={currentLevel.allowedBlocks}
-          />
-        </div>
-      </div>
+          {/* Blockly & Canvas */}
+          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+            <div className="lg:col-span-5 flex flex-col items-center">
+              <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />
+              {message && (
+                <div className="mt-3 text-center text-sm font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm w-full">
+                  {message}
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-7 flex flex-col bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+              <BlocklyWorkspace
+                onRunCode={handleRunCode}
+                onReset={resetGameState}
+                isRunning={isRunning}
+                allowedBlocks={currentLevel.allowedBlocks}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </main>
   );
 }
