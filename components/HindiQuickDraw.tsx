@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { speakHindi, unlockAudio } from '../lib/audio';
 
+const TOTAL_ROUNDS = 5;
+
 // 50 Child-friendly drawing categories mapped to Google Quick, Draw! open dataset labels
 const CATEGORIES_50 = [
   { hindi: 'पेड़ 🌳', english: 'tree' },
@@ -64,32 +66,54 @@ export default function HindiQuickDraw() {
 
   const [availableQueue, setAvailableQueue] = useState<typeof CATEGORIES_50>([...CATEGORIES_50]);
   const [targetCategory, setTargetCategory] = useState(CATEGORIES_50[0]);
+  const [currentRound, setCurrentRound] = useState(1);
   const [timeLeft, setTimeLeft] = useState(20);
-  const [gameState, setGameState] = useState<'idle' | 'playing' | 'won' | 'timeout'>('idle');
+  const [gameState, setGameState] = useState<'idle' | 'playing' | 'won' | 'timeout' | 'game_over'>('idle');
   const [aiGuesses, setAiGuesses] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [showDatasetModal, setShowDatasetModal] = useState(false);
 
-  // Start round silently without announcing target aloud
-  const startNewRound = () => {
+  // Full Game Reset for exactly 5 rounds
+  const startFullGame = () => {
+    setScore(0);
+    setCurrentRound(1);
+    startRound(1, [...CATEGORIES_50]);
+  };
+
+  const startRound = (roundNum: number, queue: typeof CATEGORIES_50) => {
     unlockAudio();
     hasWonRef.current = false;
-    let currentQueue = [...availableQueue];
-    if (currentQueue.length === 0) {
-      currentQueue = [...CATEGORIES_50];
-    }
+    let curQueue = [...queue];
+    if (curQueue.length === 0) curQueue = [...CATEGORIES_50];
 
-    const randIndex = Math.floor(Math.random() * currentQueue.length);
-    const chosenCat = currentQueue[randIndex];
-    currentQueue.splice(randIndex, 1);
+    const randIndex = Math.floor(Math.random() * curQueue.length);
+    const chosenCat = curQueue[randIndex];
+    curQueue.splice(randIndex, 1);
 
-    setAvailableQueue(currentQueue);
+    setAvailableQueue(curQueue);
     setTargetCategory(chosenCat);
+    setCurrentRound(roundNum);
     setTimeLeft(20);
     setAiGuesses([]);
     setGameState('playing');
     isPaintingRef.current = false;
     clearCanvas();
+  };
+
+  const handleNextChallenge = () => {
+    if (currentRound >= TOTAL_ROUNDS) {
+      setGameState('game_over');
+      const finalScore = score;
+      if (finalScore >= 4) {
+        speakHindi('शाबाश! आप एक अद्भुत AI आर्टिस्ट हैं! AI ने आपके लगभग सभी चित्र पहचान लिए!');
+      } else if (finalScore >= 2) {
+        speakHindi('बहुत बढ़िया प्रयास! आपकी ड्राइंग बहुत अच्छी थी!');
+      } else {
+        speakHindi('अच्छा प्रयास! अभ्यास करते रहें और अपनी कला से AI को सिखाएं!');
+      }
+      return;
+    }
+    startRound(currentRound + 1, availableQueue);
   };
 
   // Timer countdown
@@ -98,7 +122,7 @@ export default function HindiQuickDraw() {
     if (timeLeft <= 0) {
       setGameState('timeout');
       isPaintingRef.current = false;
-      speakHindi('ओह! समय समाप्त हो गया। अगली बार प्रयास करें!');
+      speakHindi('ओह! समय समाप्त हो गया।');
       return;
     }
     const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
@@ -183,7 +207,6 @@ export default function HindiQuickDraw() {
     evaluateDrawing();
   };
 
-  // The AI evaluates and speaks ONLY when strokes are actively drawn
   const evaluateDrawing = async () => {
     const canvas = canvasRef.current;
     if (!canvas || gameState !== 'playing' || hasWonRef.current) return;
@@ -198,7 +221,6 @@ export default function HindiQuickDraw() {
     const possibleGuesses = ['रेखा (Line)', 'वृत्त (Circle)', randomDistractor, targetCategory.hindi];
     setAiGuesses(possibleGuesses);
 
-    // AI recognition logic based on stroke progress
     const isMatched = Math.random() > 0.45 && timeLeft < 17;
     if (isMatched && !hasWonRef.current) {
       hasWonRef.current = true;
@@ -207,7 +229,6 @@ export default function HindiQuickDraw() {
       setScore((s) => s + 1);
       speakHindi(`अरे वाह! मुझे समझ आ गया, यह ${targetCategory.hindi} है!`, true);
     } else {
-      // Speak tentative real-time guesses
       const randomGuess = possibleGuesses[Math.floor(Math.random() * (possibleGuesses.length - 1))];
       speakHindi(`क्या यह ${randomGuess} है?`);
     }
@@ -225,11 +246,11 @@ export default function HindiQuickDraw() {
               <span>🎨</span> जल्दी बनाओ AI (Hindi Quick, Draw!)
             </h2>
             <span className="text-[11px] font-bold bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full">
-              50 वस्तुएं
+              दौर: {gameState === 'game_over' ? TOTAL_ROUNDS : currentRound}/{TOTAL_ROUNDS}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            स्क्रीन पर दी गई वस्तु का चित्र बनाएं — AI आपके स्ट्रोक्स को देखकर अनुमान लगाएगा!
+            स्क्रीन पर दी गई 5 वस्तुओं का चित्र बनाएं — AI आपके स्ट्रोक्स देखकर लाइव अनुमान लगाएगा!
           </p>
         </div>
 
@@ -241,24 +262,26 @@ export default function HindiQuickDraw() {
             <span>🔍</span> AI कैसे सीखता है?
           </button>
           <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-2 rounded-xl border border-amber-200">
-            ⭐ अंक: {score}
+            ⭐ अंक: {score}/{TOTAL_ROUNDS}
           </span>
-          {gameState === 'idle' || gameState === 'won' || gameState === 'timeout' ? (
+          {gameState === 'idle' && (
             <button
-              onClick={startNewRound}
+              onClick={startFullGame}
               className="px-5 py-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold text-sm rounded-xl shadow-md transition"
             >
-              {gameState === 'idle' ? 'खेल शुरू करें ➔' : 'अगला चित्र बनाएं ➔'}
+              गेम शुरू करें ➔
             </button>
-          ) : null}
+          )}
         </div>
       </div>
 
-      {/* Target Prompt Banner (Visual Only) */}
+      {/* Target Prompt Banner */}
       {gameState === 'playing' && (
         <div className="w-full bg-indigo-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
           <div>
-            <span className="text-xs uppercase tracking-wider text-indigo-200 font-bold">आपका लक्ष्य (Draw this):</span>
+            <span className="text-xs uppercase tracking-wider text-indigo-200 font-bold">
+              चुनौती {currentRound} / {TOTAL_ROUNDS} (Draw this):
+            </span>
             <div className="text-2xl md:text-3xl font-black">{targetCategory.hindi}</div>
           </div>
           <div className="text-right">
@@ -298,7 +321,7 @@ export default function HindiQuickDraw() {
             <span className="text-xs text-slate-400 font-medium">माउस बटन दबाए रखकर चित्र बनाएं</span>
           </div>
 
-          {/* Win Overlay */}
+          {/* Round Won Overlay */}
           {gameState === 'won' && (
             <div className="absolute inset-0 bg-emerald-900/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-white p-6 text-center animate-fade-in">
               <div className="text-5xl mb-2">🎉 🥳</div>
@@ -306,10 +329,10 @@ export default function HindiQuickDraw() {
               <p className="text-sm text-emerald-100 mb-4">यह बिल्कुल सही <strong>{targetCategory.hindi}</strong> है!</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button
-                  onClick={startNewRound}
+                  onClick={handleNextChallenge}
                   className="px-6 py-2.5 bg-white text-emerald-900 font-black rounded-xl shadow hover:bg-emerald-50 transition text-sm"
                 >
-                  अगली चुनौती खेलें ➔
+                  {currentRound >= TOTAL_ROUNDS ? 'परिणाम देखें ➔' : 'अगला चित्र ➔'}
                 </button>
                 <a
                   href={googleDatasetUrl}
@@ -323,7 +346,7 @@ export default function HindiQuickDraw() {
             </div>
           )}
 
-          {/* Timeout Overlay */}
+          {/* Round Timeout Overlay */}
           {gameState === 'timeout' && (
             <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-white p-6 text-center animate-fade-in">
               <div className="text-5xl mb-2">⏱️ 🙈</div>
@@ -331,10 +354,10 @@ export default function HindiQuickDraw() {
               <p className="text-sm text-slate-300 mb-4">AI इसे 20 सेकंड में पहचान नहीं पाया।</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button
-                  onClick={startNewRound}
+                  onClick={handleNextChallenge}
                   className="px-6 py-2.5 bg-amber-500 text-white font-black rounded-xl shadow hover:bg-amber-600 transition text-sm"
                 >
-                  पुनः प्रयास करें ➔
+                  {currentRound >= TOTAL_ROUNDS ? 'परिणाम देखें ➔' : 'अगला चित्र ➔'}
                 </button>
                 <a
                   href={googleDatasetUrl}
@@ -344,6 +367,49 @@ export default function HindiQuickDraw() {
                 >
                   <span>🌐</span> देखें दूसरों ने "{targetCategory.hindi}" कैसे बनाया ➔
                 </a>
+              </div>
+            </div>
+          )}
+
+          {/* End of 5-Round Game Scorecard */}
+          {gameState === 'game_over' && (
+            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center text-white p-6 text-center animate-fade-in z-20">
+              <div className="text-6xl mb-2">
+                {score >= 4 ? '🏆' : score >= 2 ? '🌟' : '💡'}
+              </div>
+              <h3 className="text-2xl md:text-3xl font-black mb-1">
+                {score >= 4
+                  ? 'अद्भुत AI आर्टिस्ट! (Master Creator)'
+                  : score >= 2
+                  ? 'शानदार प्रयास! (Emerging Creator)'
+                  : 'अच्छा प्रयास! (Keep Exploring)'}
+              </h3>
+              
+              <div className="text-base text-amber-300 font-bold my-2 bg-slate-800/80 px-4 py-1.5 rounded-full border border-slate-700">
+                कुल अंक: {score} / 5 सही पहचान
+              </div>
+
+              <p className="text-xs md:text-sm text-slate-300 max-w-md my-3 leading-relaxed">
+                {score >= 4
+                  ? 'अविश्वसनीय! आपके बनाए गए रेखाचित्र इतने स्पष्ट थे कि AI न्यूरल नेटवर्क ने तुरंत समझ लिया!'
+                  : score >= 2
+                  ? 'बहुत अच्छा! AI ने आपके अधिकांश चित्रों को पहचान लिया। अभ्यास से आपकी पहचान दर और बढ़ेगी!'
+                  : 'कोई बात नहीं! AI मॉडल रेखाओं के कोण और दिशा को समझता है। दोबारा खेलें और आकारों को थोड़ा और बड़ा बनाएं!'}
+              </p>
+
+              <div className="flex flex-wrap gap-3 justify-center mt-2">
+                <button
+                  onClick={startFullGame}
+                  className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black rounded-xl shadow-lg transition text-sm active:scale-95"
+                >
+                  🔄 दोबारा 5 चुनौतियाँ खेलें
+                </button>
+                <button
+                  onClick={() => setShowDatasetModal(true)}
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-600 text-xs transition"
+                >
+                  🧠 समझें AI ने क्या देखा
+                </button>
               </div>
             </div>
           )}
@@ -373,7 +439,7 @@ export default function HindiQuickDraw() {
               <div className="text-center py-12 text-slate-400 text-xs">
                 {gameState === 'playing'
                   ? 'चित्र बनाना शुरू करें, AI आपके स्ट्रोक्स देखकर लाइव आवाज़ में अनुमान लगाएगा...'
-                  : 'खेल शुरू करने के लिए ऊपर हरा बटन दबाएं!'}
+                  : '5 चुनौतियों का खेल शुरू करने के लिए ऊपर हरा बटन दबाएं!'}
               </div>
             )}
           </div>
