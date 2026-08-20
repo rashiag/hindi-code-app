@@ -7,10 +7,15 @@ import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 import { speakHindi } from '../lib/audio';
 
+interface SampleItem {
+  id: string;
+  imageSrc: string;
+}
+
 interface ClassItem {
   id: number;
   name: string;
-  count: number;
+  samples: SampleItem[];
   color: string;
 }
 
@@ -27,9 +32,16 @@ export default function HindiMLStudio() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [classes, setClasses] = useState<ClassItem[]>([
-    { id: 1, name: 'खुश चेहरा 😃', count: 0, color: 'bg-green-500' },
-    { id: 2, name: 'हाथ ऊपर ✋', count: 0, color: 'bg-blue-500' },
+    { id: 1, name: 'खुश चेहरा 😃', samples: [], color: 'bg-green-500' },
+    { id: 2, name: 'हाथ ऊपर ✋', samples: [], color: 'bg-blue-500' },
   ]);
+
+  // Explicit training states
+  const [isTrained, setIsTrained] = useState(false);
+  const [isTrainingInProgress, setIsTrainingInProgress] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState(0);
+
+  // Live prediction states
   const [isPredicting, setIsPredicting] = useState(false);
   const [topPrediction, setTopPrediction] = useState<{ label: string; conf: number } | null>(null);
   const [capturingIdx, setCapturingIdx] = useState<number | null>(null);
@@ -42,7 +54,7 @@ export default function HindiMLStudio() {
       try {
         await tf.ready();
         const classifier = knnClassifier.create();
-        const model = await mobilenet.load({ version: 2, alpha: 0.5 }); // lightweight, instant load
+        const model = await mobilenet.load({ version: 2, alpha: 0.5 });
         if (mounted) {
           classifierRef.current = classifier;
           mobilenetRef.current = model;
@@ -50,7 +62,6 @@ export default function HindiMLStudio() {
         }
       } catch (err) {
         console.error('Failed to load TensorFlow model:', err);
-        alert('AI मॉडल लोड करने में समस्या आई। कृपया पेज रिफ्रेश करें।');
       }
     }
     initModel();
@@ -59,26 +70,90 @@ export default function HindiMLStudio() {
     };
   }, []);
 
-  // Capture single frame
+  // Capture single frame (Stores visual photo only; tensor training happens upon clicking Train)
   const captureFrame = (classIndex: number) => {
-    if (!webcamRef.current || !classifierRef.current || !mobilenetRef.current) return;
-    
-    const video = webcamRef.current.video;
-    if (!video || video.readyState < 2) return;
+    if (!webcamRef.current) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
 
-    try {
-      tf.tidy(() => {
-        const imageTensor = tf.browser.fromPixels(video);
-        const logits = mobilenetRef.current!.infer(imageTensor, true);
-        classifierRef.current!.addExample(logits, classIndex);
-      });
+    const newSample: SampleItem = {
+      id: `${Date.now()}-${Math.random()}`,
+      imageSrc,
+    };
 
-      setClasses((prev) =>
-        prev.map((cls, idx) => (idx === classIndex ? { ...cls, count: cls.count + 1 } : cls))
-      );
-    } catch (error) {
-      console.error('Capture error:', error);
+    setClasses((prev) =>
+      prev.map((cls, idx) =>
+        idx === classIndex ? { ...cls, samples: [...cls.samples, newSample] } : cls
+      )
+    );
+    // Invalidate previous training when data changes
+    setIsTrained(false);
+    setIsPredicting(false);
+  };
+
+  // Delete a single bad thumbnail
+  const handleDeleteSample = (classIndex: number, sampleId: string) => {
+    const updated = classes.map((cls, idx) =>
+      idx === classIndex
+        ? { ...cls, samples: cls.samples.filter((s) => s.id !== sampleId) }
+        : cls
+    );
+    setClasses(updated);
+    setIsTrained(false);
+    setIsPredicting(false);
+  };
+
+  // Clear all samples of a class
+  const handleClearClass = (classIndex: number) => {
+    const updated = classes.map((cls, idx) =>
+      idx === classIndex ? { ...cls, samples: [] } : cls
+    );
+    setClasses(updated);
+    setIsTrained(false);
+    setIsPredicting(false);
+  };
+
+  // Explicit Train Model Action
+  const handleTrainModel = async () => {
+    const validClasses = classes.filter((c) => c.samples.length > 0);
+    if (validClasses.length < 2) {
+      alert('कृपया मॉडल को सिखाने से पहले कम से कम दो वर्गों में फोटो के नमूने जोड़ें!');
+      return;
     }
+
+    if (!mobilenetRef.current) return;
+
+    setIsTrainingInProgress(true);
+    setTrainingProgress(10);
+
+    const newClassifier = knnClassifier.create();
+    const totalSamples = classes.reduce((sum, c) => sum + c.samples.length, 0);
+    let processed = 0;
+
+    for (let cIdx = 0; cIdx < classes.length; cIdx++) {
+      const cls = classes[cIdx];
+      for (const sample of cls.samples) {
+        const img = new Image();
+        img.src = sample.imageSrc;
+        await new Promise((res) => {
+          img.onload = () => {
+            tf.tidy(() => {
+              const imageTensor = tf.browser.fromPixels(img);
+              const logits = mobilenetRef.current!.infer(imageTensor, true);
+              newClassifier.addExample(logits, cIdx);
+            });
+            processed++;
+            setTrainingProgress(Math.round((processed / totalSamples) * 100));
+            res(true);
+          };
+        });
+      }
+    }
+
+    classifierRef.current = newClassifier;
+    setIsTrainingInProgress(false);
+    setIsTrained(true);
+    speakHindi('मॉडल सफलतापूर्वक सीख चुका है! अब लाइव पहचान शुरू कर सकते हैं।');
   };
 
   // Start continuous capture while holding button
@@ -88,7 +163,7 @@ export default function HindiMLStudio() {
     if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
     captureIntervalRef.current = setInterval(() => {
       captureFrame(classIndex);
-    }, 150);
+    }, 200);
   };
 
   // Stop capturing
@@ -107,6 +182,7 @@ export default function HindiMLStudio() {
     const predictLoop = async () => {
       if (
         isPredicting &&
+        isTrained &&
         webcamRef.current &&
         classifierRef.current &&
         mobilenetRef.current &&
@@ -146,12 +222,11 @@ export default function HindiMLStudio() {
     }
 
     return () => cancelAnimationFrame(animId);
-  }, [isPredicting, classes]);
+  }, [isPredicting, isTrained, classes]);
 
   const handleStartPredicting = () => {
-    const totalSamples = classes.reduce((sum, c) => sum + c.count, 0);
-    if (totalSamples === 0 || !classifierRef.current || classifierRef.current.getNumClasses() < 2) {
-      alert('कृपया दोनों वर्गों में कम से कम 5-10 फोटो नमूने जोड़ें!');
+    if (!isTrained) {
+      alert('कृपया पहले "मॉडल को सिखाएं (Train Model)" बटन दबाएं!');
       return;
     }
     setIsPredicting(true);
@@ -162,7 +237,9 @@ export default function HindiMLStudio() {
     const newId = classes.length + 1;
     const colors = ['bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-teal-500'];
     const assignedColor = colors[newId % colors.length];
-    setClasses([...classes, { id: newId, name: `वर्ग ${newId} 🏷️`, count: 0, color: assignedColor }]);
+    setClasses([...classes, { id: newId, name: `वर्ग ${newId} 🏷️`, samples: [], color: assignedColor }]);
+    setIsTrained(false);
+    setIsPredicting(false);
   };
 
   return (
@@ -174,28 +251,52 @@ export default function HindiMLStudio() {
             <span>🧠</span> हिंदी AI मशीन ट्रेनर (Teachable Machine)
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            वेबकैम से कंप्यूटर को वस्तुएं, चेहरे और हाथ के इशारे पहचानना सिखाएं!
+            १. नमूने लें ➔ २. गलत फोटो हटाएं ➔ ३. <strong>मॉडल सिखाएं (Train)</strong> ➔ ४. लाइव पहचानें!
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleAddNewClass}
             className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
           >
             + नया वर्ग जोड़ें
           </button>
+
+          {/* Explicit Train Model Button */}
+          <button
+            onClick={handleTrainModel}
+            disabled={isLoading || isTrainingInProgress}
+            className={`px-4 py-2 text-xs md:text-sm font-bold rounded-xl shadow-md transition flex items-center gap-1.5 ${
+              isTrained
+                ? 'bg-emerald-700 text-white'
+                : 'bg-amber-500 hover:bg-amber-600 text-white animate-pulse'
+            }`}
+          >
+            <span>⚡</span>
+            {isTrainingInProgress
+              ? `सिखा रहे हैं (${trainingProgress}%)...`
+              : isTrained
+              ? '✓ मॉडल प्रशिक्षित है (Re-Train)'
+              : '२. मॉडल को सिखाएं (Train Model)'}
+          </button>
+
+          {/* Test / Predict Button */}
           {!isPredicting ? (
             <button
               onClick={handleStartPredicting}
-              disabled={isLoading}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white text-xs md:text-sm font-bold rounded-xl shadow-md transition disabled:bg-gray-400"
+              disabled={!isTrained}
+              className={`px-4 py-2 text-xs md:text-sm font-bold rounded-xl shadow-md transition ${
+                isTrained
+                  ? 'bg-green-600 hover:bg-green-700 active:scale-95 text-white'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
             >
-              🚀 लाइव पहचान शुरू करें
+              🚀 ३. लाइव पहचानें
             </button>
           ) : (
             <button
               onClick={() => setIsPredicting(false)}
-              className="px-5 py-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs md:text-sm font-bold rounded-xl shadow-md transition"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs md:text-sm font-bold rounded-xl shadow-md transition"
             >
               ⏹️ पहचान रोकें
             </button>
@@ -206,26 +307,36 @@ export default function HindiMLStudio() {
       {isLoading ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
           <div className="text-4xl animate-spin mb-3">⚙️</div>
-          <p className="text-slate-600 font-bold text-sm">AI मॉडल लोड हो रहा है... कृपया 5 सेकंड प्रतीक्षा करें</p>
+          <p className="text-slate-600 font-bold text-sm">AI मॉडल लोड हो रहा है... कृपया प्रतीक्षा करें</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left: Webcam View */}
+          {/* Left: Webcam View & Realtime Prediction */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center sticky top-4">
               <div className="w-full rounded-xl overflow-hidden bg-black aspect-video relative border border-slate-300">
                 <Webcam
                   ref={webcamRef}
                   audio={false}
                   mirrored={true}
+                  screenshotFormat="image/jpeg"
                   videoConstraints={videoConstraints}
                   className="w-full h-full object-cover"
                 />
               </div>
 
+              {/* Status Note */}
+              <div className="mt-3 text-xs text-center font-medium text-slate-500">
+                {!isTrained
+                  ? '⚠️ फोटो लेने के बाद "मॉडल को सिखाएं" बटन दबाएं'
+                  : isPredicting
+                  ? '🟢 लाइव पहचान सक्रिय है'
+                  : '✅ मॉडल प्रशिक्षित है! "लाइव पहचानें" दबाएं'}
+              </div>
+
               {/* Realtime Prediction Bar */}
               {isPredicting && topPrediction && (
-                <div className="w-full mt-4 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+                <div className="w-full mt-3 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
                   <span className="text-xs font-bold text-green-700 uppercase">AI की लाइव पहचान:</span>
                   <div className="text-xl font-black text-slate-800 my-1">{topPrediction.label}</div>
                   <div className="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden mt-2">
@@ -242,17 +353,22 @@ export default function HindiMLStudio() {
             </div>
           </div>
 
-          {/* Right: Classes & Capture Buttons */}
+          {/* Right: Classes, Captures & Thumbnail Galleries */}
           <div className="lg:col-span-7 flex flex-col gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
-              <h3 className="font-bold text-slate-800 text-sm md:text-base border-b border-slate-100 pb-2">
-                📸 नमूने इकट्ठा करें (Click or Hold to Capture)
-              </h3>
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="font-bold text-slate-800 text-sm md:text-base">
+                  📸 १. डेटा इकट्ठा करें (Capture & Clean)
+                </h3>
+                <span className="text-xs text-slate-500 font-medium">
+                  कुल नमूने: {classes.reduce((sum, c) => sum + c.samples.length, 0)}
+                </span>
+              </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {classes.map((cls, idx) => (
-                  <div key={cls.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
+                  <div key={cls.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2">
                       <input
                         type="text"
                         value={cls.name}
@@ -264,11 +380,22 @@ export default function HindiMLStudio() {
                         }}
                         className="font-bold text-slate-800 bg-white border border-slate-300 px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
-                      <span className="text-xs font-bold text-slate-700 bg-white px-3 py-1 rounded-full border border-slate-200">
-                        {cls.count} नमूने
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+                          {cls.samples.length} फोटो
+                        </span>
+                        {cls.samples.length > 0 && (
+                          <button
+                            onClick={() => handleClearClass(idx)}
+                            className="text-xs text-red-600 hover:text-red-800 font-semibold underline"
+                          >
+                            सभी हटाएं
+                          </button>
+                        )}
+                      </div>
                     </div>
 
+                    {/* Capture Button */}
                     <button
                       type="button"
                       onClick={() => captureFrame(idx)}
@@ -284,8 +411,38 @@ export default function HindiMLStudio() {
                       }`}
                     >
                       <span>📷</span>
-                      {capturingIdx === idx ? 'नमूना ले रहे हैं...' : 'फोटो लें (क्लिक करें या दबाए रखें)'}
+                      {capturingIdx === idx ? 'फोटो ले रहे हैं...' : 'फोटो लें (क्लिक करें या दबाए रखें)'}
                     </button>
+
+                    {/* Captured Thumbnails Gallery */}
+                    {cls.samples.length > 0 && (
+                      <div className="mt-2 pt-3 border-t border-slate-200">
+                        <div className="text-xs font-bold text-slate-500 mb-2">
+                          संग्रहीत फोटो (गलत फोटो हटाने के लिए ❌ दबाएं):
+                        </div>
+                        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1 bg-white rounded-xl border border-slate-200">
+                          {cls.samples.map((sample) => (
+                            <div
+                              key={sample.id}
+                              className="relative group w-14 h-14 rounded-lg overflow-hidden border border-slate-300 shrink-0"
+                            >
+                              <img
+                                src={sample.imageSrc}
+                                alt="sample"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                onClick={() => handleDeleteSample(idx, sample.id)}
+                                className="absolute inset-0 bg-red-600/80 text-white font-bold text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                title="यह फोटो हटाएं"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
