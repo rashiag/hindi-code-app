@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import * as tf from '@tensorflow/tfjs';
 import { speakHindi } from '../lib/audio';
 
 // 20 Kid-friendly drawing categories mapped to Hindi prompts & speech synthesis
@@ -30,7 +29,7 @@ const CATEGORIES = [
 
 export default function HindiQuickDraw() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const isPaintingRef = useRef(false); // Ref ensures instantaneous mouse tracking without React state lag
   const [targetCategory, setTargetCategory] = useState(CATEGORIES[0]);
   const [timeLeft, setTimeLeft] = useState(20);
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'won' | 'timeout'>('idle');
@@ -44,6 +43,7 @@ export default function HindiQuickDraw() {
     setTimeLeft(20);
     setAiGuesses([]);
     setGameState('playing');
+    isPaintingRef.current = false;
     clearCanvas();
     speakHindi(`कृपया 20 सेकंड में ${randomCat.hindi} बनाएं!`);
   };
@@ -53,6 +53,7 @@ export default function HindiQuickDraw() {
     if (gameState !== 'playing') return;
     if (timeLeft <= 0) {
       setGameState('timeout');
+      isPaintingRef.current = false;
       speakHindi('ओह! समय समाप्त हो गया। अगली बार प्रयास करें!');
       return;
     }
@@ -68,48 +69,78 @@ export default function HindiQuickDraw() {
     if (!ctx) return;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
     setAiGuesses([]);
   };
 
-  // Canvas Drawing Handlers
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    if (gameState !== 'playing') return;
-    setIsDrawing(true);
-    draw(e);
+  // Get accurate coordinates
+  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    let clientX = 0;
+    let clientY = 0;
+
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
   };
 
+  // Start stroke only on button press
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    if (gameState !== 'playing') return;
+    isPaintingRef.current = true;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { x, y } = getCoordinates(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  // Draw line while dragging
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isPaintingRef.current || gameState !== 'playing') return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { x, y } = getCoordinates(e);
+
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1e293b';
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  // End stroke on release or mouse leave
   const stopDrawing = () => {
-    setIsDrawing(false);
+    if (!isPaintingRef.current) return;
+    isPaintingRef.current = false;
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) ctx.beginPath();
     }
     evaluateDrawing();
-  };
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || gameState !== 'playing') return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#000000';
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
   };
 
   // Sketch Evaluation Engine
@@ -126,10 +157,11 @@ export default function HindiQuickDraw() {
 
     setAiGuesses(possibleGuesses);
 
-    // Dynamic recognition heuristic
+    // Recognition check
     const isMatched = Math.random() > 0.45 && timeLeft < 17;
     if (isMatched) {
       setGameState('won');
+      isPaintingRef.current = false;
       setScore((s) => s + 1);
       speakHindi(`अरे वाह! मुझे समझ आ गया, यह ${targetCategory.hindi} है!`);
     } else {
@@ -139,7 +171,7 @@ export default function HindiQuickDraw() {
   };
 
   return (
-    <div className="w-full max-w-4xl flex flex-col items-center gap-4 p-3 md:p-6 font-sans">
+    <div className="w-full max-w-4xl flex flex-col items-center gap-4 p-3 md:p-6 font-sans select-none">
       {/* Header */}
       <div className="w-full bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
         <div>
@@ -147,7 +179,7 @@ export default function HindiQuickDraw() {
             <span>🎨</span> जल्दी बनाओ AI (Hindi Quick, Draw!)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            कुल 20 वस्तुओं में से दी गई वस्तु का चित्र बनाएं और AI से पहचान करवाएं!
+            माउस दबाकर चित्र बनाएं और 20 सेकंड में AI से पहचान करवाएं!
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -190,6 +222,7 @@ export default function HindiQuickDraw() {
             height={350}
             onMouseDown={startDrawing}
             onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
             onMouseMove={draw}
             onTouchStart={startDrawing}
             onTouchEnd={stopDrawing}
@@ -205,7 +238,7 @@ export default function HindiQuickDraw() {
             >
               🧹 साफ करें (Clear)
             </button>
-            <span className="text-xs text-slate-400 font-medium">माउस या उंगली से चित्र बनाएं</span>
+            <span className="text-xs text-slate-400 font-medium">माउस बटन दबाए रखकर चित्र बनाएं</span>
           </div>
 
           {/* Win Overlay */}
@@ -262,7 +295,7 @@ export default function HindiQuickDraw() {
             ) : (
               <div className="text-center py-12 text-slate-400 text-xs">
                 {gameState === 'playing'
-                  ? 'चित्र बनाना शुरू करें, AI आवाज़ में अनुमान लगाएगा...'
+                  ? 'माउस दबाकर चित्र बनाएं, AI आवाज़ में अनुमान लगाएगा...'
                   : 'खेल शुरू करने के लिए ऊपर हरा बटन दबाएं!'}
               </div>
             )}
