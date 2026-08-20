@@ -14,6 +14,12 @@ interface ClassItem {
   color: string;
 }
 
+const videoConstraints = {
+  width: 400,
+  height: 300,
+  facingMode: 'user',
+};
+
 export default function HindiMLStudio() {
   const webcamRef = useRef<Webcam>(null);
   const classifierRef = useRef<knnClassifier.KNNClassifier | null>(null);
@@ -24,39 +30,77 @@ export default function HindiMLStudio() {
     { id: 1, name: 'खुश चेहरा 😃', count: 0, color: 'bg-green-500' },
     { id: 2, name: 'हाथ ऊपर ✋', count: 0, color: 'bg-blue-500' },
   ]);
-  const [isTraining, setIsTraining] = useState(false);
   const [isPredicting, setIsPredicting] = useState(false);
   const [topPrediction, setTopPrediction] = useState<{ label: string; conf: number } | null>(null);
+  const [capturingIdx, setCapturingIdx] = useState<number | null>(null);
+  const captureIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize TensorFlow and Pretrained MobileNet
   useEffect(() => {
+    let mounted = true;
     async function initModel() {
-      await tf.ready();
-      classifierRef.current = knnClassifier.create();
-      mobilenetRef.current = await mobilenet.load();
-      setIsLoading(false);
+      try {
+        await tf.ready();
+        const classifier = knnClassifier.create();
+        const model = await mobilenet.load({ version: 2, alpha: 0.5 }); // lightweight, instant load
+        if (mounted) {
+          classifierRef.current = classifier;
+          mobilenetRef.current = model;
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Failed to load TensorFlow model:', err);
+        alert('AI मॉडल लोड करने में समस्या आई। कृपया पेज रिफ्रेश करें।');
+      }
     }
     initModel();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Add training sample from webcam
-  const addExample = async (classIndex: number) => {
-    if (!webcamRef.current || !webcamRef.current.video || !mobilenetRef.current || !classifierRef.current) {
-      return;
-    }
+  // Capture single frame
+  const captureFrame = (classIndex: number) => {
+    if (!webcamRef.current || !classifierRef.current || !mobilenetRef.current) return;
+    
     const video = webcamRef.current.video;
-    if (video.readyState === 4) {
-      // Get image embedding from MobileNet
-      const logits = mobilenetRef.current.infer(video, true);
-      classifierRef.current.addExample(logits, classIndex);
+    if (!video || video.readyState < 2) return;
+
+    try {
+      tf.tidy(() => {
+        const imageTensor = tf.browser.fromPixels(video);
+        const logits = mobilenetRef.current!.infer(imageTensor, true);
+        classifierRef.current!.addExample(logits, classIndex);
+      });
 
       setClasses((prev) =>
         prev.map((cls, idx) => (idx === classIndex ? { ...cls, count: cls.count + 1 } : cls))
       );
+    } catch (error) {
+      console.error('Capture error:', error);
     }
   };
 
-  // Continuous live prediction loop
+  // Start continuous capture while holding button
+  const startCapturing = (classIndex: number) => {
+    captureFrame(classIndex);
+    setCapturingIdx(classIndex);
+    if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
+    captureIntervalRef.current = setInterval(() => {
+      captureFrame(classIndex);
+    }, 150);
+  };
+
+  // Stop capturing
+  const stopCapturing = () => {
+    setCapturingIdx(null);
+    if (captureIntervalRef.current) {
+      clearInterval(captureIntervalRef.current);
+      captureIntervalRef.current = null;
+    }
+  };
+
+  // Continuous prediction loop
   useEffect(() => {
     let animId: number;
 
@@ -64,23 +108,31 @@ export default function HindiMLStudio() {
       if (
         isPredicting &&
         webcamRef.current &&
-        webcamRef.current.video &&
-        mobilenetRef.current &&
         classifierRef.current &&
+        mobilenetRef.current &&
         classifierRef.current.getNumClasses() > 0
       ) {
         const video = webcamRef.current.video;
-        if (video.readyState === 4) {
-          const logits = mobilenetRef.current.infer(video, true);
-          const result = await classifierRef.current.predictClass(logits);
+        if (video && video.readyState >= 2) {
+          try {
+            const logits = tf.tidy(() => {
+              const imageTensor = tf.browser.fromPixels(video);
+              return mobilenetRef.current!.infer(imageTensor, true);
+            });
 
-          if (result && result.label !== undefined) {
-            const classIdx = parseInt(result.label, 10);
-            const conf = Math.round((result.confidences[result.label] || 0) * 100);
-            const matchedClass = classes[classIdx];
-            if (matchedClass) {
-              setTopPrediction({ label: matchedClass.name, conf });
+            const result = await classifierRef.current.predictClass(logits);
+            logits.dispose();
+
+            if (result && result.label !== undefined) {
+              const classIdx = parseInt(result.label, 10);
+              const conf = Math.round((result.confidences[result.label] || 0) * 100);
+              const matchedClass = classes[classIdx];
+              if (matchedClass) {
+                setTopPrediction({ label: matchedClass.name, conf });
+              }
             }
+          } catch (err) {
+            console.error('Prediction error:', err);
           }
         }
       }
@@ -97,8 +149,9 @@ export default function HindiMLStudio() {
   }, [isPredicting, classes]);
 
   const handleStartPredicting = () => {
-    if (!classifierRef.current || classifierRef.current.getNumClasses() === 0) {
-      alert('कृपया पहले कम से कम दो वर्गों में फोटो के नमूने जोड़ें!');
+    const totalSamples = classes.reduce((sum, c) => sum + c.count, 0);
+    if (totalSamples === 0 || !classifierRef.current || classifierRef.current.getNumClasses() < 2) {
+      alert('कृपया दोनों वर्गों में कम से कम 5-10 फोटो नमूने जोड़ें!');
       return;
     }
     setIsPredicting(true);
@@ -113,15 +166,15 @@ export default function HindiMLStudio() {
   };
 
   return (
-    <div className="w-full max-w-6xl flex flex-col gap-6 p-4">
+    <div className="w-full max-w-6xl flex flex-col gap-6 p-2 md:p-4">
       {/* Top Header */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h2 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">
             <span>🧠</span> हिंदी AI मशीन ट्रेनर (Teachable Machine)
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            अपने वेबकैम से कंप्यूटर को वस्तुएं, चेहरे और हाथ के इशारे पहचानना सिखाएं!
+            वेबकैम से कंप्यूटर को वस्तुएं, चेहरे और हाथ के इशारे पहचानना सिखाएं!
           </p>
         </div>
         <div className="flex gap-2">
@@ -135,7 +188,7 @@ export default function HindiMLStudio() {
             <button
               onClick={handleStartPredicting}
               disabled={isLoading}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white text-xs md:text-sm font-bold rounded-xl shadow-md transition"
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white text-xs md:text-sm font-bold rounded-xl shadow-md transition disabled:bg-gray-400"
             >
               🚀 लाइव पहचान शुरू करें
             </button>
@@ -153,34 +206,35 @@ export default function HindiMLStudio() {
       {isLoading ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
           <div className="text-4xl animate-spin mb-3">⚙️</div>
-          <p className="text-slate-600 font-bold text-sm">AI मॉडल लोड हो रहा है... कृपया प्रतीक्षा करें</p>
+          <p className="text-slate-600 font-bold text-sm">AI मॉडल लोड हो रहा है... कृपया 5 सेकंड प्रतीक्षा करें</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Webcam and Live Classification Prediction */}
+          {/* Left: Webcam View */}
           <div className="lg:col-span-5 flex flex-col gap-4">
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
               <div className="w-full rounded-xl overflow-hidden bg-black aspect-video relative border border-slate-300">
                 <Webcam
                   ref={webcamRef}
                   audio={false}
-                  screenshotFormat="image/jpeg"
+                  mirrored={true}
+                  videoConstraints={videoConstraints}
                   className="w-full h-full object-cover"
                 />
               </div>
 
-              {/* Prediction Display */}
+              {/* Realtime Prediction Bar */}
               {isPredicting && topPrediction && (
-                <div className="w-full mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                  <span className="text-xs font-bold text-slate-500 uppercase">AI की पहचान:</span>
-                  <div className="text-lg font-black text-slate-800 my-1">{topPrediction.label}</div>
-                  <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden mt-2">
+                <div className="w-full mt-4 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+                  <span className="text-xs font-bold text-green-700 uppercase">AI की लाइव पहचान:</span>
+                  <div className="text-xl font-black text-slate-800 my-1">{topPrediction.label}</div>
+                  <div className="w-full bg-slate-200 h-3.5 rounded-full overflow-hidden mt-2">
                     <div
-                      className="bg-green-600 h-full transition-all duration-150"
+                      className="bg-green-600 h-full transition-all duration-100"
                       style={{ width: `${topPrediction.conf}%` }}
                     />
                   </div>
-                  <span className="text-xs font-semibold text-slate-600 mt-1 block">
+                  <span className="text-xs font-bold text-slate-700 mt-1.5 block">
                     सटीकता (Confidence): {topPrediction.conf}%
                   </span>
                 </div>
@@ -188,11 +242,11 @@ export default function HindiMLStudio() {
             </div>
           </div>
 
-          {/* Right Column: Training Classes Data Collector */}
+          {/* Right: Classes & Capture Buttons */}
           <div className="lg:col-span-7 flex flex-col gap-4">
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
               <h3 className="font-bold text-slate-800 text-sm md:text-base border-b border-slate-100 pb-2">
-                📸 नमूने इकट्ठा करें (Capture Training Samples)
+                📸 नमूने इकट्ठा करें (Click or Hold to Capture)
               </h3>
 
               <div className="space-y-4">
@@ -210,17 +264,27 @@ export default function HindiMLStudio() {
                         }}
                         className="font-bold text-slate-800 bg-white border border-slate-300 px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
-                      <span className="text-xs font-semibold text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200">
-                        {cls.count} फोटो नमूने
+                      <span className="text-xs font-bold text-slate-700 bg-white px-3 py-1 rounded-full border border-slate-200">
+                        {cls.count} नमूने
                       </span>
                     </div>
 
                     <button
-                      onMouseDown={() => addExample(idx)}
-                      onTouchStart={() => addExample(idx)}
-                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 active:scale-98 text-white font-bold text-xs md:text-sm rounded-xl transition shadow flex items-center justify-center gap-2"
+                      type="button"
+                      onClick={() => captureFrame(idx)}
+                      onMouseDown={() => startCapturing(idx)}
+                      onMouseUp={stopCapturing}
+                      onMouseLeave={stopCapturing}
+                      onTouchStart={() => startCapturing(idx)}
+                      onTouchEnd={stopCapturing}
+                      className={`w-full py-3 text-white font-bold text-sm rounded-xl transition shadow flex items-center justify-center gap-2 select-none ${
+                        capturingIdx === idx
+                          ? 'bg-amber-600 scale-[0.98]'
+                          : 'bg-slate-800 hover:bg-slate-900 active:scale-95'
+                      }`}
                     >
-                      <span>📷</span> नमूना जोड़ने के लिए दबाएं (Hold / Click to Capture)
+                      <span>📷</span>
+                      {capturingIdx === idx ? 'नमूना ले रहे हैं...' : 'फोटो लें (क्लिक करें या दबाए रखें)'}
                     </button>
                   </div>
                 ))}
