@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { LEVELS, Level, AgeGroup } from '../lib/levels';
-import { speakHindi, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
+import { speakHindi, unlockAudio, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 import { ActionItem } from '../components/BlocklyWorkspace';
 
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
@@ -19,13 +19,13 @@ function StudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Read active tab directly from URL query param, default to 'coding'
   const tabParam = searchParams.get('tab');
   const activeTab = (['coding', 'scratch', 'ml', 'draw'].includes(tabParam || '')
     ? tabParam
     : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw';
 
   const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw') => {
+    unlockAudio();
     router.push(`/?tab=${newTab}`, { scroll: false });
   };
 
@@ -67,7 +67,6 @@ function StudioContent() {
   const [isVictory, setIsVictory] = useState(false);
   const [earnedStars, setEarnedStars] = useState(3);
   const [message, setMessage] = useState('');
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
   useEffect(() => {
     const savedProfile = localStorage.getItem('yr_student_profile');
@@ -84,6 +83,7 @@ function StudioContent() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    unlockAudio();
     if (!formData.name.trim()) return;
 
     setIsSubmitting(true);
@@ -133,12 +133,18 @@ function StudioContent() {
 
   useEffect(() => {
     resetGameState();
-    if (isAudioEnabled && activeTab === 'coding') {
+    if (activeTab === 'coding' && studentProfile) {
       speakHindi(currentLevel.voiceText);
     }
-  }, [currentLevelIndex, selectedAge, isAudioEnabled, activeTab]);
+  }, [currentLevelIndex, selectedAge, activeTab]);
+
+  const handlePlayVoiceInstruction = () => {
+    unlockAudio();
+    speakHindi(currentLevel.voiceText, true);
+  };
 
   const handleRunCode = async (actions: ActionItem[], blockCount: number) => {
+    unlockAudio();
     if (isRunning || actions.length === 0) return;
     setIsRunning(true);
     setMessage('कोड चल रहा है...');
@@ -252,7 +258,7 @@ function StudioContent() {
 
       playWinSound();
       setIsVictory(true);
-      if (isAudioEnabled) speakHindi('शाबाश! आपने यह स्तर पूरा कर लिया!');
+      speakHindi('शाबाश! आपने यह स्तर पूरा कर लिया!', true);
     }
     setIsRunning(false);
   };
@@ -326,7 +332,7 @@ function StudioContent() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
-      {/* Top Header with 4-Way Studio Module Switcher */}
+      {/* Top Header */}
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🚀</span>
@@ -391,13 +397,16 @@ function StudioContent() {
         <HindiMLStudio />
       ) : (
         <>
-          {/* Level Selection Bar */}
+          {/* Level Selection Bar with Explicit Hindi Audio Button */}
           <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-2 shadow-sm">
             <div className="flex items-center gap-3">
               <label className="text-xs md:text-sm font-bold text-slate-700">स्तर चुनें:</label>
               <select
                 value={currentLevelIndex}
-                onChange={(e) => setCurrentLevelIndex(Number(e.target.value))}
+                onChange={(e) => {
+                  unlockAudio();
+                  setCurrentLevelIndex(Number(e.target.value));
+                }}
                 className="bg-slate-100 text-slate-800 font-medium py-1 px-2.5 rounded-lg border border-slate-300 text-xs md:text-sm"
               >
                 {filteredLevels.map((lvl, i) => {
@@ -410,6 +419,15 @@ function StudioContent() {
                   );
                 })}
               </select>
+
+              {/* Hindi Voice Instruction Trigger */}
+              <button
+                onClick={handlePlayVoiceInstruction}
+                className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+                title="निर्देश हिंदी में सुनें"
+              >
+                <span>🔊</span> निर्देश सुनें
+              </button>
             </div>
             <div className="text-xs text-slate-600 font-medium">{currentLevel.instruction}</div>
           </section>

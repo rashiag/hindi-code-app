@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { speakHindi } from '../lib/audio';
+import { speakHindi, unlockAudio } from '../lib/audio';
 
 // 50 Child-friendly drawing categories mapped to Google Quick, Draw! open dataset labels
 const CATEGORIES_50 = [
@@ -60,29 +60,28 @@ const CATEGORIES_50 = [
 export default function HindiQuickDraw() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isPaintingRef = useRef(false);
-  
-  // Non-repeating queue
+  const hasWonRef = useRef(false);
+
   const [availableQueue, setAvailableQueue] = useState<typeof CATEGORIES_50>([...CATEGORIES_50]);
   const [targetCategory, setTargetCategory] = useState(CATEGORIES_50[0]);
-  
   const [timeLeft, setTimeLeft] = useState(20);
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'won' | 'timeout'>('idle');
   const [aiGuesses, setAiGuesses] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [showDatasetModal, setShowDatasetModal] = useState(false);
 
-  // Start a new drawing round without immediate repeats
   const startNewRound = () => {
+    unlockAudio();
+    hasWonRef.current = false;
     let currentQueue = [...availableQueue];
     if (currentQueue.length === 0) {
       currentQueue = [...CATEGORIES_50];
     }
-    
-    // Pick random from remaining queue
+
     const randIndex = Math.floor(Math.random() * currentQueue.length);
     const chosenCat = currentQueue[randIndex];
     currentQueue.splice(randIndex, 1);
-    
+
     setAvailableQueue(currentQueue);
     setTargetCategory(chosenCat);
     setTimeLeft(20);
@@ -90,7 +89,9 @@ export default function HindiQuickDraw() {
     setGameState('playing');
     isPaintingRef.current = false;
     clearCanvas();
-    speakHindi(`कृपया 20 सेकंड में ${chosenCat.hindi} बनाएं!`);
+
+    // Single prompt utterance
+    speakHindi(`कृपया 20 सेकंड में ${chosenCat.hindi} बनाएं!`, true);
   };
 
   // Timer countdown
@@ -106,7 +107,6 @@ export default function HindiQuickDraw() {
     return () => clearTimeout(timer);
   }, [timeLeft, gameState]);
 
-  // Clear Canvas
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -144,6 +144,7 @@ export default function HindiQuickDraw() {
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     if (gameState !== 'playing') return;
+    unlockAudio();
     isPaintingRef.current = true;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -184,10 +185,9 @@ export default function HindiQuickDraw() {
     evaluateDrawing();
   };
 
-  // Sketch Evaluation Engine
   const evaluateDrawing = async () => {
     const canvas = canvasRef.current;
-    if (!canvas || gameState !== 'playing') return;
+    if (!canvas || gameState !== 'playing' || hasWonRef.current) return;
 
     const possibleGuesses = [
       'रेखा (Line)',
@@ -199,18 +199,18 @@ export default function HindiQuickDraw() {
     setAiGuesses(possibleGuesses);
 
     const isMatched = Math.random() > 0.45 && timeLeft < 17;
-    if (isMatched) {
+    if (isMatched && !hasWonRef.current) {
+      hasWonRef.current = true;
       setGameState('won');
       isPaintingRef.current = false;
       setScore((s) => s + 1);
-      speakHindi(`अरे वाह! मुझे समझ आ गया, यह ${targetCategory.hindi} है!`);
+      speakHindi(`अरे वाह! मुझे समझ आ गया, यह ${targetCategory.hindi} है!`, true);
     } else {
       const randomGuess = possibleGuesses[Math.floor(Math.random() * possibleGuesses.length)];
       speakHindi(`क्या यह ${randomGuess} है?`);
     }
   };
 
-  // Direct Google Dataset URL for the active category
   const googleDatasetUrl = `https://quickdraw.withgoogle.com/data/${targetCategory.english}`;
 
   return (
@@ -223,7 +223,7 @@ export default function HindiQuickDraw() {
               <span>🎨</span> जल्दी बनाओ AI (Hindi Quick, Draw!)
             </h2>
             <span className="text-[11px] font-bold bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full">
-              50 वस्तुएं (Categories)
+              50 वस्तुएं
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -236,7 +236,7 @@ export default function HindiQuickDraw() {
             onClick={() => setShowDatasetModal(true)}
             className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition border border-slate-300 flex items-center gap-1.5"
           >
-            <span>🔍</span> AI कैसे सीखता है? (Dataset)
+            <span>🔍</span> AI कैसे सीखता है?
           </button>
           <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-2 rounded-xl border border-amber-200">
             ⭐ अंक: {score}
@@ -315,7 +315,7 @@ export default function HindiQuickDraw() {
                   rel="noopener noreferrer"
                   className="px-4 py-2.5 bg-emerald-800/80 hover:bg-emerald-700 text-white font-bold rounded-xl border border-emerald-500 text-xs flex items-center gap-1.5 transition"
                 >
-                  <span>🌐</span> दुनिया भर के 50,000+ "{targetCategory.hindi}" चित्र देखें ➔
+                  <span>🌐</span> 50,000+ "{targetCategory.hindi}" चित्र देखें ➔
                 </a>
               </div>
             </div>
@@ -377,18 +377,18 @@ export default function HindiQuickDraw() {
           </div>
 
           <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 leading-relaxed">
-            💡 <strong>सीखें:</strong> AI पिक्सेल और रेखाओं (Strokes) के कोण को गूगल के 5 करोड़ रेखाचित्रों के डेटाबेस से मिलाकर अनुमान लगाता है!
+            💡 <strong>सीखें:</strong> AI पिक्सेल और रेखाओं के कोण को गूगल के 5 करोड़ रेखाचित्रों के डेटाबेस से मिलाकर अनुमान लगाता है!
           </div>
         </div>
       </div>
 
-      {/* Behind The Scenes / Dataset Inspector Modal */}
+      {/* Dataset Modal */}
       {showDatasetModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 relative animate-fade-in">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
               <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <span>🧠</span> AI मॉडल कैसे काम करता है? (Behind the Scenes)
+                <span>🧠</span> AI मॉडल कैसे काम करता है?
               </h3>
               <button
                 onClick={() => setShowDatasetModal(false)}
@@ -400,18 +400,15 @@ export default function HindiQuickDraw() {
 
             <div className="space-y-3.5 text-xs text-slate-600 leading-relaxed">
               <p>
-                <strong>1. न्यूरल नेटवर्क (CNN):</strong> जब आप कैनवास पर रेखा खींचते हैं, तो मॉडल आपकी रेखाओं के क्रम, दिशा (Direction) और आकार को प्रोसेस करता है।
+                <strong>1. न्यूरल नेटवर्क (CNN):</strong> जब आप रेखा खींचते हैं, तो मॉडल आपकी रेखाओं के क्रम, दिशा और आकार को प्रोसेस करता है।
               </p>
               <p>
-                <strong>2. Google Quick, Draw! डेटाबेस:</strong> इस AI को दुनिया भर के 1.5 करोड़ से अधिक लोगों द्वारा बनाए गए <strong>5 करोड़ (50 Million+)</strong> चित्रों पर प्रशिक्षित (Train) किया गया है।
+                <strong>2. Google Quick, Draw! डेटाबेस:</strong> इस AI को दुनिया भर के 1.5 करोड़ से अधिक लोगों द्वारा बनाए गए <strong>5 करोड़ (50 Million+)</strong> चित्रों पर प्रशिक्षित किया गया है।
               </p>
               
               <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900">
                 <div className="font-bold text-xs mb-1">🌐 वास्तविक ट्रेनिंग डेटा एक्सप्लोर करें:</div>
-                <p className="text-[11px] mb-2.5">
-                  आप देख सकते हैं कि दुनिया भर के बच्चों ने अलग-अलग देशों में इन वस्तुओं को कैसे ड्रा किया:
-                </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   <a
                     href="https://quickdraw.withgoogle.com/data"
                     target="_blank"
@@ -426,7 +423,7 @@ export default function HindiQuickDraw() {
                     rel="noopener noreferrer"
                     className="px-3 py-1.5 bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-300 font-bold rounded-lg text-xs inline-flex items-center gap-1 transition"
                   >
-                    <span>🔍</span> वर्तमान वस्तु ({targetCategory.hindi}) का डेटा देखें
+                    <span>🔍</span> वर्तमान वस्तु ({targetCategory.hindi}) का डेटा
                   </a>
                 </div>
               </div>
