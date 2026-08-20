@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { LEVELS, Level, AgeGroup } from '../lib/levels';
 import { speakHindi, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 import { ActionItem } from '../components/BlocklyWorkspace';
@@ -14,8 +15,19 @@ const HindiScratchStudio = dynamic(() => import('../components/HindiScratchStudi
 
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/ap1nemn50td2f';
 
-export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'coding' | 'scratch' | 'ml' | 'draw'>('coding');
+function StudioContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Read active tab directly from URL query param, default to 'coding'
+  const tabParam = searchParams.get('tab');
+  const activeTab = (['coding', 'scratch', 'ml', 'draw'].includes(tabParam || '')
+    ? tabParam
+    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw';
+
+  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw') => {
+    router.push(`/?tab=${newTab}`, { scroll: false });
+  };
 
   const [studentProfile, setStudentProfile] = useState<{
     name: string;
@@ -326,10 +338,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 4-Way Studio Module Switcher */}
+        {/* 4-Way Studio Module Switcher with Address Bar Routing */}
         <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
           <button
-            onClick={() => setActiveTab('coding')}
+            onClick={() => handleTabChange('coding')}
             className={`px-3 py-2 rounded-lg transition ${
               activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -337,7 +349,7 @@ export default function HomePage() {
             🎮 मेज़ कोडिंग
           </button>
           <button
-            onClick={() => setActiveTab('scratch')}
+            onClick={() => handleTabChange('scratch')}
             className={`px-3 py-2 rounded-lg transition ${
               activeTab === 'scratch' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -345,7 +357,7 @@ export default function HomePage() {
             🐱 स्क्रैच स्टूडियो
           </button>
           <button
-            onClick={() => setActiveTab('ml')}
+            onClick={() => handleTabChange('ml')}
             className={`px-3 py-2 rounded-lg transition ${
               activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -353,7 +365,7 @@ export default function HomePage() {
             🧠 AI मशीन ट्रेनर
           </button>
           <button
-            onClick={() => setActiveTab('draw')}
+            onClick={() => handleTabChange('draw')}
             className={`px-3 py-2 rounded-lg transition ${
               activeTab === 'draw' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -425,5 +437,13 @@ export default function HomePage() {
         </>
       )}
     </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">लोड हो रहा है...</div>}>
+      <StudioContent />
+    </Suspense>
   );
 }
