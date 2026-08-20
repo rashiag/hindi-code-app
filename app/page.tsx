@@ -10,11 +10,12 @@ const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: fals
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
 const HindiMLStudio = dynamic(() => import('../components/HindiMLStudio'), { ssr: false });
 const HindiQuickDraw = dynamic(() => import('../components/HindiQuickDraw'), { ssr: false });
+const HindiScratchStudio = dynamic(() => import('../components/HindiScratchStudio'), { ssr: false });
 
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/ap1nemn50td2f';
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'coding' | 'ml' | 'draw'>('coding');
+  const [activeTab, setActiveTab] = useState<'coding' | 'scratch' | 'ml' | 'draw'>('coding');
 
   const [studentProfile, setStudentProfile] = useState<{
     name: string;
@@ -249,7 +250,7 @@ export default function HomePage() {
       <main className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full border border-slate-200">
           <div className="text-center mb-6">
-            <div className="text-5xl mb-2">🐵 💻 🎨</div>
+            <div className="text-5xl mb-2">🐵 🐱 🧠 🎨</div>
             <h1 className="text-2xl font-black text-slate-800">Young Researcher</h1>
             <p className="text-slate-500 text-xs mt-1">कोडिंग और AI यात्रा शुरू करने के लिए छात्र विवरण भरें</p>
           </div>
@@ -313,10 +314,10 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
-      {/* Top Header with 3-Way Studio Module Switcher */}
+      {/* Top Header with 4-Way Studio Module Switcher */}
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🐵</span>
+          <span className="text-2xl">🚀</span>
           <div>
             <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher AI & Code</h1>
             <p className="text-xs text-slate-600">
@@ -325,7 +326,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Studio Module Switcher */}
+        {/* 4-Way Studio Module Switcher */}
         <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
           <button
             onClick={() => setActiveTab('coding')}
@@ -333,7 +334,15 @@ export default function HomePage() {
               activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🎮 कोडिंग खेल
+            🎮 मेज़ कोडिंग
+          </button>
+          <button
+            onClick={() => setActiveTab('scratch')}
+            className={`px-3 py-2 rounded-lg transition ${
+              activeTab === 'scratch' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            🐱 स्क्रैच स्टूडियो
           </button>
           <button
             onClick={() => setActiveTab('ml')}
@@ -362,7 +371,9 @@ export default function HomePage() {
       </header>
 
       {/* Render Active Studio */}
-      {activeTab === 'draw' ? (
+      {activeTab === 'scratch' ? (
+        <HindiScratchStudio />
+      ) : activeTab === 'draw' ? (
         <HindiQuickDraw />
       ) : activeTab === 'ml' ? (
         <HindiMLStudio />
