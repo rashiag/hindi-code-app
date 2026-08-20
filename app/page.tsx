@@ -9,11 +9,12 @@ import { ActionItem } from '../components/BlocklyWorkspace';
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
 const HindiMLStudio = dynamic(() => import('../components/HindiMLStudio'), { ssr: false });
+const HindiQuickDraw = dynamic(() => import('../components/HindiQuickDraw'), { ssr: false });
 
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/ap1nemn50td2f';
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<'coding' | 'ml'>('coding');
+  const [activeTab, setActiveTab] = useState<'coding' | 'ml' | 'draw'>('coding');
 
   const [studentProfile, setStudentProfile] = useState<{
     name: string;
@@ -149,7 +150,7 @@ export default function HomePage() {
       if (curDir === 'NORTH') lookY -= 1;
       if (curDir === 'EAST') lookX += 1;
       if (curDir === 'SOUTH') lookY += 1;
-      if (curDir === 'WEST') lookX -= 1;
+      if (curDir === 'WEST') lookX += 1;
       return currentLevel.obstacles.some((obs) => obs.x === lookX && obs.y === lookY);
     };
 
@@ -163,7 +164,7 @@ export default function HomePage() {
           if (curDir === 'NORTH') nextY -= 1;
           if (curDir === 'EAST') nextX += 1;
           if (curDir === 'SOUTH') nextY += 1;
-          if (curDir === 'WEST') nextX -= 1;
+          if (curDir === 'WEST') nextX += 1;
 
           if (nextX < 0 || nextX >= currentLevel.gridSize || nextY < 0 || nextY >= currentLevel.gridSize) {
             playBumpSound();
@@ -248,7 +249,7 @@ export default function HomePage() {
       <main className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full border border-slate-200">
           <div className="text-center mb-6">
-            <div className="text-5xl mb-2">🐵 💻 🧠</div>
+            <div className="text-5xl mb-2">🐵 💻 🎨</div>
             <h1 className="text-2xl font-black text-slate-800">Young Researcher</h1>
             <p className="text-slate-500 text-xs mt-1">कोडिंग और AI यात्रा शुरू करने के लिए छात्र विवरण भरें</p>
           </div>
@@ -312,7 +313,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
-      {/* Top Header with Module Switcher */}
+      {/* Top Header with 3-Way Studio Module Switcher */}
       <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🐵</span>
@@ -328,19 +329,27 @@ export default function HomePage() {
         <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
           <button
             onClick={() => setActiveTab('coding')}
-            className={`px-3.5 py-2 rounded-lg transition ${
-              activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600'
+            className={`px-3 py-2 rounded-lg transition ${
+              activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🎮 कोडिंग खेल (Code Arena)
+            🎮 कोडिंग खेल
           </button>
           <button
             onClick={() => setActiveTab('ml')}
-            className={`px-3.5 py-2 rounded-lg transition ${
-              activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600'
+            className={`px-3 py-2 rounded-lg transition ${
+              activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🧠 AI मशीन ट्रेनर (Teachable Machine)
+            🧠 AI मशीन ट्रेनर
+          </button>
+          <button
+            onClick={() => setActiveTab('draw')}
+            className={`px-3 py-2 rounded-lg transition ${
+              activeTab === 'draw' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            🎨 जल्दी बनाओ AI
           </button>
         </div>
 
@@ -353,7 +362,9 @@ export default function HomePage() {
       </header>
 
       {/* Render Active Studio */}
-      {activeTab === 'ml' ? (
+      {activeTab === 'draw' ? (
+        <HindiQuickDraw />
+      ) : activeTab === 'ml' ? (
         <HindiMLStudio />
       ) : (
         <>
