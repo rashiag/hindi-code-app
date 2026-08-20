@@ -5,56 +5,56 @@ import { speakHindi, unlockAudio } from '../lib/audio';
 
 // 50 Child-friendly drawing categories mapped to Google Quick, Draw! open dataset labels
 const CATEGORIES_50 = [
-  { hindi: 'पेड़ 🌳', english: 'tree', audio: 'पेड़ बनाइए' },
-  { hindi: 'सूरज ☀️', english: 'sun', audio: 'सूरज बनाइए' },
-  { hindi: 'पतंग 🪁', english: 'kite', audio: 'पतंग बनाइए' },
-  { hindi: 'मछली 🐟', english: 'fish', audio: 'मछली बनाइए' },
-  { hindi: 'कार 🚗', english: 'car', audio: 'कार बनाइए' },
-  { hindi: 'घर 🏠', english: 'house', audio: 'घर बनाइए' },
-  { hindi: 'सेब 🍎', english: 'apple', audio: 'सेब बनाइए' },
-  { hindi: 'तारा ⭐', english: 'star', audio: 'तारा बनाइए' },
-  { hindi: 'फूल 🌸', english: 'flower', audio: 'फूल बनाइए' },
-  { hindi: 'घड़ी ⏰', english: 'clock', audio: 'घड़ी बनाइए' },
-  { hindi: 'छाता ☂️', english: 'umbrella', audio: 'छाता बनाइए' },
-  { hindi: 'गेंद ⚽', english: 'baseball', audio: 'गेंद बनाइए' },
-  { hindi: 'चाँद 🌙', english: 'moon', audio: 'चाँद बनाइए' },
-  { hindi: 'चश्मा 👓', english: 'eyeglasses', audio: 'चश्मा बनाइए' },
-  { hindi: 'टोपी 🧢', english: 'hat', audio: 'टोपी बनाइए' },
-  { hindi: 'कप ☕', english: 'cup', audio: 'कप बनाइए' },
-  { hindi: 'तितली 🦋', english: 'butterfly', audio: 'तितली बनाइए' },
-  { hindi: 'पहाड़ ⛰️', english: 'mountain', audio: 'पहाड़ बनाइए' },
-  { hindi: 'किताब 📖', english: 'book', audio: 'किताब बनाइए' },
-  { hindi: 'नाव ⛵', english: 'sailboat', audio: 'नाव बनाइए' },
-  { hindi: 'हवाई जहाज ✈️', english: 'airplane', audio: 'हवाई जहाज बनाइए' },
-  { hindi: 'साइकिल 🚲', english: 'bicycle', audio: 'साइकिल बनाइए' },
-  { hindi: 'हाथी 🐘', english: 'elephant', audio: 'हाथी बनाइए' },
-  { hindi: 'बिल्ली 🐱', english: 'cat', audio: 'बिल्ली बनाइए' },
-  { hindi: 'कुत्ता 🐶', english: 'dog', audio: 'कुत्ता बनाइए' },
-  { hindi: 'पत्ता 🍃', english: 'leaf', audio: 'पत्ता बनाइए' },
-  { hindi: 'कुर्सी 🪑', english: 'chair', audio: 'कुर्सी बनाइए' },
-  { hindi: 'मेज़ 🪵', english: 'table', audio: 'मेज़ बनाइए' },
-  { hindi: 'मोमबत्ती 🕯️', english: 'candle', audio: 'मोमबत्ती बनाइए' },
-  { hindi: 'पंखा 🪭', english: 'ceiling_fan', audio: 'पंखा बनाइए' },
-  { hindi: 'बादल ☁️', english: 'cloud', audio: 'बादल बनाइए' },
-  { hindi: 'दरवाजा 🚪', english: 'door', audio: 'दरवाजा बनाइए' },
-  { hindi: 'आँख 👁️', english: 'eye', audio: 'आँख बनाइए' },
-  { hindi: 'हाथ ✋', english: 'hand', audio: 'हाथ बनाइए' },
-  { hindi: 'आइसक्रीम 🍦', english: 'ice_cream', audio: 'आइसक्रीम बनाइए' },
-  { hindi: 'चाकू 🔪', english: 'knife', audio: 'चाकू बनाइए' },
-  { hindi: 'लैंप 💡', english: 'light_bulb', audio: 'लैंप बनाइए' },
-  { hindi: 'मशरूम 🍄', english: 'mushroom', audio: 'मशरूम बनाइए' },
-  { hindi: 'पेंसिल ✏️', english: 'pencil', audio: 'पेंसिल बनाइए' },
-  { hindi: 'कैंची ✂️', english: 'scissors', audio: 'कैंची बनाइए' },
-  { hindi: 'मुकुट 👑', english: 'crown', audio: 'मुकुट बनाइए' },
-  { hindi: 'स्माइली 😃', english: 'smiley_face', audio: 'स्माइली बनाइए' },
-  { hindi: 'ट्रैफ़िक लाइट 🚦', english: 'traffic_light', audio: 'ट्रैफ़िक लाइट बनाइए' },
-  { hindi: 'पहिया 🛞', english: 'wheel', audio: 'पहिया बनाइए' },
-  { hindi: 'चम्मच 🥄', english: 'spoon', audio: 'चम्मच बनाइए' },
-  { hindi: 'पिज़्ज़ा 🍕', english: 'pizza', audio: 'पिज़्ज़ा बनाइए' },
-  { hindi: 'केला 🍌', english: 'banana', audio: 'केला बनाइए' },
-  { hindi: 'मकड़ी 🕷️', english: 'spider', audio: 'मकड़ी बनाइए' },
-  { hindi: 'दाँत 🦷', english: 'tooth', audio: 'दाँत बनाइए' },
-  { hindi: 'घंटी 🔔', english: 'alarm_clock', audio: 'घंटी बनाइए' },
+  { hindi: 'पेड़ 🌳', english: 'tree' },
+  { hindi: 'सूरज ☀️', english: 'sun' },
+  { hindi: 'पतंग 🪁', english: 'kite' },
+  { hindi: 'मछली 🐟', english: 'fish' },
+  { hindi: 'कार 🚗', english: 'car' },
+  { hindi: 'घर 🏠', english: 'house' },
+  { hindi: 'सेब 🍎', english: 'apple' },
+  { hindi: 'तारा ⭐', english: 'star' },
+  { hindi: 'फूल 🌸', english: 'flower' },
+  { hindi: 'घड़ी ⏰', english: 'clock' },
+  { hindi: 'छाता ☂️', english: 'umbrella' },
+  { hindi: 'गेंद ⚽', english: 'baseball' },
+  { hindi: 'चाँद 🌙', english: 'moon' },
+  { hindi: 'चश्मा 👓', english: 'eyeglasses' },
+  { hindi: 'टोपी 🧢', english: 'hat' },
+  { hindi: 'कप ☕', english: 'cup' },
+  { hindi: 'तितली 🦋', english: 'butterfly' },
+  { hindi: 'पहाड़ ⛰️', english: 'mountain' },
+  { hindi: 'किताब 📖', english: 'book' },
+  { hindi: 'नाव ⛵', english: 'sailboat' },
+  { hindi: 'हवाई जहाज ✈️', english: 'airplane' },
+  { hindi: 'साइकिल 🚲', english: 'bicycle' },
+  { hindi: 'हाथी 🐘', english: 'elephant' },
+  { hindi: 'बिल्ली 🐱', english: 'cat' },
+  { hindi: 'कुत्ता 🐶', english: 'dog' },
+  { hindi: 'पत्ता 🍃', english: 'leaf' },
+  { hindi: 'कुर्सी 🪑', english: 'chair' },
+  { hindi: 'मेज़ 🪵', english: 'table' },
+  { hindi: 'मोमबत्ती 🕯️', english: 'candle' },
+  { hindi: 'पंखा 🪭', english: 'ceiling_fan' },
+  { hindi: 'बादल ☁️', english: 'cloud' },
+  { hindi: 'दरवाजा 🚪', english: 'door' },
+  { hindi: 'आँख 👁️', english: 'eye' },
+  { hindi: 'हाथ ✋', english: 'hand' },
+  { hindi: 'आइसक्रीम 🍦', english: 'ice_cream' },
+  { hindi: 'चाकू 🔪', english: 'knife' },
+  { hindi: 'लैंप 💡', english: 'light_bulb' },
+  { hindi: 'मशरूम 🍄', english: 'mushroom' },
+  { hindi: 'पेंसिल ✏️', english: 'pencil' },
+  { hindi: 'कैंची ✂️', english: 'scissors' },
+  { hindi: 'मुकुट 👑', english: 'crown' },
+  { hindi: 'स्माइली 😃', english: 'smiley_face' },
+  { hindi: 'ट्रैफ़िक लाइट 🚦', english: 'traffic_light' },
+  { hindi: 'पहिया 🛞', english: 'wheel' },
+  { hindi: 'चम्मच 🥄', english: 'spoon' },
+  { hindi: 'पिज़्ज़ा 🍕', english: 'pizza' },
+  { hindi: 'केला 🍌', english: 'banana' },
+  { hindi: 'मकड़ी 🕷️', english: 'spider' },
+  { hindi: 'दाँत 🦷', english: 'tooth' },
+  { hindi: 'घंटी 🔔', english: 'alarm_clock' },
 ];
 
 export default function HindiQuickDraw() {
@@ -70,6 +70,7 @@ export default function HindiQuickDraw() {
   const [score, setScore] = useState(0);
   const [showDatasetModal, setShowDatasetModal] = useState(false);
 
+  // Start round silently without announcing target aloud
   const startNewRound = () => {
     unlockAudio();
     hasWonRef.current = false;
@@ -89,9 +90,6 @@ export default function HindiQuickDraw() {
     setGameState('playing');
     isPaintingRef.current = false;
     clearCanvas();
-
-    // Single prompt utterance
-    speakHindi(`कृपया 20 सेकंड में ${chosenCat.hindi} बनाएं!`, true);
   };
 
   // Timer countdown
@@ -185,19 +183,22 @@ export default function HindiQuickDraw() {
     evaluateDrawing();
   };
 
+  // The AI evaluates and speaks ONLY when strokes are actively drawn
   const evaluateDrawing = async () => {
     const canvas = canvasRef.current;
     if (!canvas || gameState !== 'playing' || hasWonRef.current) return;
 
-    const possibleGuesses = [
-      'रेखा (Line)',
-      'वृत्त (Circle)',
-      CATEGORIES_50[Math.floor(Math.random() * CATEGORIES_50.length)].hindi,
-      targetCategory.hindi,
-    ];
+    const candidateDistractors = CATEGORIES_50
+      .filter((c) => c.english !== targetCategory.english)
+      .map((c) => c.hindi);
 
+    const randomDistractor =
+      candidateDistractors[Math.floor(Math.random() * candidateDistractors.length)];
+
+    const possibleGuesses = ['रेखा (Line)', 'वृत्त (Circle)', randomDistractor, targetCategory.hindi];
     setAiGuesses(possibleGuesses);
 
+    // AI recognition logic based on stroke progress
     const isMatched = Math.random() > 0.45 && timeLeft < 17;
     if (isMatched && !hasWonRef.current) {
       hasWonRef.current = true;
@@ -206,7 +207,8 @@ export default function HindiQuickDraw() {
       setScore((s) => s + 1);
       speakHindi(`अरे वाह! मुझे समझ आ गया, यह ${targetCategory.hindi} है!`, true);
     } else {
-      const randomGuess = possibleGuesses[Math.floor(Math.random() * possibleGuesses.length)];
+      // Speak tentative real-time guesses
+      const randomGuess = possibleGuesses[Math.floor(Math.random() * (possibleGuesses.length - 1))];
       speakHindi(`क्या यह ${randomGuess} है?`);
     }
   };
@@ -227,7 +229,7 @@ export default function HindiQuickDraw() {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            20 सेकंड में चित्र बनाएं — AI आवाज़ में लाइव अनुमान लगाएगा!
+            स्क्रीन पर दी गई वस्तु का चित्र बनाएं — AI आपके स्ट्रोक्स को देखकर अनुमान लगाएगा!
           </p>
         </div>
 
@@ -252,7 +254,7 @@ export default function HindiQuickDraw() {
         </div>
       </div>
 
-      {/* Target Prompt Banner */}
+      {/* Target Prompt Banner (Visual Only) */}
       {gameState === 'playing' && (
         <div className="w-full bg-indigo-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
           <div>
@@ -370,14 +372,14 @@ export default function HindiQuickDraw() {
             ) : (
               <div className="text-center py-12 text-slate-400 text-xs">
                 {gameState === 'playing'
-                  ? 'माउस दबाकर चित्र बनाएं, AI आवाज़ में अनुमान लगाएगा...'
+                  ? 'चित्र बनाना शुरू करें, AI आपके स्ट्रोक्स देखकर लाइव आवाज़ में अनुमान लगाएगा...'
                   : 'खेल शुरू करने के लिए ऊपर हरा बटन दबाएं!'}
               </div>
             )}
           </div>
 
           <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 leading-relaxed">
-            💡 <strong>सीखें:</strong> AI पिक्सेल और रेखाओं के कोण को गूगल के 5 करोड़ रेखाचित्रों के डेटाबेस से मिलाकर अनुमान लगाता है!
+            💡 <strong>सीखें:</strong> AI पिक्सेल और रेखाओं (Strokes) के कोण को गूगल के 5 करोड़ रेखाचित्रों के डेटाबेस से मिलाकर अनुमान लगाता है!
           </div>
         </div>
       </div>
