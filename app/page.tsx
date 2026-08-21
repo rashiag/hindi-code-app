@@ -6,7 +6,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { LEVELS, Level, AgeGroup } from '../lib/levels';
 import { speakHindi, unlockAudio, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 import { ActionItem } from '../components/BlocklyWorkspace';
-import Footer from '../components/Footer';
 
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
@@ -373,9 +372,6 @@ function StudioContent() {
           </div>
         </>
       )}
-
-      {/* Footer */}
-      <Footer />
     </main>
   );
 }
