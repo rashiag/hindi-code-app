@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { LEVELS, Level, AgeGroup } from '../lib/levels';
 import { speakHindi, unlockAudio, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 import { ActionItem } from '../components/BlocklyWorkspace';
+import Footer from '../components/Footer';
 
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
@@ -14,17 +15,18 @@ const HindiQuickDraw = dynamic(() => import('../components/HindiQuickDraw'), { s
 const HindiScratchStudio = dynamic(() => import('../components/HindiScratchStudio'), { ssr: false });
 const HindiVocabMatch = dynamic(() => import('../components/HindiVocabMatch'), { ssr: false });
 const HindiSentenceBuilder = dynamic(() => import('../components/HindiSentenceBuilder'), { ssr: false });
+const HindiPhonicsStudio = dynamic(() => import('../components/HindiPhonicsStudio'), { ssr: false });
 
 function StudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get('tab');
-  const activeTab = (['coding', 'scratch', 'ml', 'draw', 'vocab', 'sentence'].includes(tabParam || '')
+  const activeTab = (['coding', 'scratch', 'ml', 'draw', 'vocab', 'sentence', 'phonics'].includes(tabParam || '')
     ? tabParam
-    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence';
+    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence' | 'phonics';
 
-  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence') => {
+  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence' | 'phonics') => {
     unlockAudio();
     router.push(`/?tab=${newTab}`, { scroll: false });
   };
@@ -224,8 +226,16 @@ function StudioContent() {
           </div>
         </div>
 
-        {/* Swipeable Mobile-Optimized Module Navigation Bar */}
+        {/* 7-Way Studio Navigation Switcher */}
         <div className="w-full md:w-auto flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1 overflow-x-auto no-scrollbar scroll-smooth">
+          <button
+            onClick={() => handleTabChange('phonics')}
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'phonics' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            🔊 फोनिक्स (CVC)
+          </button>
           <button
             onClick={() => handleTabChange('sentence')}
             className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
@@ -278,7 +288,9 @@ function StudioContent() {
       </header>
 
       {/* Render Active Studio */}
-      {activeTab === 'sentence' ? (
+      {activeTab === 'phonics' ? (
+        <HindiPhonicsStudio />
+      ) : activeTab === 'sentence' ? (
         <HindiSentenceBuilder />
       ) : activeTab === 'vocab' ? (
         <HindiVocabMatch />
@@ -361,6 +373,9 @@ function StudioContent() {
           </div>
         </>
       )}
+
+      {/* Footer */}
+      <Footer />
     </main>
   );
 }
