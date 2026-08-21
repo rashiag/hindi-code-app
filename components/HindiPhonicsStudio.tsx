@@ -6,38 +6,40 @@ import { unlockAudio } from '../lib/audio';
 interface LetterSound {
   letter: string;
   hindiSound: string;
-  phoneticAudio: string;
+  audioPhoneme: string;
+  lang: 'hi-IN' | 'en-US';
   exampleEmoji: string;
   exampleWord: string;
 }
 
+// 26 Pure Letter Phonemes mapped to crisp phonetic audio tokens
 const LETTER_SOUNDS_26: LetterSound[] = [
-  { letter: 'A', hindiSound: 'ऐ (æ)', phoneticAudio: 'short a', exampleEmoji: '🍎', exampleWord: 'Apple' },
-  { letter: 'B', hindiSound: 'ब (b)', phoneticAudio: 'buh', exampleEmoji: '⚽', exampleWord: 'Ball' },
-  { letter: 'C', hindiSound: 'क (k)', phoneticAudio: 'kuh', exampleEmoji: '🐱', exampleWord: 'Cat' },
-  { letter: 'D', hindiSound: 'ड (d)', phoneticAudio: 'duh', exampleEmoji: '🐶', exampleWord: 'Dog' },
-  { letter: 'E', hindiSound: 'ए (e)', phoneticAudio: 'short e', exampleEmoji: '🥚', exampleWord: 'Egg' },
-  { letter: 'F', hindiSound: 'फ़ (f)', phoneticAudio: 'fff', exampleEmoji: '🐟', exampleWord: 'Fish' },
-  { letter: 'G', hindiSound: 'ग (g)', phoneticAudio: 'guh', exampleEmoji: '🍇', exampleWord: 'Grapes' },
-  { letter: 'H', hindiSound: 'ह (h)', phoneticAudio: 'huh', exampleEmoji: '🏠', exampleWord: 'House' },
-  { letter: 'I', hindiSound: 'इ (i)', phoneticAudio: 'short i', exampleEmoji: '🦎', exampleWord: 'Iguana' },
-  { letter: 'J', hindiSound: 'ज (j)', phoneticAudio: 'juh', exampleEmoji: '🧃', exampleWord: 'Juice' },
-  { letter: 'K', hindiSound: 'क (k)', phoneticAudio: 'kuh', exampleEmoji: '🪁', exampleWord: 'Kite' },
-  { letter: 'L', hindiSound: 'ल (l)', phoneticAudio: 'lll', exampleEmoji: '🦁', exampleWord: 'Lion' },
-  { letter: 'M', hindiSound: 'म (m)', phoneticAudio: 'mmm', exampleEmoji: '🥭', exampleWord: 'Mango' },
-  { letter: 'N', hindiSound: 'न (n)', phoneticAudio: 'nnn', exampleEmoji: '🪺', exampleWord: 'Nest' },
-  { letter: 'O', hindiSound: 'ऑ (ɒ)', phoneticAudio: 'short o', exampleEmoji: '🍊', exampleWord: 'Orange' },
-  { letter: 'P', hindiSound: 'प (p)', phoneticAudio: 'puh', exampleEmoji: '✏️', exampleWord: 'Pencil' },
-  { letter: 'Q', hindiSound: 'क्व (kw)', phoneticAudio: 'kwuh', exampleEmoji: '👑', exampleWord: 'Queen' },
-  { letter: 'R', hindiSound: 'र (r)', phoneticAudio: 'rrr', exampleEmoji: '🌹', exampleWord: 'Rose' },
-  { letter: 'S', hindiSound: 'स (s)', phoneticAudio: 'sss', exampleEmoji: '☀️', exampleWord: 'Sun' },
-  { letter: 'T', hindiSound: 'ट (t)', phoneticAudio: 'tuh', exampleEmoji: '🌳', exampleWord: 'Tree' },
-  { letter: 'U', hindiSound: 'अ (ʌ)', phoneticAudio: 'uh', exampleEmoji: '☂️', exampleWord: 'Umbrella' },
-  { letter: 'V', hindiSound: 'व (v)', phoneticAudio: 'vvv', exampleEmoji: '🚐', exampleWord: 'Van' },
-  { letter: 'W', hindiSound: 'व (w)', phoneticAudio: 'wuh', exampleEmoji: '⌚', exampleWord: 'Watch' },
-  { letter: 'X', hindiSound: 'क्स (ks)', phoneticAudio: 'ks', exampleEmoji: '📦', exampleWord: 'Box' },
-  { letter: 'Y', hindiSound: 'य (y)', phoneticAudio: 'yuh', exampleEmoji: '🪀', exampleWord: 'Yo-yo' },
-  { letter: 'Z', hindiSound: 'ज़ (z)', phoneticAudio: 'zzz', exampleEmoji: '🦓', exampleWord: 'Zebra' },
+  { letter: 'A', hindiSound: 'ऐ (æ)', audioPhoneme: 'ऐ', lang: 'hi-IN', exampleEmoji: '🍎', exampleWord: 'Apple' },
+  { letter: 'B', hindiSound: 'ब (b)', audioPhoneme: 'ब', lang: 'hi-IN', exampleEmoji: '⚽', exampleWord: 'Ball' },
+  { letter: 'C', hindiSound: 'क (k)', audioPhoneme: 'क', lang: 'hi-IN', exampleEmoji: '🐱', exampleWord: 'Cat' },
+  { letter: 'D', hindiSound: 'ड (d)', audioPhoneme: 'ड', lang: 'hi-IN', exampleEmoji: '🐶', exampleWord: 'Dog' },
+  { letter: 'E', hindiSound: 'ए (e)', audioPhoneme: 'ए', lang: 'hi-IN', exampleEmoji: '🥚', exampleWord: 'Egg' },
+  { letter: 'F', hindiSound: 'फ़ (f)', audioPhoneme: 'फ़', lang: 'hi-IN', exampleEmoji: '🐟', exampleWord: 'Fish' },
+  { letter: 'G', hindiSound: 'ग (g)', audioPhoneme: 'ग', lang: 'hi-IN', exampleEmoji: '🍇', exampleWord: 'Grapes' },
+  { letter: 'H', hindiSound: 'ह (h)', audioPhoneme: 'ह', lang: 'hi-IN', exampleEmoji: '🏠', exampleWord: 'House' },
+  { letter: 'I', hindiSound: 'इ (i)', audioPhoneme: 'इ', lang: 'hi-IN', exampleEmoji: '🦎', exampleWord: 'Iguana' },
+  { letter: 'J', hindiSound: 'ज (j)', audioPhoneme: 'ज', lang: 'hi-IN', exampleEmoji: '🧃', exampleWord: 'Juice' },
+  { letter: 'K', hindiSound: 'क (k)', audioPhoneme: 'क', lang: 'hi-IN', exampleEmoji: '🪁', exampleWord: 'Kite' },
+  { letter: 'L', hindiSound: 'ल (l)', audioPhoneme: 'ल', lang: 'hi-IN', exampleEmoji: '🦁', exampleWord: 'Lion' },
+  { letter: 'M', hindiSound: 'म (m)', audioPhoneme: 'म', lang: 'hi-IN', exampleEmoji: '🥭', exampleWord: 'Mango' },
+  { letter: 'N', hindiSound: 'न (n)', audioPhoneme: 'न', lang: 'hi-IN', exampleEmoji: '🪺', exampleWord: 'Nest' },
+  { letter: 'O', hindiSound: 'ऑ (ɒ)', audioPhoneme: 'ऑ', lang: 'hi-IN', exampleEmoji: '🍊', exampleWord: 'Orange' },
+  { letter: 'P', hindiSound: 'प (p)', audioPhoneme: 'प', lang: 'hi-IN', exampleEmoji: '✏️', exampleWord: 'Pencil' },
+  { letter: 'Q', hindiSound: 'क्व (kw)', audioPhoneme: 'क्व', lang: 'hi-IN', exampleEmoji: '👑', exampleWord: 'Queen' },
+  { letter: 'R', hindiSound: 'र (r)', audioPhoneme: 'र', lang: 'hi-IN', exampleEmoji: '🌹', exampleWord: 'Rose' },
+  { letter: 'S', hindiSound: 'स (s)', audioPhoneme: 'स', lang: 'hi-IN', exampleEmoji: '☀️', exampleWord: 'Sun' },
+  { letter: 'T', hindiSound: 'ट (t)', audioPhoneme: 'ट', lang: 'hi-IN', exampleEmoji: '🌳', exampleWord: 'Tree' },
+  { letter: 'U', hindiSound: 'अ (ʌ)', audioPhoneme: 'अ', lang: 'hi-IN', exampleEmoji: '☂️', exampleWord: 'Umbrella' },
+  { letter: 'V', hindiSound: 'व (v)', audioPhoneme: 'व', lang: 'hi-IN', exampleEmoji: '🚐', exampleWord: 'Van' },
+  { letter: 'W', hindiSound: 'व (w)', audioPhoneme: 'व', lang: 'hi-IN', exampleEmoji: '⌚', exampleWord: 'Watch' },
+  { letter: 'X', hindiSound: 'क्स (ks)', audioPhoneme: 'क्स', lang: 'hi-IN', exampleEmoji: '📦', exampleWord: 'Box' },
+  { letter: 'Y', hindiSound: 'य (y)', audioPhoneme: 'य', lang: 'hi-IN', exampleEmoji: '🪀', exampleWord: 'Yo-yo' },
+  { letter: 'Z', hindiSound: 'ज़ (z)', audioPhoneme: 'ज़', lang: 'hi-IN', exampleEmoji: '🦓', exampleWord: 'Zebra' },
 ];
 
 interface CVCItem {
@@ -55,45 +57,45 @@ interface CVCItem {
 
 const CVC_DATABASE: CVCItem[] = [
   // Short A
-  { word: 'CAT', c1: 'C', c1Sound: 'k', v: 'A', vSound: 'æ', c2: 'T', c2Sound: 't', hindiPronounce: 'क-ऐ-ट ➔ कैट (बिल्ली)', emoji: '🐱', family: '-at' },
-  { word: 'BAT', c1: 'B', c1Sound: 'b', v: 'A', vSound: 'æ', c2: 'T', c2Sound: 't', hindiPronounce: 'ब-ऐ-ट ➔ बैट (बल्ला)', emoji: '🏏', family: '-at' },
-  { word: 'RAT', c1: 'R', c1Sound: 'r', v: 'A', vSound: 'æ', c2: 'T', c2Sound: 't', hindiPronounce: 'र-ऐ-ट ➔ रैट (चूहा)', emoji: '🐀', family: '-at' },
-  { word: 'FAN', c1: 'F', c1Sound: 'f', v: 'A', vSound: 'æ', c2: 'N', c2Sound: 'n', hindiPronounce: 'फ-ऐ-न ➔ फैन (पंखा)', emoji: '🪭', family: '-an' },
-  { word: 'VAN', c1: 'V', c1Sound: 'v', v: 'A', vSound: 'æ', c2: 'N', c2Sound: 'n', hindiPronounce: 'व-ऐ-न ➔ वैन (गाड़ी)', emoji: '🚐', family: '-an' },
-  { word: 'CAP', c1: 'C', c1Sound: 'k', v: 'A', vSound: 'æ', c2: 'P', c2Sound: 'p', hindiPronounce: 'क-ऐ-प ➔ कैप (टोपी)', emoji: '🧢', family: '-ap' },
+  { word: 'CAT', c1: 'C', c1Sound: 'क', v: 'A', vSound: 'ऐ', c2: 'T', c2Sound: 'ट', hindiPronounce: 'क-ऐ-ट ➔ कैट (बिल्ली)', emoji: '🐱', family: '-at' },
+  { word: 'BAT', c1: 'B', c1Sound: 'ब', v: 'A', vSound: 'ऐ', c2: 'T', c2Sound: 'ट', hindiPronounce: 'ब-ऐ-ट ➔ बैट (बल्ला)', emoji: '🏏', family: '-at' },
+  { word: 'RAT', c1: 'R', c1Sound: 'र', v: 'A', vSound: 'ऐ', c2: 'T', c2Sound: 'ट', hindiPronounce: 'र-ऐ-ट ➔ रैट (चूहा)', emoji: '🐀', family: '-at' },
+  { word: 'FAN', c1: 'F', c1Sound: 'फ़', v: 'A', vSound: 'ऐ', c2: 'N', c2Sound: 'न', hindiPronounce: 'फ-ऐ-न ➔ फैन (पंखा)', emoji: '🪭', family: '-an' },
+  { word: 'VAN', c1: 'V', c1Sound: 'व', v: 'A', vSound: 'ऐ', c2: 'N', c2Sound: 'न', hindiPronounce: 'व-ऐ-न ➔ वैन (गाड़ी)', emoji: '🚐', family: '-an' },
+  { word: 'CAP', c1: 'C', c1Sound: 'क', v: 'A', vSound: 'ऐ', c2: 'P', c2Sound: 'प', hindiPronounce: 'क-ऐ-प ➔ कैप (टोपी)', emoji: '🧢', family: '-ap' },
 
   // Short E
-  { word: 'HEN', c1: 'H', c1Sound: 'h', v: 'E', vSound: 'e', c2: 'N', c2Sound: 'n', hindiPronounce: 'ह-ए-न ➔ हेन (मुर्गी)', emoji: '🐔', family: '-en' },
-  { word: 'PEN', c1: 'P', c1Sound: 'p', v: 'E', vSound: 'e', c2: 'N', c2Sound: 'n', hindiPronounce: 'प-ए-न ➔ पेन (कलम)', emoji: '🖊️', family: '-en' },
-  { word: 'BED', c1: 'B', c1Sound: 'b', v: 'E', vSound: 'e', c2: 'D', c2Sound: 'd', hindiPronounce: 'ब-ए-ड ➔ बेड (बिस्तर)', emoji: '🛏️', family: '-ed' },
-  { word: 'NET', c1: 'N', c1Sound: 'n', v: 'E', vSound: 'e', c2: 'T', c2Sound: 't', hindiPronounce: 'न-ए-ट ➔ नेट (जाल)', emoji: '🕸️', family: '-et' },
+  { word: 'HEN', c1: 'H', c1Sound: 'ह', v: 'E', vSound: 'ए', c2: 'N', c2Sound: 'न', hindiPronounce: 'ह-ए-न ➔ हेन (मुर्गी)', emoji: '🐔', family: '-en' },
+  { word: 'PEN', c1: 'P', c1Sound: 'प', v: 'E', vSound: 'ए', c2: 'N', c2Sound: 'न', hindiPronounce: 'प-ए-न ➔ पेन (कलम)', emoji: '🖊️', family: '-en' },
+  { word: 'BED', c1: 'B', c1Sound: 'ब', v: 'E', vSound: 'ए', c2: 'D', c2Sound: 'ड', hindiPronounce: 'ब-ए-ड ➔ बेड (बिस्तर)', emoji: '🛏️', family: '-ed' },
+  { word: 'NET', c1: 'N', c1Sound: 'न', v: 'E', vSound: 'ए', c2: 'T', c2Sound: 'ट', hindiPronounce: 'न-ए-ट ➔ नेट (जाल)', emoji: '🕸️', family: '-et' },
 
   // Short I
-  { word: 'PIN', c1: 'P', c1Sound: 'p', v: 'I', vSound: 'i', c2: 'N', c2Sound: 'n', hindiPronounce: 'प-इ-न ➔ पिन (आलपिन)', emoji: '📌', family: '-in' },
-  { word: 'BIN', c1: 'B', c1Sound: 'b', v: 'I', vSound: 'i', c2: 'N', c2Sound: 'n', hindiPronounce: 'ब-इ-न ➔ बिन (कूड़ेदान)', emoji: '🗑️', family: '-in' },
-  { word: 'LIP', c1: 'L', c1Sound: 'l', v: 'I', vSound: 'i', c2: 'P', c2Sound: 'p', hindiPronounce: 'ल-इ-प ➔ लिप (होंठ)', emoji: '👄', family: '-ip' },
-  { word: 'PIG', c1: 'P', c1Sound: 'p', v: 'I', vSound: 'i', c2: 'G', c2Sound: 'g', hindiPronounce: 'प-इ-ग ➔ पिग (सुअर)', emoji: '🐷', family: '-ig' },
+  { word: 'PIN', c1: 'P', c1Sound: 'प', v: 'I', vSound: 'इ', c2: 'N', c2Sound: 'न', hindiPronounce: 'प-इ-न ➔ पिन (आलपिन)', emoji: '📌', family: '-in' },
+  { word: 'BIN', c1: 'B', c1Sound: 'ब', v: 'I', vSound: 'इ', c2: 'N', c2Sound: 'न', hindiPronounce: 'ब-इ-न ➔ बिन (कूड़ेदान)', emoji: '🗑️', family: '-in' },
+  { word: 'LIP', c1: 'L', c1Sound: 'ल', v: 'I', vSound: 'इ', c2: 'P', c2Sound: 'प', hindiPronounce: 'ल-इ-प ➔ लिप (होंठ)', emoji: '👄', family: '-ip' },
+  { word: 'PIG', c1: 'P', c1Sound: 'प', v: 'I', vSound: 'इ', c2: 'G', c2Sound: 'ग', hindiPronounce: 'प-इ-ग ➔ पिग (सुअर)', emoji: '🐷', family: '-ig' },
 
   // Short O
-  { word: 'POT', c1: 'P', c1Sound: 'p', v: 'O', vSound: 'o', c2: 'T', c2Sound: 't', hindiPronounce: 'प-ऑ-ट ➔ पॉट (मटका)', emoji: '🏺', family: '-ot' },
-  { word: 'HOT', c1: 'H', c1Sound: 'h', v: 'O', vSound: 'o', c2: 'T', c2Sound: 't', hindiPronounce: 'ह-ऑ-ट ➔ हॉट (गरम)', emoji: '🔥', family: '-ot' },
-  { word: 'TOP', c1: 'T', c1Sound: 't', v: 'O', vSound: 'o', c2: 'P', c2Sound: 'p', hindiPronounce: 'ट-ऑ-प ➔ टॉप (लट्टू)', emoji: '🪀', family: '-op' },
-  { word: 'BOX', c1: 'B', c1Sound: 'b', v: 'O', vSound: 'o', c2: 'X', c2Sound: 'ks', hindiPronounce: 'ब-ऑ-क्स ➔ बॉक्स (डिब्बा)', emoji: '📦', family: '-ox' },
+  { word: 'POT', c1: 'P', c1Sound: 'प', v: 'O', vSound: 'ऑ', c2: 'T', c2Sound: 'ट', hindiPronounce: 'प-ऑ-ट ➔ पॉट (मटका)', emoji: '🏺', family: '-ot' },
+  { word: 'HOT', c1: 'H', c1Sound: 'ह', v: 'O', vSound: 'ऑ', c2: 'T', c2Sound: 'ट', hindiPronounce: 'ह-ऑ-ट ➔ हॉट (गरम)', emoji: '🔥', family: '-ot' },
+  { word: 'TOP', c1: 'T', c1Sound: 'ट', v: 'O', vSound: 'ऑ', c2: 'P', c2Sound: 'प', hindiPronounce: 'ट-ऑ-प ➔ टॉप (लट्टू)', emoji: '🪀', family: '-op' },
+  { word: 'BOX', c1: 'B', c1Sound: 'ब', v: 'O', vSound: 'ऑ', c2: 'X', c2Sound: 'क्स', hindiPronounce: 'ब-ऑ-क्स ➔ बॉक्स (डिब्बा)', emoji: '📦', family: '-ox' },
 
   // Short U
-  { word: 'MUG', c1: 'M', c1Sound: 'm', v: 'U', vSound: 'u', c2: 'G', c2Sound: 'g', hindiPronounce: 'म-अ-ग ➔ मग (मग)', emoji: '🍺', family: '-ug' },
-  { word: 'SUN', c1: 'S', c1Sound: 's', v: 'U', vSound: 'u', c2: 'N', c2Sound: 'n', hindiPronounce: 'स-अ-न ➔ सन (सूरज)', emoji: '☀️', family: '-un' },
-  { word: 'RUN', c1: 'R', c1Sound: 'r', v: 'U', vSound: 'u', c2: 'N', c2Sound: 'n', hindiPronounce: 'र-अ-न ➔ रन (दौड़ना)', emoji: '🏃', family: '-un' },
-  { word: 'NUT', c1: 'N', c1Sound: 'n', v: 'U', vSound: 'u', c2: 'T', c2Sound: 't', hindiPronounce: 'न-अ-ट ➔ नट (अखरोट)', emoji: '🥜', family: '-ut' },
+  { word: 'MUG', c1: 'M', c1Sound: 'म', v: 'U', vSound: 'अ', c2: 'G', c2Sound: 'ग', hindiPronounce: 'म-अ-ग ➔ मग (मग)', emoji: '🍺', family: '-ug' },
+  { word: 'SUN', c1: 'S', c1Sound: 'स', v: 'U', vSound: 'अ', c2: 'N', c2Sound: 'न', hindiPronounce: 'स-अ-न ➔ सन (सूरज)', emoji: '☀️', family: '-un' },
+  { word: 'RUN', c1: 'R', c1Sound: 'र', v: 'U', vSound: 'अ', c2: 'N', c2Sound: 'न', hindiPronounce: 'र-अ-न ➔ रन (दौड़ना)', emoji: '🏃', family: '-un' },
+  { word: 'NUT', c1: 'N', c1Sound: 'न', v: 'U', vSound: 'अ', c2: 'T', c2Sound: 'ट', hindiPronounce: 'न-अ-ट ➔ नट (अखरोट)', emoji: '🥜', family: '-ut' },
 ];
 
-const speakVoice = (text: string, lang: 'en-US' | 'hi-IN') => {
+const speakVoice = (text: string, lang: 'hi-IN' | 'en-US') => {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
-  utterance.rate = 0.82;
-  utterance.pitch = 1.08;
+  utterance.rate = 0.85;
+  utterance.pitch = 1.05;
   setTimeout(() => window.speechSynthesis.speak(utterance), 30);
 };
 
@@ -107,9 +109,9 @@ export default function HindiPhonicsStudio() {
 
   const handlePlayLetterSound = (item: LetterSound) => {
     unlockAudio();
-    speakVoice(item.phoneticAudio, 'en-US');
+    speakVoice(item.audioPhoneme, 'hi-IN');
     setTimeout(() => {
-      speakVoice(`${item.letter} का उच्चारण ${item.hindiSound} है`, 'hi-IN');
+      speakVoice(`${item.letter} से ${item.exampleWord}`, 'hi-IN');
     }, 550);
   };
 
@@ -118,27 +120,27 @@ export default function HindiPhonicsStudio() {
     setIsBlending(true);
     unlockAudio();
 
-    // 1. Initial Consonant
+    // 1. Initial Consonant Sound (e.g., 'क' for C)
     setBlendStep(1);
-    speakVoice(currentCVC.c1, 'en-US');
+    speakVoice(currentCVC.c1Sound, 'hi-IN');
     await new Promise((r) => setTimeout(r, 650));
 
-    // 2. Middle Vowel
+    // 2. Short Vowel Sound (e.g., 'ऐ' for A)
     setBlendStep(2);
-    speakVoice(currentCVC.v, 'en-US');
+    speakVoice(currentCVC.vSound, 'hi-IN');
     await new Promise((r) => setTimeout(r, 650));
 
-    // 3. Final Consonant
+    // 3. Final Consonant Sound (e.g., 'ट' for T)
     setBlendStep(3);
-    speakVoice(currentCVC.c2, 'en-US');
+    speakVoice(currentCVC.c2Sound, 'hi-IN');
     await new Promise((r) => setTimeout(r, 650));
 
-    // 4. Blended Full Word
+    // 4. Blended English Word
     setBlendStep(4);
     speakVoice(currentCVC.word, 'en-US');
     await new Promise((r) => setTimeout(r, 850));
 
-    // 5. Hindi Meaning & Pronunciation Guide
+    // 5. Hindi Synthesis Breakdown
     speakVoice(currentCVC.hindiPronounce, 'hi-IN');
     setIsBlending(false);
   };
@@ -215,7 +217,7 @@ export default function HindiPhonicsStudio() {
               onClick={() => {
                 unlockAudio();
                 setBlendStep(1);
-                speakVoice(currentCVC.c1, 'en-US');
+                speakVoice(currentCVC.c1Sound, 'hi-IN');
               }}
               className={`w-20 h-24 md:w-24 md:h-28 rounded-2xl border-4 flex flex-col items-center justify-center font-black transition-all duration-300 shadow-sm active:scale-95 ${
                 blendStep === 1 || blendStep === 4
@@ -224,7 +226,8 @@ export default function HindiPhonicsStudio() {
               }`}
             >
               <span className="text-3xl md:text-4xl">{currentCVC.c1}</span>
-              <span className="text-[10px] opacity-80 mt-1">Consonant</span>
+              <span className="text-xs text-amber-500 font-bold mt-0.5">{currentCVC.c1Sound}</span>
+              <span className="text-[10px] opacity-70">Consonant</span>
             </button>
 
             <span className="text-2xl font-black text-slate-400">+</span>
@@ -234,7 +237,7 @@ export default function HindiPhonicsStudio() {
               onClick={() => {
                 unlockAudio();
                 setBlendStep(2);
-                speakVoice(currentCVC.v, 'en-US');
+                speakVoice(currentCVC.vSound, 'hi-IN');
               }}
               className={`w-20 h-24 md:w-24 md:h-28 rounded-2xl border-4 flex flex-col items-center justify-center font-black transition-all duration-300 shadow-sm active:scale-95 ${
                 blendStep === 2 || blendStep === 4
@@ -243,7 +246,8 @@ export default function HindiPhonicsStudio() {
               }`}
             >
               <span className="text-3xl md:text-4xl">{currentCVC.v}</span>
-              <span className="text-[10px] opacity-80 mt-1">Vowel</span>
+              <span className="text-xs text-rose-600 font-bold mt-0.5">{currentCVC.vSound}</span>
+              <span className="text-[10px] opacity-70">Vowel</span>
             </button>
 
             <span className="text-2xl font-black text-slate-400">+</span>
@@ -253,7 +257,7 @@ export default function HindiPhonicsStudio() {
               onClick={() => {
                 unlockAudio();
                 setBlendStep(3);
-                speakVoice(currentCVC.c2, 'en-US');
+                speakVoice(currentCVC.c2Sound, 'hi-IN');
               }}
               className={`w-20 h-24 md:w-24 md:h-28 rounded-2xl border-4 flex flex-col items-center justify-center font-black transition-all duration-300 shadow-sm active:scale-95 ${
                 blendStep === 3 || blendStep === 4
@@ -262,7 +266,8 @@ export default function HindiPhonicsStudio() {
               }`}
             >
               <span className="text-3xl md:text-4xl">{currentCVC.c2}</span>
-              <span className="text-[10px] opacity-80 mt-1">Consonant</span>
+              <span className="text-xs text-amber-500 font-bold mt-0.5">{currentCVC.c2Sound}</span>
+              <span className="text-[10px] opacity-70">Consonant</span>
             </button>
           </div>
 
