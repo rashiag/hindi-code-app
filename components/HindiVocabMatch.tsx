@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { unlockAudio } from '../lib/audio';
 
 interface VocabItem {
@@ -261,27 +261,59 @@ export default function HindiVocabMatch() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [gameState, setGameState] = useState<'playing' | 'game_over'>('playing');
 
-  const generateNewQuestion = (roundNum: number) => {
+  // Active game session non-repeating queue
+  const remainingPoolRef = useRef<VocabItem[]>([]);
+
+  // Shuffle helper
+  const shuffleArray = <T,>(arr: T[]): T[] => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  };
+
+  const startNewGameSession = () => {
+    setScore(0);
+    setGameState('playing');
+    // Fresh shuffle of all 200 items for this new game
+    remainingPoolRef.current = shuffleArray(VOCAB_DATABASE_200);
+    generateNextQuestion(1);
+  };
+
+  const generateNextQuestion = (roundNum: number) => {
     unlockAudio();
-    const randomTarget = VOCAB_DATABASE_200[Math.floor(Math.random() * VOCAB_DATABASE_200.length)];
 
-    const otherItems = VOCAB_DATABASE_200.filter((i) => i.englishWord !== randomTarget.englishWord);
-    const shuffledOthers = [...otherItems].sort(() => 0.5 - Math.random());
-    const distractors = shuffledOthers.slice(0, 2).map((i) => i.englishWord);
+    // Ensure we have items in the pool
+    if (remainingPoolRef.current.length === 0) {
+      remainingPoolRef.current = shuffleArray(VOCAB_DATABASE_200);
+    }
 
-    const roundChoices = [randomTarget.englishWord, ...distractors].sort(() => 0.5 - Math.random());
+    // Pop the next target so it CANNOT appear again in this session
+    const currentTarget = remainingPoolRef.current.pop()!;
 
-    setTargetItem(randomTarget);
+    // Select 2 unique distractors that are different from the target
+    const distractorCandidates = VOCAB_DATABASE_200.filter(
+      (item) => item.englishWord !== currentTarget.englishWord
+    );
+    const shuffledDistractors = shuffleArray(distractorCandidates).slice(0, 2);
+    const distractors = shuffledDistractors.map((d) => d.englishWord);
+
+    // Shuffle the 3 choices
+    const roundChoices = shuffleArray([currentTarget.englishWord, ...distractors]);
+
+    setTargetItem(currentTarget);
     setOptions(roundChoices);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setCurrentRound(roundNum);
 
-    speakBilingual(`${randomTarget.hindiName} को अंग्रेजी में क्या कहते हैं?`, 'hi-IN');
+    speakBilingual(`${currentTarget.hindiName} को अंग्रेजी में क्या कहते हैं?`, 'hi-IN');
   };
 
   useEffect(() => {
-    generateNewQuestion(1);
+    startNewGameSession();
   }, []);
 
   const handleSelectOption = (chosenWord: string) => {
@@ -309,13 +341,7 @@ export default function HindiVocabMatch() {
       }
       return;
     }
-    generateNewQuestion(currentRound + 1);
-  };
-
-  const restartGame = () => {
-    setScore(0);
-    setGameState('playing');
-    generateNewQuestion(1);
+    generateNextQuestion(currentRound + 1);
   };
 
   return (
@@ -432,13 +458,13 @@ export default function HindiVocabMatch() {
             कुल अंक: {score} / {TOTAL_ROUNDS} सही शब्द
           </div>
           <p className="text-xs text-slate-500 max-w-sm mb-6 leading-relaxed">
-            आपने 200 शब्दों के शब्दकोश से नए अंग्रेजी शब्द सीखे हैं। बार-बार खेलने से आपकी वोकैबुलरी और मजबूत होगी!
+            आपने 200 शब्दों के शब्दकोश से नए अंग्रेजी शब्द सीखे हैं। हर बार खेलने पर आपको नए शब्द मिलेंगे!
           </p>
           <button
-            onClick={restartGame}
+            onClick={startNewGameSession}
             className="px-6 py-3 bg-green-600 hover:bg-green-700 active:scale-95 text-white font-bold text-sm rounded-xl shadow-lg transition"
           >
-            🔄 दोबारा खेलें (Play Again)
+            🔄 दोबारा 5 नए शब्द खेलें (Play Again)
           </button>
         </div>
       )}
