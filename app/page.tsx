@@ -213,38 +213,38 @@ function StudioContent() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 flex flex-col items-center p-3 md:p-6">
+    <main className="min-h-screen bg-slate-50 flex flex-col items-center p-2.5 md:p-6 w-full overflow-x-hidden">
       {/* Top Header */}
-      <header className="w-full max-w-6xl flex flex-wrap items-center justify-between bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200 mb-4 gap-3">
-        <div className="flex items-center gap-3">
+      <header className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-between bg-white px-3.5 py-3 md:px-5 md:py-3.5 rounded-2xl shadow-sm border border-slate-200 mb-3 gap-2.5">
+        <div className="flex items-center gap-2.5 w-full md:w-auto">
           <span className="text-2xl">🚀</span>
           <div>
-            <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher AI &amp; Code</h1>
-            <p className="text-xs text-slate-500">ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)</p>
+            <h1 className="text-sm md:text-lg font-black text-slate-800 leading-tight">Young Researcher AI &amp; Code</h1>
+            <p className="text-[11px] md:text-xs text-slate-500">ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)</p>
           </div>
         </div>
 
-        {/* 6-Way Studio Module Switcher */}
-        <div className="flex flex-wrap items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
+        {/* Swipeable Mobile-Optimized Module Navigation Bar */}
+        <div className="w-full md:w-auto flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1 overflow-x-auto no-scrollbar scroll-smooth">
           <button
             onClick={() => handleTabChange('sentence')}
-            className={`px-3 py-2 rounded-lg transition ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
               activeTab === 'sentence' ? 'bg-teal-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🧩 वाक्य बनाओ (Syntax)
+            🧩 वाक्य बनाओ
           </button>
           <button
             onClick={() => handleTabChange('vocab')}
-            className={`px-3 py-2 rounded-lg transition ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
               activeTab === 'vocab' ? 'bg-pink-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🔤 शब्द मिलाओ (3-6 yr)
+            🔤 शब्द मिलाओ
           </button>
           <button
             onClick={() => handleTabChange('coding')}
-            className={`px-3 py-2 rounded-lg transition ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
               activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -252,7 +252,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('scratch')}
-            className={`px-3 py-2 rounded-lg transition ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
               activeTab === 'scratch' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -260,7 +260,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('ml')}
-            className={`px-3 py-2 rounded-lg transition ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
               activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -268,7 +268,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('draw')}
-            className={`px-3 py-2 rounded-lg transition ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
               activeTab === 'draw' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -291,22 +291,22 @@ function StudioContent() {
       ) : (
         <>
           {/* Level & Age Bracket Selection Bar */}
-          <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-3 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs font-bold text-slate-700">आयु वर्ग:</label>
+          <section className="w-full max-w-6xl mb-3 bg-white border border-slate-200 p-3 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-2.5 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-1">
+                <label className="text-xs font-bold text-slate-700">आयु:</label>
                 <select
                   value={selectedAge}
                   onChange={(e) => handleAgeChange(e.target.value as AgeGroup)}
-                  className="bg-slate-100 text-slate-800 font-semibold py-1 px-2.5 rounded-lg border border-slate-300 text-xs"
+                  className="bg-slate-100 text-slate-800 font-semibold py-1 px-2 rounded-lg border border-slate-300 text-xs"
                 >
-                  <option value="junior">आयु 5–7 (Junior)</option>
-                  <option value="intermediate">आयु 8–10 (Explorer)</option>
-                  <option value="senior">आयु 11+ (Researcher)</option>
+                  <option value="junior">5–7 (Junior)</option>
+                  <option value="intermediate">8–10 (Explorer)</option>
+                  <option value="senior">11+ (Researcher)</option>
                 </select>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <label className="text-xs font-bold text-slate-700">स्तर:</label>
                 <select
                   value={currentLevelIndex}
@@ -314,7 +314,7 @@ function StudioContent() {
                     unlockAudio();
                     setCurrentLevelIndex(Number(e.target.value));
                   }}
-                  className="bg-slate-100 text-slate-800 font-medium py-1 px-2.5 rounded-lg border border-slate-300 text-xs"
+                  className="bg-slate-100 text-slate-800 font-medium py-1 px-2 rounded-lg border border-slate-300 text-xs"
                 >
                   {filteredLevels.map((lvl, i) => {
                     const isLocked = i > (unlockedLevels[selectedAge] || 0);
@@ -330,10 +330,9 @@ function StudioContent() {
 
               <button
                 onClick={handlePlayVoiceInstruction}
-                className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
-                title="निर्देश हिंदी में सुनें"
+                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition active:scale-95 shadow-sm"
               >
-                <span>🔊</span> निर्देश सुनें
+                <span>🔊</span> सुनें
               </button>
             </div>
 
@@ -341,17 +340,17 @@ function StudioContent() {
           </section>
 
           {/* Blockly & Canvas */}
-          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1">
+          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1">
             <div className="lg:col-span-5 flex flex-col items-center">
               <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />
               {message && (
-                <div className="mt-3 text-center text-sm font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm w-full">
+                <div className="mt-2.5 text-center text-xs md:text-sm font-semibold px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm w-full">
                   {message}
                 </div>
               )}
             </div>
 
-            <div className="lg:col-span-7 flex flex-col bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <div className="lg:col-span-7 flex flex-col bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-slate-200">
               <BlocklyWorkspace
                 onRunCode={handleRunCode}
                 onReset={resetGameState}
