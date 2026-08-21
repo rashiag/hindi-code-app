@@ -12,23 +12,22 @@ const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'),
 const HindiMLStudio = dynamic(() => import('../components/HindiMLStudio'), { ssr: false });
 const HindiQuickDraw = dynamic(() => import('../components/HindiQuickDraw'), { ssr: false });
 const HindiScratchStudio = dynamic(() => import('../components/HindiScratchStudio'), { ssr: false });
+const HindiVocabMatch = dynamic(() => import('../components/HindiVocabMatch'), { ssr: false });
 
 function StudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Read active tab directly from URL query param, default to 'coding'
   const tabParam = searchParams.get('tab');
-  const activeTab = (['coding', 'scratch', 'ml', 'draw'].includes(tabParam || '')
+  const activeTab = (['coding', 'scratch', 'ml', 'draw', 'vocab'].includes(tabParam || '')
     ? tabParam
-    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw';
+    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab';
 
-  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw') => {
+  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab') => {
     unlockAudio();
     router.push(`/?tab=${newTab}`, { scroll: false });
   };
 
-  // Direct Age Track Selection without registration gate
   const [selectedAge, setSelectedAge] = useState<AgeGroup>('junior');
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [unlockedLevels, setUnlockedLevels] = useState<{ [key: string]: number }>({
@@ -53,7 +52,6 @@ function StudioContent() {
   const [earnedStars, setEarnedStars] = useState(3);
   const [message, setMessage] = useState('');
 
-  // Load progress on initial render
   useEffect(() => {
     const savedAge = localStorage.getItem('yr_selected_age') as AgeGroup | null;
     const savedProgress = localStorage.getItem('yr_unlocked_tracks');
@@ -220,13 +218,21 @@ function StudioContent() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">🚀</span>
           <div>
-            <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher AI & Code</h1>
+            <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">Young Researcher AI &amp; Code</h1>
             <p className="text-xs text-slate-500">ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)</p>
           </div>
         </div>
 
-        {/* 4-Way Studio Module Switcher */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
+        {/* 5-Way Studio Module Switcher */}
+        <div className="flex flex-wrap items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
+          <button
+            onClick={() => handleTabChange('vocab')}
+            className={`px-3 py-2 rounded-lg transition ${
+              activeTab === 'vocab' ? 'bg-pink-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            🔤 शब्द मिलाओ (3-6 yr)
+          </button>
           <button
             onClick={() => handleTabChange('coding')}
             className={`px-3 py-2 rounded-lg transition ${
@@ -263,7 +269,9 @@ function StudioContent() {
       </header>
 
       {/* Render Active Studio */}
-      {activeTab === 'scratch' ? (
+      {activeTab === 'vocab' ? (
+        <HindiVocabMatch />
+      ) : activeTab === 'scratch' ? (
         <HindiScratchStudio />
       ) : activeTab === 'draw' ? (
         <HindiQuickDraw />
@@ -274,7 +282,6 @@ function StudioContent() {
           {/* Level & Age Bracket Selection Bar */}
           <section className="w-full max-w-6xl mb-4 bg-white border border-slate-200 p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-3 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Age Track Selector */}
               <div className="flex items-center gap-1.5">
                 <label className="text-xs font-bold text-slate-700">आयु वर्ग:</label>
                 <select
@@ -288,7 +295,6 @@ function StudioContent() {
                 </select>
               </div>
 
-              {/* Level Selector */}
               <div className="flex items-center gap-1.5">
                 <label className="text-xs font-bold text-slate-700">स्तर:</label>
                 <select
@@ -311,10 +317,10 @@ function StudioContent() {
                 </select>
               </div>
 
-              {/* Spoken Instruction Trigger */}
               <button
                 onClick={handlePlayVoiceInstruction}
                 className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+                title="निर्देश हिंदी में सुनें"
               >
                 <span>🔊</span> निर्देश सुनें
               </button>
