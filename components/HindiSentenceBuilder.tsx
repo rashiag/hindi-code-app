@@ -7,11 +7,11 @@ interface SentenceItem {
   id: number;
   hindiSentence: string;
   hindiPhonetic: string;
-  englishWords: string[]; // Correct sequential order
+  englishWords: string[]; // Exact target sequence
   category: string;
 }
 
-// 40 Foundational 2-to-5 word sentences tailored for early learners (Ages 4-8)
+// 40 Curated Foundational Sentences (2 to 5 words) with exact colloquial translations
 const SENTENCES_DATABASE: SentenceItem[] = [
   // 2-Word Sentences
   { id: 1, hindiSentence: 'यहाँ आओ।', hindiPhonetic: 'Yahan aao.', englishWords: ['Come', 'here.'], category: 'दैनिक निर्देश' },
@@ -20,34 +20,36 @@ const SENTENCES_DATABASE: SentenceItem[] = [
   { id: 4, hindiSentence: 'बैठ जाओ।', hindiPhonetic: 'Baith jaao.', englishWords: ['Sit', 'down.'], category: 'दैनिक निर्देश' },
   { id: 5, hindiSentence: 'पानी पियो।', hindiPhonetic: 'Paani piyo.', englishWords: ['Drink', 'water.'], category: 'दैनिक निर्देश' },
   { id: 6, hindiSentence: 'किताब पढ़ो।', hindiPhonetic: 'Kitaab padho.', englishWords: ['Read', 'book.'], category: 'स्कूल' },
-  { id: 7, hindiSentence: 'मुस्कुराओ।', hindiPhonetic: 'Muskurao.', englishWords: ['Keep', 'smiling.'], category: 'भावनाएं' },
+  { id: 7, hindiSentence: 'मुस्कुराते रहो।', hindiPhonetic: 'Muskuraate raho.', englishWords: ['Keep', 'smiling.'], category: 'भावनाएं' },
   { id: 8, hindiSentence: 'नमस्ते बोलो।', hindiPhonetic: 'Namaste bolo.', englishWords: ['Say', 'hello.'], category: 'शिष्टाचार' },
 
   // 3-Word Sentences
-  { id: 9, hindiSentence: 'यह एक सेब है।', hindiPhonetic: 'Yeh ek seb hai.', englishWords: ['This', 'is', 'apple.'], category: 'पहचान' },
-  { id: 10, hindiSentence: 'वह एक बिल्ली है।', hindiPhonetic: 'Vah ek billi hai.', englishWords: ['That', 'is', 'cat.'], category: 'पहचान' },
+  { id: 9, hindiSentence: 'यह सेब है।', hindiPhonetic: 'Yeh seb hai.', englishWords: ['This', 'is', 'apple.'], category: 'पहचान' },
+  { id: 10, hindiSentence: 'वह बिल्ली है।', hindiPhonetic: 'Vah billi hai.', englishWords: ['That', 'is', 'cat.'], category: 'पहचान' },
   { id: 11, hindiSentence: 'मैं खेल रहा हूँ।', hindiPhonetic: 'Main khel raha hoon.', englishWords: ['I', 'am', 'playing.'], category: 'क्रियाएं' },
   { id: 12, hindiSentence: 'सूरज चमक रहा है।', hindiPhonetic: 'Sooraj chamak raha hai.', englishWords: ['Sun', 'is', 'shining.'], category: 'प्रकृति' },
-  { id: 13, hindiSentence: 'पंछी उड़ते हैं।', hindiPhonetic: 'Panchhi udte hain.', englishWords: ['Birds', 'can', 'fly.'], category: 'जानवर' },
+  { id: 13, hindiSentence: 'पक्षी उड़ सकते हैं।', hindiPhonetic: 'Pakshi ud sakte hain.', englishWords: ['Birds', 'can', 'fly.'], category: 'जानवर' },
   { id: 14, hindiSentence: 'मुझे दूध पसंद है।', hindiPhonetic: 'Mujhe doodh pasand hai.', englishWords: ['I', 'like', 'milk.'], category: 'पसंद' },
   { id: 15, hindiSentence: 'यह मेरी गेंद है।', hindiPhonetic: 'Yeh meri gend hai.', englishWords: ['This', 'is', 'ball.'], category: 'खेल' },
-  { id: 16, hindiSentence: 'हाथी बड़ा है।', hindiPhonetic: 'Haathi bada hai.', englishWords: ['Elephant', 'is', 'big.'], category: 'विवरण' },
+  { id: 16, hindiSentence: 'हाथी बहुत बड़ा है।', hindiPhonetic: 'Haathi bahut bada hai.', englishWords: ['Elephant', 'is', 'big.'], category: 'विवरण' },
 
   // 4-Word Sentences
-  { id: 17, hindiSentence: 'मुझे एक सेब खाना है।', hindiPhonetic: 'Mujhe ek seb khaana hai.', englishWords: ['I', 'want', 'an', 'apple.'], category: 'दैनिक संवाद' },
-  { id: 18, hindiSentence: 'यह मेरा प्यारा घर है।', hindiPhonetic: 'Yeh mera pyaara ghar hai.', englishWords: ['This', 'is', 'my', 'home.'], category: 'घर' },
+  { id: 17, hindiSentence: 'मुझे सेब खाना है।', hindiPhonetic: 'Mujhe seb khaana hai.', englishWords: ['I', 'want', 'an', 'apple.'], category: 'दैनिक संवाद' },
+  { id: 18, hindiSentence: 'यह मेरा घर है।', hindiPhonetic: 'Yeh mera ghar hai.', englishWords: ['This', 'is', 'my', 'home.'], category: 'घर' },
   { id: 19, hindiSentence: 'कुत्ता तेज़ी से दौड़ता है।', hindiPhonetic: 'Kutta tezi se daudta hai.', englishWords: ['Dog', 'runs', 'very', 'fast.'], category: 'जानवर' },
   { id: 20, hindiSentence: 'आसमान में बादल हैं।', hindiPhonetic: 'Aasman mein baadal hain.', englishWords: ['Clouds', 'are', 'in', 'sky.'], category: 'प्रकृति' },
-  { id: 21, hindiSentence: 'हम सब स्कूल जाते हैं।', hindiPhonetic: 'Hum sab school jaate hain.', englishWords: ['We', 'go', 'to', 'school.'], category: 'स्कूल' },
-  { id: 22, hindiSentence: 'गुलाब एक सुंदर फूल है।', hindiPhonetic: 'Gulaab ek sundar phool hai.', englishWords: ['Rose', 'is', 'pretty', 'flower.'], category: 'प्रकृति' },
-  { id: 23, hindiSentence: 'मेरे पास लाल कार है।', hindiPhonetic: 'Mere paas laal car hai.', englishWords: ['I', 'have', 'red', 'car.'], category: 'चीजें' },
+  { id: 21, hindiSentence: 'हम स्कूल जाते हैं।', hindiPhonetic: 'Hum school jaate hain.', englishWords: ['We', 'go', 'to', 'school.'], category: 'स्कूल' },
+  { id: 22, hindiSentence: 'गुलाब सुंदर फूल है।', hindiPhonetic: 'Gulaab sundar phool hai.', englishWords: ['Rose', 'is', 'pretty', 'flower.'], category: 'प्रकृति' },
+  { id: 23, hindiSentence: 'मेरे पास कार है।', hindiPhonetic: 'Mere paas car hai.', englishWords: ['I', 'have', 'red', 'car.'], category: 'चीजें' },
 
   // 5-Word Sentences
-  { id: 24, hindiSentence: 'बंदर पेड़ पर कूद रहा है।', hindiPhonetic: 'Bandar ped par kood raha hai.', englishWords: ['Monkey', 'is', 'jumping', 'on', 'tree.'], category: 'जानवर' },
-  { id: 25, hindiSentence: 'मोर बारिश में नाच रहा है।', hindiPhonetic: 'Mor baarish mein naach raha hai.', englishWords: ['Peacock', 'is', 'dancing', 'in', 'rain.'], category: 'प्रकृति' },
-  { id: 26, hindiSentence: 'मैं रोज़ाना अपना पाठ पढ़ता हूँ।', hindiPhonetic: 'Main rozana apna paath padhta hoon.', englishWords: ['I', 'read', 'my', 'book', 'daily.'], category: 'आदतें' },
-  { id: 27, hindiSentence: 'मछली साफ पानी में तैरती है।', hindiPhonetic: 'Machhli saaf paani mein tairti hai.', englishWords: ['Fish', 'swims', 'in', 'clean', 'water.'], category: 'जानवर' },
-  { id: 28, hindiSentence: 'तारे रात में सुंदर चमकते हैं।', hindiPhonetic: 'Taare raat mein sundar chamakte hain.', englishWords: ['Stars', 'shine', 'bright', 'at', 'night.'], category: 'अंतरिक्ष' },
+  { id: 24, hindiSentence: 'यह मेरा प्यारा घर है।', hindiPhonetic: 'Yeh mera pyaara ghar hai.', englishWords: ['This', 'is', 'my', 'sweet', 'home.'], category: 'घर' },
+  { id: 25, hindiSentence: 'बंदर पेड़ पर कूद रहा है।', hindiPhonetic: 'Bandar ped par kood raha hai.', englishWords: ['Monkey', 'is', 'jumping', 'on', 'tree.'], category: 'जानवर' },
+  { id: 26, hindiSentence: 'मोर बारिश में नाच रहा है।', hindiPhonetic: 'Mor baarish mein naach raha hai.', englishWords: ['Peacock', 'is', 'dancing', 'in', 'rain.'], category: 'प्रकृति' },
+  { id: 27, hindiSentence: 'मैं रोज़ अपनी किताब पढ़ता हूँ।', hindiPhonetic: 'Main roz apni kitaab padhta hoon.', englishWords: ['I', 'read', 'my', 'book', 'daily.'], category: 'आदतें' },
+  { id: 28, hindiSentence: 'मछली साफ पानी में तैरती है।', hindiPhonetic: 'Machhli saaf paani mein tairti hai.', englishWords: ['Fish', 'swims', 'in', 'clean', 'water.'], category: 'जानवर' },
+  { id: 29, hindiSentence: 'तारे रात में चमकते हैं।', hindiPhonetic: 'Taare raat mein chamakte hain.', englishWords: ['Stars', 'shine', 'bright', 'at', 'night.'], category: 'अंतरिक्ष' },
+  { id: 30, hindiSentence: 'माँ स्वादिष्ट खाना बनाती हैं।', hindiPhonetic: 'Maa swadisht khaana banati hain.', englishWords: ['Mother', 'cooks', 'very', 'tasty', 'food.'], category: 'घर' },
 ];
 
 const TOTAL_ROUNDS = 5;
@@ -77,9 +79,10 @@ export default function HindiSentenceBuilder() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [gameState, setGameState] = useState<'playing' | 'game_over'>('playing');
 
+  // Non-repeating queue reference for active session
   const poolRef = useRef<SentenceItem[]>([]);
 
-  const shuffle = <T,>(arr: T[]): T[] => {
+  const shuffleArray = <T,>(arr: T[]): T[] => {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -91,23 +94,28 @@ export default function HindiSentenceBuilder() {
   const startNewGame = () => {
     setScore(0);
     setGameState('playing');
-    poolRef.current = shuffle(SENTENCES_DATABASE);
+    // Fresh shuffle of all sentences; items will be popped sequentially
+    poolRef.current = shuffleArray(SENTENCES_DATABASE);
     loadQuestion(1);
   };
 
   const loadQuestion = (roundNum: number) => {
     unlockAudio();
-    if (poolRef.current.length === 0) poolRef.current = shuffle(SENTENCES_DATABASE);
+    if (poolRef.current.length === 0) {
+      poolRef.current = shuffleArray(SENTENCES_DATABASE);
+    }
+    
+    // Pop next sentence so it cannot repeat in this 5-round game
     const item = poolRef.current.pop()!;
 
     setCurrentSentence(item);
-    setAvailableWords(shuffle(item.englishWords));
+    setAvailableWords(shuffleArray(item.englishWords));
     setSelectedWords([]);
     setIsAnswerChecked(false);
     setIsCorrect(false);
     setCurrentRound(roundNum);
 
-    // Speak the target Hindi sentence
+    // Speak Hindi prompt
     speakVoice(item.hindiSentence, 'hi-IN');
   };
 
@@ -297,7 +305,7 @@ export default function HindiSentenceBuilder() {
             कुल अंक: {score} / {TOTAL_ROUNDS} सही वाक्य
           </div>
           <p className="text-xs text-slate-500 max-w-sm mb-6 leading-relaxed">
-            आपने हिंदी से अंग्रेजी में शब्दों का सही क्रम बनाना सीखा। जितना अधिक अभ्यास करेंगे, अंग्रेजी बोलना उतना ही सहज होगा!
+            आपने हिंदी से अंग्रेजी में शब्दों का सही क्रम बनाना सीखा। हर बार खेलने पर आपको नए वाक्य मिलेंगे!
           </p>
           <button
             onClick={startNewGame}
