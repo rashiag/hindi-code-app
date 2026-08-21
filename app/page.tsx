@@ -13,17 +13,18 @@ const HindiMLStudio = dynamic(() => import('../components/HindiMLStudio'), { ssr
 const HindiQuickDraw = dynamic(() => import('../components/HindiQuickDraw'), { ssr: false });
 const HindiScratchStudio = dynamic(() => import('../components/HindiScratchStudio'), { ssr: false });
 const HindiVocabMatch = dynamic(() => import('../components/HindiVocabMatch'), { ssr: false });
+const HindiSentenceBuilder = dynamic(() => import('../components/HindiSentenceBuilder'), { ssr: false });
 
 function StudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get('tab');
-  const activeTab = (['coding', 'scratch', 'ml', 'draw', 'vocab'].includes(tabParam || '')
+  const activeTab = (['coding', 'scratch', 'ml', 'draw', 'vocab', 'sentence'].includes(tabParam || '')
     ? tabParam
-    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab';
+    : 'coding') as 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence';
 
-  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab') => {
+  const handleTabChange = (newTab: 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence') => {
     unlockAudio();
     router.push(`/?tab=${newTab}`, { scroll: false });
   };
@@ -223,8 +224,16 @@ function StudioContent() {
           </div>
         </div>
 
-        {/* 5-Way Studio Module Switcher */}
+        {/* 6-Way Studio Module Switcher */}
         <div className="flex flex-wrap items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
+          <button
+            onClick={() => handleTabChange('sentence')}
+            className={`px-3 py-2 rounded-lg transition ${
+              activeTab === 'sentence' ? 'bg-teal-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            🧩 वाक्य बनाओ (Syntax)
+          </button>
           <button
             onClick={() => handleTabChange('vocab')}
             className={`px-3 py-2 rounded-lg transition ${
@@ -269,7 +278,9 @@ function StudioContent() {
       </header>
 
       {/* Render Active Studio */}
-      {activeTab === 'vocab' ? (
+      {activeTab === 'sentence' ? (
+        <HindiSentenceBuilder />
+      ) : activeTab === 'vocab' ? (
         <HindiVocabMatch />
       ) : activeTab === 'scratch' ? (
         <HindiScratchStudio />
