@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
+import { HindiNumberBonds } from '@/components/HindiNumberBonds';
 
 type MathTab = 'counting' | 'bonds' | 'vedic';
 
@@ -36,7 +37,7 @@ function MathsPortalContent() {
           </div>
         </div>
 
-        {/* Maths-Only Navigation Tabs */}
+        {/* Maths Tabs */}
         <div className="w-full md:w-auto flex items-center bg-amber-100/60 p-1 rounded-xl border border-amber-200 text-xs font-bold gap-1 overflow-x-auto">
           <button
             onClick={() => handleTabChange('counting')}
@@ -71,22 +72,14 @@ function MathsPortalContent() {
         </div>
       </header>
 
-      {/* Render Active Math Tool */}
+      {/* Render Active Math App */}
       <div className="w-full max-w-5xl">
         {activeTab === 'counting' && <HindiMathStudio />}
-        
-        {activeTab === 'bonds' && (
-          <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-amber-300 text-center text-amber-900">
-            <span className="text-4xl block mb-3">🎯</span>
-            <h3 className="text-xl font-black mb-1">अंक जोड़ (Number Bonds Lab)</h3>
-            <p className="text-xs text-slate-500 font-semibold">आगामी मॉड्यूल — जल्द उपलब्ध होगा</p>
-          </div>
-        )}
-
+        {activeTab === 'bonds' && <HindiNumberBonds />}
         {activeTab === 'vedic' && (
           <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-amber-300 text-center text-amber-900">
             <span className="text-4xl block mb-3">✨</span>
-            <h3 className="text-xl font-black mb-1">वैदिक गणित (Visual Patterns)</h3>
+            <h3 className="text-xl font-black mb-1">वैदिक गणित (Visual Multiplication Grids)</h3>
             <p className="text-xs text-slate-500 font-semibold">आगामी मॉड्यूल — जल्द उपलब्ध होगा</p>
           </div>
         )}
