@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, RotateCcw, Award, CheckCircle2, Trophy, Star, Sparkles, Plus } from 'lucide-react';
+import { Volume2, RotateCcw, Award, Sparkles, CheckCircle2, Trophy, Star } from 'lucide-react';
 
-const HINDI_DIGITS: { [key: number]: { hi: string; word: string; eng: string } } = {
+const NUMBER_MAP: { [key: number]: { hi: string; word: string; eng: string } } = {
   0: { hi: '०', word: 'शून्य', eng: 'Zero' },
   1: { hi: '१', word: 'एक', eng: 'One' },
   2: { hi: '२', word: 'दो', eng: 'Two' },
@@ -20,20 +20,24 @@ const HINDI_DIGITS: { [key: number]: { hi: string; word: string; eng: string } }
 const TOTAL_ROUNDS = 5;
 
 export function HindiNumberBonds() {
-  const [targetSum, setTargetSum] = useState<5 | 10>(10); // Mode: 5-Frame or 10-Frame
   const [currentRound, setCurrentRound] = useState<number>(1);
-  const [baseCount, setBaseCount] = useState<number>(3);
-  const [addedCount, setAddedCount] = useState<number>(0);
+  const [baseNum, setBaseNum] = useState<number>(2);
+  const [targetSum, setTargetSum] = useState<number>(5);
+  const [options, setOptions] = useState<number[]>([]);
+  const [selectedNum, setSelectedNum] = useState<number | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showBeadVisual, setShowBeadVisual] = useState<boolean>(false);
+  const [animatedBeadCount, setAnimatedBeadCount] = useState<number>(0);
+  const [isBusy, setIsBusy] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [finalScore, setFinalScore] = useState<number>(0);
-  const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
-  const [feedbackState, setFeedbackState] = useState<'idle' | 'correct' | 'wrong'>('idle');
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const missingNeeded = targetSum - baseCount;
+  const missingCorrect = targetSum - baseNum;
 
   const clearActiveTimeout = () => {
     if (timeoutRef.current) {
@@ -86,86 +90,85 @@ export function HindiNumberBonds() {
     });
   };
 
-  const generateRound = (sumTarget: 5 | 10) => {
-    const minBase = 1;
-    const maxBase = sumTarget - 1;
-    const base = Math.floor(Math.random() * (maxBase - minBase + 1)) + minBase;
-    setBaseCount(base);
-    setAddedCount(0);
-    setFeedbackState('idle');
-    setIsEvaluating(false);
+  const generateQuestion = () => {
+    // Generate dynamic target sum between 3 and 10
+    const sum = Math.floor(Math.random() * 8) + 3; // 3 to 10
+    const base = Math.floor(Math.random() * (sum - 1)) + 1; // 1 to sum-1
+    const correct = sum - base;
+
+    // Generate 3 unique options
+    const opts = new Set<number>([correct]);
+    while (opts.size < 3) {
+      const wrong = Math.floor(Math.random() * 9) + 1; // 1 to 9
+      if (wrong !== correct && wrong < sum) {
+        opts.add(wrong);
+      }
+    }
+
+    setTargetSum(sum);
+    setBaseNum(base);
+    setOptions(Array.from(opts).sort(() => Math.random() - 0.5));
+    setSelectedNum(null);
+    setIsCorrect(null);
+    setShowBeadVisual(false);
+    setAnimatedBeadCount(0);
+    setIsBusy(false);
   };
 
-  const startNewGame = (target: 5 | 10 = targetSum) => {
+  const startNewGame = () => {
     clearActiveTimeout();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     setScore(0);
+    setStreak(0);
     setCurrentRound(1);
     setIsGameOver(false);
     setFinalScore(0);
-    generateRound(target);
+    generateQuestion();
   };
 
   useEffect(() => {
-    startNewGame(targetSum);
-  }, [targetSum]);
-
-  const handleModeSwitch = (newTarget: 5 | 10) => {
-    if (targetSum === newTarget) return;
-    setTargetSum(newTarget);
-  };
-
-  const addCounter = () => {
-    if (isEvaluating || isGameOver) return;
-    if (baseCount + addedCount < targetSum) {
-      setAddedCount((prev) => prev + 1);
-    }
-  };
-
-  const removeCounter = () => {
-    if (isEvaluating || isGameOver) return;
-    if (addedCount > 0) {
-      setAddedCount((prev) => prev - 1);
-    }
-  };
+    startNewGame();
+  }, []);
 
   const handleGameOver = async (achievedScore: number) => {
     setIsGameOver(true);
     setFinalScore(achievedScore);
-    setIsEvaluating(false);
+    setIsBusy(false);
 
     if (achievedScore >= 4) {
-      await speakAudio(`शानदार! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं!`, 'hi-IN');
+      await speakAudio(`शानदार प्रदर्शन! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं!`, 'hi-IN');
       await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Terrific! You scored ${achievedScore} out of 5!`, 'en-IN', 0.9);
+      await speakAudio(`Outstanding! You scored ${achievedScore} out of 5!`, 'en-IN', 0.9);
     } else {
-      await speakAudio(`अच्छा प्रयास! आपने पाँच में से ${achievedScore} अंक प्राप्त किए।`, 'hi-IN');
+      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${achievedScore} अंक प्राप्त किए।`, 'hi-IN');
       await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Good effort! You scored ${achievedScore} out of 5.`, 'en-IN', 0.9);
+      await speakAudio(`Good job! You scored ${achievedScore} out of 5. Keep practicing!`, 'en-IN', 0.9);
     }
   };
 
-  const handleCheckAnswer = async () => {
-    if (isEvaluating || isGameOver) return;
-    setIsEvaluating(true);
+  const handleSelect = async (num: number) => {
+    if (isBusy || isGameOver || isCorrect !== null) return;
+    setIsBusy(true);
+    setSelectedNum(num);
 
-    const isCorrect = addedCount === missingNeeded;
+    const isAnswerCorrect = num === missingCorrect;
 
-    if (isCorrect) {
-      setFeedbackState('correct');
+    if (isAnswerCorrect) {
+      setIsCorrect(true);
       const nextScore = score + 1;
       setScore(nextScore);
+      setStreak((prev) => prev + 1);
       playSuccessChime();
 
       await speakAudio(
-        `शाबाश! ${HINDI_DIGITS[baseCount].word} और ${HINDI_DIGITS[addedCount].word} मिलकर बनते हैं ${HINDI_DIGITS[targetSum].word}!`,
+        `शाबाश! ${NUMBER_MAP[baseNum].word} और ${NUMBER_MAP[num].word} मिलकर बनते हैं ${NUMBER_MAP[targetSum].word}!`,
         'hi-IN'
       );
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 120));
       await speakAudio(
-        `Great! ${HINDI_DIGITS[baseCount].eng} plus ${HINDI_DIGITS[addedCount].eng} equals ${HINDI_DIGITS[targetSum].eng}!`,
+        `Great! ${NUMBER_MAP[baseNum].eng} plus ${NUMBER_MAP[num].eng} equals ${NUMBER_MAP[targetSum].eng}!`,
         'en-IN',
         0.9
       );
@@ -175,22 +178,31 @@ export function HindiNumberBonds() {
           handleGameOver(nextScore);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateRound(targetSum);
+          generateQuestion();
         }
-      }, 1200);
+      }, 1000);
 
     } else {
-      setFeedbackState('wrong');
+      // Incorrect -> Show bead animation explanation
+      setIsCorrect(false);
+      setStreak(0);
+      setShowBeadVisual(true);
 
       await speakAudio(
-        `यहाँ ${HINDI_DIGITS[targetSum].word} बनाने के लिए ${HINDI_DIGITS[missingNeeded].word} और मनकों की आवश्यकता है।`,
+        `आइए देखें: ${NUMBER_MAP[baseNum].word} में कितने जोड़ने पर ${NUMBER_MAP[targetSum].word} बनेगा?`,
         'hi-IN'
       );
-      await new Promise((r) => setTimeout(r, 150));
+
+      // Animate adding the missing beads step by step
+      for (let i = 1; i <= missingCorrect; i++) {
+        setAnimatedBeadCount(i);
+        await speakAudio(NUMBER_MAP[i].word, 'hi-IN', 0.9);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+
       await speakAudio(
-        `We need ${HINDI_DIGITS[missingNeeded].eng} more counters to make ${HINDI_DIGITS[targetSum].eng}.`,
-        'en-IN',
-        0.9
+        `यहाँ हमें ${NUMBER_MAP[missingCorrect].word} और मनके चाहिए! ${NUMBER_MAP[baseNum].eng} plus ${NUMBER_MAP[missingCorrect].eng} equals ${NUMBER_MAP[targetSum].eng}!`,
+        'hi-IN'
       );
 
       timeoutRef.current = setTimeout(() => {
@@ -198,9 +210,9 @@ export function HindiNumberBonds() {
           handleGameOver(score);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateRound(targetSum);
+          generateQuestion();
         }
-      }, 1000);
+      }, 1200);
     }
   };
 
@@ -211,14 +223,14 @@ export function HindiNumberBonds() {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">🎯</span>
-            <h1 className="text-xl md:text-2xl font-black text-amber-950">अंक जोड़ (Number Bonds Lab)</h1>
+            <h1 className="text-xl md:text-2xl font-black text-amber-950">अंक जोड़ (Missing Number Bond)</h1>
           </div>
           <p className="text-xs md:text-sm font-semibold text-amber-800">
-            टेन-फ्रेम में मनके जोड़कर {targetSum} पूरा करें • Complete the {targetSum}-Frame
+            समीकरण को पूरा करने के लिए सही संख्या चुनें • Complete the equation
           </p>
         </div>
 
-        {/* Turn Progress Pills */}
+        {/* Round Progress Indicators */}
         <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm">
           <span className="text-xs font-black text-amber-900 mr-1">राउंड:</span>
           {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
@@ -238,35 +250,20 @@ export function HindiNumberBonds() {
           </span>
         </div>
 
-        {/* 5-Frame / 10-Frame Switcher */}
-        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-amber-300 shadow-sm">
-          <button
-            onClick={() => handleModeSwitch(5)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              targetSum === 5 ? 'bg-amber-600 text-white shadow' : 'text-amber-900 hover:bg-amber-50'
-            }`}
-          >
-            ५ का जोड़ (5-Frame)
-          </button>
-          <button
-            onClick={() => handleModeSwitch(10)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              targetSum === 10 ? 'bg-amber-600 text-white shadow' : 'text-amber-900 hover:bg-amber-50'
-            }`}
-          >
-            १० का जोड़ (10-Frame)
-          </button>
-        </div>
-
-        {/* Score Counter */}
+        {/* Live Score Counter */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-xs font-black border border-amber-200">
             <Award className="w-4 h-4 text-amber-600" /> सही: {score}/{TOTAL_ROUNDS}
           </div>
+          {streak > 1 && (
+            <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-orange-200">
+              <Sparkles className="w-3.5 h-3.5 text-orange-600" /> {streak} लगातार!
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main Container */}
+      {/* Main Play Area */}
       <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-amber-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
         {isGameOver ? (
           /* End Game Modal */
@@ -278,10 +275,10 @@ export function HindiNumberBonds() {
             <h2 className="text-2xl font-black text-amber-950 mb-1">खेल संपन्न! (Game Complete)</h2>
             <p className="text-sm font-bold text-amber-800 mb-5">
               {finalScore === 5
-                ? '🌟 Brilliant! All equations balanced!'
+                ? '🌟 Excellent! All equations solved!'
                 : finalScore >= 3
-                ? '👏 Great math work! बहुत बढ़िया!'
-                : '💪 Keep exploring! अभ्यास करते रहें!'}
+                ? '👏 Great math skills! बहुत बढ़िया!'
+                : '💪 Keep practicing! अभ्यास जारी रखें!'}
             </p>
 
             {/* Stars */}
@@ -301,7 +298,7 @@ export function HindiNumberBonds() {
             {/* Score Summary */}
             <div className="w-full bg-white rounded-2xl p-4 border border-amber-200 mb-6 flex justify-around shadow-sm">
               <div>
-                <span className="block text-xs font-bold text-slate-500">कुल राउंड</span>
+                <span className="block text-xs font-bold text-slate-500">कुल प्रश्न</span>
                 <span className="text-xl font-black text-slate-800">{TOTAL_ROUNDS}</span>
               </div>
               <div className="w-px bg-slate-200" />
@@ -319,7 +316,7 @@ export function HindiNumberBonds() {
             </div>
 
             <button
-              onClick={() => startNewGame(targetSum)}
+              onClick={startNewGame}
               className="w-full py-3.5 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white rounded-xl font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" /> पुनः खेलें (Play Again)
@@ -328,11 +325,11 @@ export function HindiNumberBonds() {
         ) : (
           /* Active Gameplay Screen */
           <>
-            {/* Audio Prompt */}
+            {/* Audio Prompt Button */}
             <button
               onClick={() =>
                 speakAudio(
-                  `${HINDI_DIGITS[baseCount].word} में कितने और जोड़ें कि ${HINDI_DIGITS[targetSum].word} बन जाए? How many more to make ${HINDI_DIGITS[targetSum].eng}?`,
+                  `${NUMBER_MAP[baseNum].word} में कितना जोड़ें कि ${NUMBER_MAP[targetSum].word} बन जाए? ${NUMBER_MAP[baseNum].eng} plus what equals ${NUMBER_MAP[targetSum].eng}?`,
                   'hi-IN'
                 )
               }
@@ -341,95 +338,107 @@ export function HindiNumberBonds() {
               <Volume2 className="w-4 h-4 text-amber-700" /> प्रश्न सुनें (Audio Prompt)
             </button>
 
-            {/* Visual Number Bond Equation Bar */}
-            <div className="flex items-center justify-center gap-2 md:gap-4 bg-amber-50/60 border border-amber-200 px-6 py-3 rounded-2xl mb-8">
-              <div className="flex items-center gap-1.5 bg-blue-100 text-blue-900 px-4 py-2 rounded-xl font-black text-xl md:text-2xl border border-blue-300">
-                <span className="w-3.5 h-3.5 rounded-full bg-blue-600 inline-block" />
-                <span>{baseCount}</span>
-                <span className="text-xs text-blue-700 font-bold">({HINDI_DIGITS[baseCount].hi})</span>
+            {/* Equation Display Box */}
+            <div className="flex items-center justify-center gap-3 md:gap-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-200 px-8 py-5 rounded-3xl mb-8 shadow-sm">
+              {/* Base Number */}
+              <div className="flex flex-col items-center bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
+                <span className="text-3xl md:text-4xl font-black">{baseNum}</span>
+                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[baseNum].hi} ({NUMBER_MAP[baseNum].word})</span>
               </div>
 
-              <span className="text-2xl font-black text-amber-800">+</span>
+              <span className="text-3xl md:text-4xl font-black text-amber-900">+</span>
 
+              {/* Missing Number Placeholder Box */}
               <div
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-black text-xl md:text-2xl border transition-all ${
-                  feedbackState === 'correct'
-                    ? 'bg-emerald-100 text-emerald-900 border-emerald-400 scale-105'
-                    : feedbackState === 'wrong'
-                    ? 'bg-rose-100 text-rose-900 border-rose-400'
-                    : 'bg-amber-100 text-amber-950 border-amber-300'
+                className={`flex flex-col items-center justify-center px-5 py-3 rounded-2xl border-2 min-w-[80px] transition-all ${
+                  isCorrect === true
+                    ? 'bg-emerald-500 border-emerald-600 text-white shadow-md scale-105'
+                    : isCorrect === false
+                    ? 'bg-amber-100 border-amber-400 text-amber-900'
+                    : 'bg-white border-dashed border-amber-400 text-amber-600'
                 }`}
               >
-                <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block" />
-                <span>{addedCount}</span>
-                <span className="text-xs text-amber-800 font-bold">({HINDI_DIGITS[addedCount].hi})</span>
+                <span className="text-3xl md:text-4xl font-black">
+                  {selectedNum !== null ? selectedNum : '?'}
+                </span>
+                <span className="text-[11px] font-bold">
+                  {selectedNum !== null
+                    ? `${NUMBER_MAP[selectedNum].hi} (${NUMBER_MAP[selectedNum].word})`
+                    : 'खाली स्थान'}
+                </span>
               </div>
 
-              <span className="text-2xl font-black text-amber-800">=</span>
+              <span className="text-3xl md:text-4xl font-black text-amber-900">=</span>
 
-              <div className="bg-amber-600 text-white px-4 py-2 rounded-xl font-black text-xl md:text-2xl shadow-sm">
-                <span>{targetSum}</span>
-                <span className="text-xs text-amber-100 font-bold ml-1">({HINDI_DIGITS[targetSum].hi})</span>
+              {/* Target Sum */}
+              <div className="flex flex-col items-center bg-amber-700 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
+                <span className="text-3xl md:text-4xl font-black">{targetSum}</span>
+                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[targetSum].hi} ({NUMBER_MAP[targetSum].word})</span>
               </div>
             </div>
 
-            {/* Ten-Frame Grid Display (2 rows x 5 columns) */}
-            <div
-              className={`grid gap-2 md:gap-3 p-4 bg-slate-50 border-2 border-slate-300 rounded-2xl mb-8 shadow-inner ${
-                targetSum === 5 ? 'grid-cols-5' : 'grid-cols-5'
-              }`}
-            >
-              {Array.from({ length: targetSum }).map((_, idx) => {
-                const isBase = idx < baseCount;
-                const isAdded = idx >= baseCount && idx < baseCount + addedCount;
-
-                return (
-                  <div
-                    key={idx}
-                    className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl border-2 flex items-center justify-center transition-all ${
-                      isBase
-                        ? 'bg-blue-500 border-blue-600 shadow-md scale-95'
-                        : isAdded
-                        ? 'bg-amber-500 border-amber-600 shadow-md scale-95 animate-in zoom-in-50 duration-150'
-                        : 'bg-white border-dashed border-slate-300 hover:border-slate-400'
-                    }`}
-                  >
-                    {isBase && <span className="text-2xl filter drop-shadow">🔵</span>}
-                    {isAdded && <span className="text-2xl filter drop-shadow">🟡</span>}
-                    {!isBase && !isAdded && <span className="text-xs font-bold text-slate-300">{idx + 1}</span>}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Interactive Bead Tray & Control Buttons */}
-            <div className="flex flex-col items-center gap-4 w-full max-w-md">
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  onClick={addCounter}
-                  disabled={isEvaluating || baseCount + addedCount >= targetSum}
-                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-extrabold text-sm rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" /> मनका जोड़ें (Add Bead) 🟡
-                </button>
-
-                <button
-                  onClick={removeCounter}
-                  disabled={isEvaluating || addedCount === 0}
-                  className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-bold text-sm rounded-xl transition cursor-pointer"
-                >
-                  हटाएं (Remove)
-                </button>
+            {/* Visual Bead Clarification on Incorrect Choice */}
+            {showBeadVisual && (
+              <div className="w-full max-w-md bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
+                <span className="text-xs font-black text-amber-900 mb-2">मनके जोड़कर देखें (Visual Clarification):</span>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {/* Base Beads */}
+                  {Array.from({ length: baseNum }).map((_, i) => (
+                    <span key={`b-${i}`} className="text-3xl filter drop-shadow">🔵</span>
+                  ))}
+                  <span className="text-xl font-black text-amber-800 mx-1">+</span>
+                  {/* Animated Added Beads */}
+                  {Array.from({ length: missingCorrect }).map((_, i) => (
+                    <span
+                      key={`a-${i}`}
+                      className={`text-3xl filter drop-shadow transition-all ${
+                        i < animatedBeadCount ? 'scale-110 opacity-100' : 'scale-75 opacity-30'
+                      }`}
+                    >
+                      🟡
+                    </span>
+                  ))}
+                </div>
               </div>
+            )}
 
-              {/* Check Answer Button */}
-              <button
-                onClick={handleCheckAnswer}
-                disabled={isEvaluating}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-black text-sm rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <CheckCircle2 className="w-5 h-5" /> उत्तर जांचें (Check Answer) ➔
-              </button>
+            {/* Numeral Selection Buttons */}
+            <div className="w-full max-w-lg">
+              <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
+                समीकरण पूरा करने के लिए सही संख्या चुनें (Choose missing number):
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                {options.map((num) => {
+                  const isSelected = selectedNum === num;
+                  const isRight = isSelected && isCorrect === true;
+                  const isWrong = isSelected && isCorrect === false;
+
+                  return (
+                    <button
+                      key={num}
+                      disabled={isBusy}
+                      onClick={() => handleSelect(num)}
+                      className={`relative py-4 md:py-6 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md cursor-pointer ${
+                        isRight
+                          ? 'bg-emerald-500 border-emerald-600 text-white scale-105 shadow-emerald-200'
+                          : isWrong
+                          ? 'bg-amber-100 border-amber-400 text-amber-900'
+                          : 'bg-amber-50/50 hover:bg-amber-100 border-amber-200 text-slate-800 hover:border-amber-400 hover:scale-102 active:scale-95'
+                      }`}
+                    >
+                      <span className="text-3xl md:text-4xl font-black">{num}</span>
+                      <span
+                        className={`text-xs md:text-sm font-extrabold mt-1 ${
+                          isRight ? 'text-emerald-100' : 'text-amber-800'
+                        }`}
+                      >
+                        {NUMBER_MAP[num].hi} • {NUMBER_MAP[num].eng}
+                      </span>
+                      {isRight && <CheckCircle2 className="w-5 h-5 text-white absolute top-2 right-2" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </>
         )}
