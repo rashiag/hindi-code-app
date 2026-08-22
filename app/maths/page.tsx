@@ -4,15 +4,16 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
 import { HindiNumberBonds } from '@/components/HindiNumberBonds';
+import { HindiSubtraction } from '@/components/HindiSubtraction';
 
-type MathTab = 'counting' | 'bonds' | 'vedic';
+type MathTab = 'counting' | 'bonds' | 'subtraction' | 'vedic';
 
 function MathsPortalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get('tab');
-  const validTabs: MathTab[] = ['counting', 'bonds', 'vedic'];
+  const validTabs: MathTab[] = ['counting', 'bonds', 'subtraction', 'vedic'];
   const activeTab: MathTab = validTabs.includes(tabParam as MathTab) ? (tabParam as MathTab) : 'counting';
 
   const handleTabChange = (newTab: MathTab) => {
@@ -37,7 +38,7 @@ function MathsPortalContent() {
           </div>
         </div>
 
-        {/* Maths Tabs */}
+        {/* Maths Navigation Tabs */}
         <div className="w-full md:w-auto flex items-center bg-amber-100/60 p-1 rounded-xl border border-amber-200 text-xs font-bold gap-1 overflow-x-auto">
           <button
             onClick={() => handleTabChange('counting')}
@@ -47,7 +48,7 @@ function MathsPortalContent() {
                 : 'text-amber-900 hover:bg-amber-200/50'
             }`}
           >
-            🍎 गिनती मिलाओ (Counting Match)
+            🍎 गिनती मिलाओ
           </button>
           <button
             onClick={() => handleTabChange('bonds')}
@@ -57,7 +58,17 @@ function MathsPortalContent() {
                 : 'text-amber-900 hover:bg-amber-200/50'
             }`}
           >
-            🎯 अंक जोड़ (Number Bonds)
+            ➕ अंक जोड़
+          </button>
+          <button
+            onClick={() => handleTabChange('subtraction')}
+            className={`px-3.5 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
+              activeTab === 'subtraction'
+                ? 'bg-amber-600 text-white shadow-md'
+                : 'text-amber-900 hover:bg-amber-200/50'
+            }`}
+          >
+            ➖ अंक घटाव
           </button>
           <button
             onClick={() => handleTabChange('vedic')}
@@ -67,19 +78,20 @@ function MathsPortalContent() {
                 : 'text-amber-900 hover:bg-amber-200/50'
             }`}
           >
-            ✨ वैदिक गणित (Visual Math)
+            ✨ वैदिक गणित
           </button>
         </div>
       </header>
 
-      {/* Render Active Math App */}
+      {/* Render Active Tool */}
       <div className="w-full max-w-5xl">
         {activeTab === 'counting' && <HindiMathStudio />}
         {activeTab === 'bonds' && <HindiNumberBonds />}
+        {activeTab === 'subtraction' && <HindiSubtraction />}
         {activeTab === 'vedic' && (
           <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-amber-300 text-center text-amber-900">
             <span className="text-4xl block mb-3">✨</span>
-            <h3 className="text-xl font-black mb-1">वैदिक गणित (Visual Multiplication Grids)</h3>
+            <h3 className="text-xl font-black mb-1">वैदिक गणित (Visual Pattern Lab)</h3>
             <p className="text-xs text-slate-500 font-semibold">आगामी मॉड्यूल — जल्द उपलब्ध होगा</p>
           </div>
         )}
