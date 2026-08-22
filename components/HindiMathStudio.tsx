@@ -74,7 +74,7 @@ export function HindiMathStudio() {
     }
   };
 
-  const speakAudio = (text: string, lang: 'hi-IN' | 'en-IN' | 'en-US' = 'hi-IN', rate: number = 0.85): Promise<void> => {
+  const speakAudio = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN', rate: number = 0.85): Promise<void> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         resolve();
@@ -90,12 +90,7 @@ export function HindiMathStudio() {
     });
   };
 
-  const generateQuestion = (roundNum: number = currentRound) => {
-    if (roundNum > TOTAL_ROUNDS) {
-      triggerGameOver();
-      return;
-    }
-
+  const generateQuestion = () => {
     const maxVal = tier === 1 ? 5 : 10;
     const minVal = 1;
     const count = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
@@ -116,16 +111,16 @@ export function HindiMathStudio() {
     setIsCountingAnimation(false);
   };
 
-  const triggerGameOver = async () => {
+  const triggerGameOver = async (finalScore: number) => {
     setIsGameOver(true);
-    if (score >= 4) {
-      await speakAudio(`अद्भुत प्रदर्शन! आपने पाँच में से ${score} अंक प्राप्त किए हैं!`, 'hi-IN');
+    if (finalScore >= 4) {
+      await speakAudio(`अद्भुत प्रदर्शन! आपने पाँच में से ${finalScore} अंक प्राप्त किए हैं!`, 'hi-IN');
       await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Outstanding! You scored ${score} out of 5!`, 'en-IN', 0.9);
+      await speakAudio(`Outstanding! You scored ${finalScore} out of 5!`, 'en-IN', 0.9);
     } else {
-      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${score} अंक प्राप्त किए हैं। आइए फिर से अभ्यास करें!`, 'hi-IN');
+      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${finalScore} अंक प्राप्त किए हैं। आइए फिर से अभ्यास करें!`, 'hi-IN');
       await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Good job! You scored ${score} out of 5. Let's practice again!`, 'en-IN', 0.9);
+      await speakAudio(`Good job! You scored ${finalScore} out of 5. Let's practice again!`, 'en-IN', 0.9);
     }
   };
 
@@ -134,7 +129,7 @@ export function HindiMathStudio() {
     setStreak(0);
     setCurrentRound(1);
     setIsGameOver(false);
-    generateQuestion(1);
+    generateQuestion();
   };
 
   useEffect(() => {
@@ -149,25 +144,21 @@ export function HindiMathStudio() {
 
     if (num === targetCount) {
       setIsCorrect(true);
-      const newScore = score + 1;
-      setScore(newScore);
+      const updatedScore = score + 1;
+      setScore(updatedScore);
       setStreak((prev) => prev + 1);
       playSuccessChime();
 
-      // Hindi Praise
       await speakAudio(`शाबाश! ${NUMBER_MAP[num].hindiWord} ${activeItem.hindi}!`, 'hi-IN');
       await new Promise((r) => setTimeout(r, 150));
-      
-      // Dual-Language English Reinforcement
       await speakAudio(`Great! ${NUMBER_MAP[num].engWord} ${itemName}!`, 'en-IN', 0.9);
 
       setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
-          triggerGameOver();
+          triggerGameOver(updatedScore);
         } else {
-          const nextR = currentRound + 1;
-          setCurrentRound(nextR);
-          generateQuestion(nextR);
+          setCurrentRound((prev) => prev + 1);
+          generateQuestion();
         }
       }, 1200);
     } else {
@@ -177,7 +168,6 @@ export function HindiMathStudio() {
 
       await speakAudio(`आइए मिलकर गिनते हैं...`, 'hi-IN');
 
-      // Sequential Counting Animation
       for (let i = 1; i <= targetCount; i++) {
         setCountingIndex(i - 1);
         await speakAudio(NUMBER_MAP[i].hindiWord, 'hi-IN', 0.9);
@@ -186,22 +176,18 @@ export function HindiMathStudio() {
 
       setCountingIndex(-1);
       
-      // Hindi Final Count
       await speakAudio(`यहाँ कुल ${NUMBER_MAP[targetCount].hindiWord} ${activeItem.hindi} हैं।`, 'hi-IN');
       await new Promise((r) => setTimeout(r, 200));
-      
-      // English Final Count Reinforcement
       await speakAudio(`There are ${NUMBER_MAP[targetCount].engWord} ${itemName}.`, 'en-IN', 0.9);
 
       setIsCountingAnimation(false);
 
       setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
-          triggerGameOver();
+          triggerGameOver(score);
         } else {
-          const nextR = currentRound + 1;
-          setCurrentRound(nextR);
-          generateQuestion(nextR);
+          setCurrentRound((prev) => prev + 1);
+          generateQuestion();
         }
       }, 800);
     }
@@ -221,7 +207,7 @@ export function HindiMathStudio() {
           </p>
         </div>
 
-        {/* Turn Progress Pills */}
+        {/* Turn Progress Indicators */}
         <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300">
           <span className="text-xs font-black text-amber-900 mr-1">राउंड:</span>
           {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
@@ -292,7 +278,7 @@ export function HindiMathStudio() {
                 : '💪 Keep practicing! अभ्यास जारी रखें!'}
             </p>
 
-            {/* Stars Earned */}
+            {/* Accurate Stars Earned */}
             <div className="flex items-center gap-2 mb-6">
               {Array.from({ length: 5 }).map((_, idx) => (
                 <Star
@@ -318,7 +304,7 @@ export function HindiMathStudio() {
               <div className="w-px bg-slate-200" />
               <div>
                 <span className="block text-xs font-bold text-slate-500">सटीकता (Accuracy)</span>
-                <span className="text-xl font-black text-amber-600">{(score / 5) * 100}%</span>
+                <span className="text-xl font-black text-amber-600">{Math.round((score / 5) * 100)}%</span>
               </div>
             </div>
 
