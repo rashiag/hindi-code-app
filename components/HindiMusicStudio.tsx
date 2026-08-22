@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, RotateCcw, Award, Star, Music2, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Volume2, RotateCcw, Award, Star, Music2, Sparkles, CheckCircle2, ListMusic } from 'lucide-react';
 
 interface KeyConfig {
   id: string;
@@ -10,7 +10,7 @@ interface KeyConfig {
   subText: string;
   freq: number;
   isBlack: boolean;
-  leftPercent?: number; // for positioning black keys
+  leftPercent?: number;
 }
 
 // 9 White Keys spanning Mandra Ni to Taar Komal Re
@@ -42,38 +42,118 @@ interface SongTutorial {
   title: string;
   hindiTitle: string;
   emoji: string;
-  sequence: string[]; // key ids
+  sequence: string[];
+  lyrics: string[];
 }
 
-// Classical Bilawal / Natural Scale starting on Kali-1 (Db4)
 const SONG_LIBRARY: SongTutorial[] = [
   {
-    id: 'sargam',
-    title: 'Natural Sargam Scale (सा रे ग म प ध नि सां)',
-    hindiTitle: 'शुद्ध स्वर सरगम (Kali-1)',
-    emoji: '🎵',
-    sequence: ['Db4', 'Eb4', 'F4', 'Fs4', 'Ab4', 'Bb4', 'C5', 'Db5']
+    id: 'jana_gana_mana',
+    title: 'Jana Gana Mana (National Anthem)',
+    hindiTitle: '🇮🇳 जन गण मन (राष्ट्रगान)',
+    emoji: '🇮🇳',
+    sequence: [
+      // जन गण मन अधिनायक जय हे
+      'Db4', 'Eb4', 'F4', 'F4', 'F4', 'F4', 'F4', 'F4', 'F4', 'F4', 'Eb4', 'F4', 'Fs4',
+      // भारत भाग्य विधाता
+      'F4', 'F4', 'F4', 'Eb4', 'Eb4', 'Eb4', 'C4', 'Eb4', 'Db4',
+      // पंजाब सिन्धु गुजरात मराठा
+      'Db4', 'Ab4', 'Ab4', 'Ab4', 'Ab4', 'Ab4', 'Ab4', 'G4', 'Ab4', 'Fs4',
+      // द्राविड़ उत्कल बंग
+      'F4', 'F4', 'F4', 'Eb4', 'Fs4', 'F4',
+      // जय हे, जय हे, जय हे
+      'Db5', 'Db5', 'C5', 'Bb4', 'C5',
+      // जय जय जय जय हे
+      'Db4', 'Eb4', 'F4', 'F4', 'Eb4', 'F4', 'Fs4'
+    ],
+    lyrics: [
+      'ज', 'न', 'ग', 'ण', 'म', 'न', 'अ', 'धि', 'ना', 'य', 'क', 'ज', 'य',
+      'भा', 'र', 'त', 'भा', 'ग्य', 'वि', 'धा', 'ता',
+      'पं', 'जा', 'ब', 'सि', 'न्धु', 'गु', 'ज', 'रा', 'त', 'म',
+      'द्रा', 'वि', 'ड़', 'उ', 'त्क', 'ल',
+      'ज', 'य', 'हे', 'ज', 'य',
+      'ज', 'य', 'ज', 'य', 'ज', 'य', 'हे'
+    ]
   },
   {
-    id: 'sargam_black',
-    title: 'Black Keys Only (काली कुंजियाँ)',
-    hindiTitle: 'सा रे म प ध सां (भूप / Durga)',
-    emoji: '🎹',
-    sequence: ['Db4', 'Eb4', 'Fs4', 'Ab4', 'Bb4', 'Db5']
+    id: 'lakdi_ki_kathi',
+    title: 'Lakdi Ki Kaathi (Full Melody)',
+    hindiTitle: '🐎 लकड़ी की काठी',
+    emoji: '🪵',
+    sequence: [
+      // लकड़ी की काठी
+      'F4', 'F4', 'F4', 'Eb4', 'Db4',
+      // काठी पे घोड़ा
+      'F4', 'F4', 'F4', 'Eb4', 'Db4',
+      // घोड़े की दुम पे जो मारा हथौड़ा
+      'Fs4', 'Fs4', 'Fs4', 'Fs4', 'Fs4', 'F4', 'Eb4', 'Db4', 'Eb4', 'F4',
+      // दौड़ा दौड़ा दौड़ा घोड़ा दुम उठा के दौड़ा
+      'Ab4', 'Ab4', 'Ab4', 'Ab4', 'Fs4', 'F4', 'Eb4', 'Db4', 'Eb4', 'Db4'
+    ],
+    lyrics: [
+      'लक', 'ड़ी', 'की', 'का', 'ठी',
+      'का', 'ठी', 'पे', 'घो', 'ड़ा',
+      'घो', 'ड़े', 'की', 'दुम', 'पे', 'जो', 'मा', 'रा', 'ह', 'थौड़ा',
+      'दौ', 'ड़ा', 'दौ', 'ड़ा', 'घो', 'ड़ा', 'दुम', 'उ', 'ठा', 'के'
+    ]
   },
   {
-    id: 'twinkle',
-    title: 'Twinkle Twinkle Little Star',
-    hindiTitle: 'ट्विंकल ट्विंकल (सा सा प प)',
-    emoji: '⭐',
-    sequence: ['Db4', 'Db4', 'Ab4', 'Ab4', 'Bb4', 'Bb4', 'Ab4', 'Fs4', 'Fs4', 'F4', 'F4', 'Eb4', 'Eb4', 'Db4']
+    id: 'saare_jahan',
+    title: 'Saare Jahan Se Achha (Extended)',
+    hindiTitle: '🕊️ सारे जहाँ से अच्छा',
+    emoji: '🇮🇳',
+    sequence: [
+      // सारे जहाँ से अच्छा
+      'Db4', 'Eb4', 'F4', 'Db4', 'Eb4', 'F4', 'Fs4', 'F4',
+      // हिन्दोस्ताँ हमारा
+      'Eb4', 'Db4', 'Eb4', 'Db4', 'C4', 'Db4',
+      // हम बुलबुलें हैं इसकी
+      'F4', 'Fs4', 'Ab4', 'Ab4', 'Bb4', 'Ab4', 'Fs4', 'F4',
+      // ये गुलसितां हमारा हमारा
+      'Fs4', 'F4', 'Eb4', 'Db4', 'Eb4', 'Db4'
+    ],
+    lyrics: [
+      'सा', 'रे', 'ज', 'हाँ', 'से', 'अ', 'च्छा', '...',
+      'हि', 'न्दो', 'स्ताँ', 'ह', 'मा', 'रा',
+      'हम', 'बुल', 'बु', 'लें', 'हैं', 'इस', 'की', '...',
+      'ये', 'गुल', 'सि', 'तां', 'ह', 'मा', 'रा'
+    ]
   },
   {
     id: 'birthday',
-    title: 'Happy Birthday to You',
-    hindiTitle: 'जन्मदिन गीत',
-    emoji: '🎂',
-    sequence: ['Db4', 'Db4', 'Eb4', 'Db4', 'Fs4', 'F4', 'Db4', 'Db4', 'Eb4', 'Db4', 'Ab4', 'Fs4']
+    title: 'Happy Birthday To You (Full Song)',
+    hindiTitle: '🎂 जन्मदिन की बधाई',
+    emoji: '🎉',
+    sequence: [
+      // Happy birthday to you
+      'Db4', 'Db4', 'Eb4', 'Db4', 'Fs4', 'F4',
+      // Happy birthday to you
+      'Db4', 'Db4', 'Eb4', 'Db4', 'Ab4', 'Fs4',
+      // Happy birthday dear child
+      'Db4', 'Db4', 'Db5', 'Bb4', 'Fs4', 'F4', 'Eb4',
+      // Happy birthday to you
+      'B4', 'B4', 'Bb4', 'Fs4', 'Ab4', 'Fs4'
+    ],
+    lyrics: [
+      'Hap-', 'py', 'birth-', 'day', 'to', 'you',
+      'Hap-', 'py', 'birth-', 'day', 'to', 'you',
+      'Hap-', 'py', 'birth-', 'day', 'dear', 'one', '...',
+      'Hap-', 'py', 'birth-', 'day', 'to', 'you'
+    ]
+  },
+  {
+    id: 'sargam_aaroh_avroh',
+    title: 'Sargam Aaroh & Avroh (आरोह-अवरोह)',
+    hindiTitle: '🎵 संपूर्ण सरगम अभ्यास',
+    emoji: '🎼',
+    sequence: [
+      'Db4', 'Eb4', 'F4', 'Fs4', 'Ab4', 'Bb4', 'C5', 'Db5',
+      'Db5', 'C5', 'Bb4', 'Ab4', 'Fs4', 'F4', 'Eb4', 'Db4'
+    ],
+    lyrics: [
+      'सा', 'रे', 'ग', 'म', 'प', 'ध', 'नि', 'सां',
+      'सां', 'नि', 'ध', 'प', 'म', 'ग', 'रे', 'सा'
+    ]
   }
 ];
 
@@ -99,7 +179,6 @@ export function HindiMusicStudio() {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      // Triangle waveform for authentic Indian harmonium/reed acoustic tone
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, now);
 
@@ -146,6 +225,7 @@ export function HindiMusicStudio() {
 
   const currentTargetId = selectedSong && !isCompleted ? selectedSong.sequence[tutorialIndex] : null;
   const currentTargetObj = [...WHITE_KEYS, ...BLACK_KEYS].find((k) => k.id === currentTargetId);
+  const currentLyric = selectedSong && selectedSong.lyrics ? selectedSong.lyrics[tutorialIndex] : '';
 
   return (
     <div className="max-w-5xl mx-auto p-3 md:p-6 font-sans select-none">
@@ -156,16 +236,16 @@ export function HindiMusicStudio() {
             🎹
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-purple-950">स्वर हारमोनियम व पियानो (Indian Classical Keyboard)</h1>
+            <h1 className="text-xl md:text-2xl font-black text-purple-950">स्वर हारमोनियम व पियानो (Kids Music &amp; Song Lab)</h1>
             <p className="text-xs md:text-sm font-semibold text-purple-800">
-              काली-१ (C#) आधारित वास्तविक स्वर विन्यास • Harmonium &amp; Keyboard Layout
+              राष्ट्रगान व बाल-गीतों का संपूर्ण स्वर अभ्यास • Complete Song Melodies
             </p>
           </div>
         </div>
 
         {selectedSong && (
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-purple-300 shadow-sm">
-            <span className="text-xs font-black text-purple-900">धुन प्रगति:</span>
+          <div className="flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-purple-300 shadow-sm">
+            <span className="text-xs font-black text-purple-900">स्वर प्रगति:</span>
             <span className="text-xs font-extrabold text-purple-700">
               {tutorialIndex}/{selectedSong.sequence.length}
             </span>
@@ -173,13 +253,13 @@ export function HindiMusicStudio() {
         )}
       </div>
 
-      {/* Main Studio Area */}
+      {/* Main Studio Card */}
       <div className="bg-white rounded-3xl p-4 md:p-8 border-2 border-purple-200 shadow-xl flex flex-col items-center">
         
-        {/* Melody Selector */}
+        {/* Song Selector */}
         <div className="w-full mb-6">
           <p className="text-center text-xs font-bold text-slate-500 mb-3">
-            अभ्यास हेतु धुन चुनें (Select a melody to practice):
+            बजाने के लिए गीत या सरगम चुनें (Select a complete song):
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2">
             <button
@@ -207,21 +287,28 @@ export function HindiMusicStudio() {
           </div>
         </div>
 
-        {/* Guidance Prompt */}
+        {/* Dynamic Lyric & Note Guidance Prompt */}
         {selectedSong && !isCompleted && currentTargetObj && (
-          <div className="w-full max-w-lg bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5 mb-6 text-center flex items-center justify-between shadow-sm animate-in fade-in">
+          <div className="w-full max-w-xl bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm animate-in fade-in">
             <div className="flex items-center gap-3 text-left">
-              <span className="text-2xl">{selectedSong.emoji}</span>
+              <span className="text-3xl">{selectedSong.emoji}</span>
               <div>
-                <span className="block text-[11px] font-extrabold text-amber-950">अगला स्वर दबाएँ (Press Next Note):</span>
-                <span className="text-lg md:text-xl font-black text-amber-900">
-                  {currentTargetObj.swar} • {currentTargetObj.hindiLabel} {currentTargetObj.subText}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-extrabold text-amber-950">गीत के बोल (Lyrics):</span>
+                  {currentLyric && (
+                    <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md text-xs font-black">
+                      "{currentLyric}"
+                    </span>
+                  )}
+                </div>
+                <span className="text-xl md:text-2xl font-black text-amber-900">
+                  दबाएं: {currentTargetObj.swar} ({currentTargetObj.hindiLabel} {currentTargetObj.subText})
                 </span>
               </div>
             </div>
             <button
               onClick={handleReset}
-              className="p-2 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-xl text-xs font-bold transition cursor-pointer"
+              className="p-2.5 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-xl text-xs font-bold transition cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -231,9 +318,11 @@ export function HindiMusicStudio() {
         {/* Completion Modal Card */}
         {isCompleted && (
           <div className="w-full max-w-md bg-gradient-to-b from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-300 p-6 mb-6 text-center shadow-md animate-in zoom-in-95">
-            <span className="text-4xl block mb-2">🎉</span>
-            <h3 className="text-lg font-black text-purple-950 mb-1">शाबाश! धुन पूरी हो गई!</h3>
-            <p className="text-xs font-bold text-purple-800 mb-4">You successfully played {selectedSong?.title}!</p>
+            <span className="text-5xl block mb-2">🏆</span>
+            <h3 className="text-xl font-black text-purple-950 mb-1">अद्भुत प्रदर्शन! पूरा गीत बजा लिया!</h3>
+            <p className="text-xs font-bold text-purple-800 mb-4">
+              You successfully mastered {selectedSong?.title}!
+            </p>
             <button
               onClick={handleReset}
               className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer"
@@ -243,10 +332,10 @@ export function HindiMusicStudio() {
           </div>
         )}
 
-        {/* Exact Layout Piano Deck */}
+        {/* Exact Layout Harmonium & Piano Deck */}
         <div className="relative bg-gradient-to-b from-stone-900 to-stone-950 p-4 md:p-6 rounded-3xl shadow-2xl border-4 border-stone-800 w-full max-w-4xl select-none overflow-x-auto">
           
-          {/* Top Harmonium Wood Bellow Strip */}
+          {/* Top Bellow Strip */}
           <div className="w-full h-3.5 bg-amber-950 rounded-t-md mb-2 border-b border-amber-900/80 flex items-center justify-center">
             <div className="w-full h-0.5 bg-amber-600/40" />
           </div>
@@ -271,12 +360,9 @@ export function HindiMusicStudio() {
                       : 'bg-white hover:bg-stone-50 shadow-[0_5px_0_#cbd5e1,0_8px_10px_rgba(0,0,0,0.35)]'
                   }`}
                 >
-                  {/* Swar Name */}
                   <span className="text-xl md:text-2xl font-black text-stone-900 leading-none">
                     {key.swar}
                   </span>
-                  
-                  {/* Hindi & Komal/Tivra subtitle matching your reference */}
                   <span className="text-[11px] md:text-xs font-bold text-stone-600 mt-1">
                     {key.hindiLabel} {key.subText}
                   </span>
@@ -284,7 +370,7 @@ export function HindiMusicStudio() {
               );
             })}
 
-            {/* 7 Black Keys Styled to Match Reference Image */}
+            {/* 7 Black Keys */}
             {BLACK_KEYS.map((key) => {
               const isTarget = currentTargetId === key.id;
               const isPressed = activeId === key.id;
@@ -302,12 +388,9 @@ export function HindiMusicStudio() {
                       : 'bg-gradient-to-b from-stone-900 via-stone-950 to-black shadow-[0_4px_0_#0f172a,0_8px_12px_rgba(0,0,0,0.7)] text-white'
                   }`}
                 >
-                  {/* Devanagari Svar Accent */}
                   <span className={`text-[11px] font-black ${key.swar.includes('.') ? 'text-red-400' : 'text-stone-300'}`}>
                     {key.hindiLabel}
                   </span>
-
-                  {/* Primary Latin Swar Label */}
                   <span className={`text-sm md:text-base font-black leading-tight mt-0.5 ${key.swar.includes('.') ? 'text-red-400' : 'text-white'}`}>
                     {key.swar}
                   </span>
@@ -317,19 +400,6 @@ export function HindiMusicStudio() {
           </div>
 
           <div className="w-full h-1 bg-stone-800 rounded-b mt-1" />
-        </div>
-
-        {/* Indian Music Theory Quick Reference */}
-        <div className="w-full max-w-4xl mt-6 bg-purple-50/60 rounded-2xl p-4 border border-purple-200 flex flex-wrap items-center justify-around gap-3 text-center text-xs font-bold text-purple-950">
-          <div>
-            <span className="block text-stone-500">काली कुंजियाँ (Black Keys)</span>
-            <span className="text-sm font-black text-purple-900">Sa • Re • Ma • Pa • Da • Sȧ • Rė</span>
-          </div>
-          <div className="hidden md:block w-px h-8 bg-purple-200" />
-          <div>
-            <span className="block text-stone-500">सफ़ेद कुंजियाँ (White Keys)</span>
-            <span className="text-sm font-black text-purple-900">Ni • Re(k) • Ga(k) • Ga • Ma(t) • Da(k) • Ni(k) • Ni</span>
-          </div>
         </div>
 
       </div>
