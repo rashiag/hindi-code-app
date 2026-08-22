@@ -70,7 +70,7 @@ export function HindiNumberBonds() {
       osc.start(now);
       osc.stop(now + 0.5);
     } catch (e) {
-      console.log('Audio chime error:', e);
+      console.log('Audio error:', e);
     }
   };
 
@@ -91,23 +91,24 @@ export function HindiNumberBonds() {
   };
 
   const generateQuestion = () => {
-    // Generate dynamic target sum between 3 and 10
-    const sum = Math.floor(Math.random() * 8) + 3; // 3 to 10
-    const base = Math.floor(Math.random() * (sum - 1)) + 1; // 1 to sum-1
+    // Generate dynamic target sum between 4 and 10
+    const sum = Math.floor(Math.random() * 7) + 4; // 4 to 10
+    const base = Math.floor(Math.random() * (sum - 2)) + 1; // 1 to sum-2
     const correct = sum - base;
 
-    // Generate 3 unique options
-    const opts = new Set<number>([correct]);
-    while (opts.size < 3) {
-      const wrong = Math.floor(Math.random() * 9) + 1; // 1 to 9
-      if (wrong !== correct && wrong < sum) {
-        opts.add(wrong);
-      }
-    }
+    // Safe option generation without while-loop freeze
+    const candidates = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(
+      (n) => n !== correct && n < 10
+    );
+    candidates.sort(() => Math.random() - 0.5);
+
+    const generatedOpts = [correct, candidates[0], candidates[1]].sort(
+      () => Math.random() - 0.5
+    );
 
     setTargetSum(sum);
     setBaseNum(base);
-    setOptions(Array.from(opts).sort(() => Math.random() - 0.5));
+    setOptions(generatedOpts);
     setSelectedNum(null);
     setIsCorrect(null);
     setShowBeadVisual(false);
@@ -183,7 +184,6 @@ export function HindiNumberBonds() {
       }, 1000);
 
     } else {
-      // Incorrect -> Show bead animation explanation
       setIsCorrect(false);
       setStreak(0);
       setShowBeadVisual(true);
@@ -193,7 +193,6 @@ export function HindiNumberBonds() {
         'hi-IN'
       );
 
-      // Animate adding the missing beads step by step
       for (let i = 1; i <= missingCorrect; i++) {
         setAnimatedBeadCount(i);
         await speakAudio(NUMBER_MAP[i].word, 'hi-IN', 0.9);
@@ -230,7 +229,7 @@ export function HindiNumberBonds() {
           </p>
         </div>
 
-        {/* Round Progress Indicators */}
+        {/* Round Indicators */}
         <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm">
           <span className="text-xs font-black text-amber-900 mr-1">राउंड:</span>
           {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
@@ -250,7 +249,7 @@ export function HindiNumberBonds() {
           </span>
         </div>
 
-        {/* Live Score Counter */}
+        {/* Live Score */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-xs font-black border border-amber-200">
             <Award className="w-4 h-4 text-amber-600" /> सही: {score}/{TOTAL_ROUNDS}
@@ -340,7 +339,6 @@ export function HindiNumberBonds() {
 
             {/* Equation Display Box */}
             <div className="flex items-center justify-center gap-3 md:gap-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-200 px-8 py-5 rounded-3xl mb-8 shadow-sm">
-              {/* Base Number */}
               <div className="flex flex-col items-center bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
                 <span className="text-3xl md:text-4xl font-black">{baseNum}</span>
                 <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[baseNum].hi} ({NUMBER_MAP[baseNum].word})</span>
@@ -348,7 +346,6 @@ export function HindiNumberBonds() {
 
               <span className="text-3xl md:text-4xl font-black text-amber-900">+</span>
 
-              {/* Missing Number Placeholder Box */}
               <div
                 className={`flex flex-col items-center justify-center px-5 py-3 rounded-2xl border-2 min-w-[80px] transition-all ${
                   isCorrect === true
@@ -370,7 +367,6 @@ export function HindiNumberBonds() {
 
               <span className="text-3xl md:text-4xl font-black text-amber-900">=</span>
 
-              {/* Target Sum */}
               <div className="flex flex-col items-center bg-amber-700 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
                 <span className="text-3xl md:text-4xl font-black">{targetSum}</span>
                 <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[targetSum].hi} ({NUMBER_MAP[targetSum].word})</span>
@@ -382,12 +378,10 @@ export function HindiNumberBonds() {
               <div className="w-full max-w-md bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
                 <span className="text-xs font-black text-amber-900 mb-2">मनके जोड़कर देखें (Visual Clarification):</span>
                 <div className="flex flex-wrap items-center justify-center gap-2">
-                  {/* Base Beads */}
                   {Array.from({ length: baseNum }).map((_, i) => (
                     <span key={`b-${i}`} className="text-3xl filter drop-shadow">🔵</span>
                   ))}
                   <span className="text-xl font-black text-amber-800 mx-1">+</span>
-                  {/* Animated Added Beads */}
                   {Array.from({ length: missingCorrect }).map((_, i) => (
                     <span
                       key={`a-${i}`}
