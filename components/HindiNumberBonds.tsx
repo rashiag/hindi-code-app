@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, RotateCcw, Award, Sparkles, CheckCircle2, Trophy, Star } from 'lucide-react';
+import { Volume2, RotateCcw, Award, Sparkles, CheckCircle2, Trophy, Star, ArrowRight } from 'lucide-react';
 
 const NUMBER_MAP: { [key: number]: { hi: string; word: string; eng: string } } = {
   0: { hi: '०', word: 'शून्य', eng: 'Zero' },
@@ -19,7 +19,6 @@ const NUMBER_MAP: { [key: number]: { hi: string; word: string; eng: string } } =
 
 const TOTAL_ROUNDS = 5;
 
-// Pre-defined safe question bank so it can never enter any loop
 const QUESTION_POOL = [
   { base: 2, sum: 5, correct: 3, opts: [3, 1, 4] },
   { base: 3, sum: 7, correct: 4, opts: [4, 2, 5] },
@@ -46,14 +45,14 @@ export function HindiNumberBonds() {
   const [finalScore, setFinalScore] = useState<number>(0);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const activeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const currentQ = QUESTION_POOL[questionIndex % QUESTION_POOL.length];
 
   const clearTimer = () => {
-    if (activeTimerRef.current) {
-      clearTimeout(activeTimerRef.current);
-      activeTimerRef.current = null;
+    if (autoAdvanceTimer.current) {
+      clearTimeout(autoAdvanceTimer.current);
+      autoAdvanceTimer.current = null;
     }
   };
 
@@ -66,7 +65,6 @@ export function HindiNumberBonds() {
     };
   }, []);
 
-  // Fail-safe Web Speech function that cannot freeze the page
   const playSpeech = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN') => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
@@ -75,9 +73,7 @@ export function HindiNumberBonds() {
       u.lang = lang;
       u.rate = 0.85;
       window.speechSynthesis.speak(u);
-    } catch (e) {
-      console.log('Speech ignored', e);
-    }
+    } catch (e) {}
   };
 
   const playSuccessChime = () => {
@@ -123,6 +119,22 @@ export function HindiNumberBonds() {
     startNewGame();
   }, []);
 
+  const handleNextQuestion = () => {
+    clearTimer();
+    if (currentRound >= TOTAL_ROUNDS) {
+      setIsGameOver(true);
+      setFinalScore(score);
+      setIsBusy(false);
+    } else {
+      setCurrentRound((prev) => prev + 1);
+      setQuestionIndex((prev) => (prev + 1) % QUESTION_POOL.length);
+      setSelectedNum(null);
+      setIsCorrect(null);
+      setShowBeadVisual(false);
+      setIsBusy(false);
+    }
+  };
+
   const handleSelect = (num: number) => {
     if (isBusy || isGameOver || isCorrect !== null) return;
     setIsBusy(true);
@@ -138,7 +150,8 @@ export function HindiNumberBonds() {
       playSuccessChime();
       playSpeech(`शाबाश! ${NUMBER_MAP[currentQ.base].word} और ${NUMBER_MAP[num].word} मिलकर बनते हैं ${NUMBER_MAP[currentQ.sum].word}!`);
 
-      activeTimerRef.current = setTimeout(() => {
+      // Gentle auto-advance ONLY on correct answers
+      autoAdvanceTimer.current = setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
           setIsGameOver(true);
           setFinalScore(nextScore);
@@ -151,28 +164,14 @@ export function HindiNumberBonds() {
           setShowBeadVisual(false);
           setIsBusy(false);
         }
-      }, 1400);
+      }, 1600);
 
     } else {
+      // Incorrect -> Stays visible permanently until user clicks Next
       setIsCorrect(false);
       setStreak(0);
       setShowBeadVisual(true);
       playSpeech(`यहाँ ${NUMBER_MAP[currentQ.correct].word} और मनके चाहिए! ${NUMBER_MAP[currentQ.base].eng} plus ${NUMBER_MAP[currentQ.correct].eng} equals ${NUMBER_MAP[currentQ.sum].eng}!`);
-
-      activeTimerRef.current = setTimeout(() => {
-        if (currentRound >= TOTAL_ROUNDS) {
-          setIsGameOver(true);
-          setFinalScore(score);
-          setIsBusy(false);
-        } else {
-          setCurrentRound((prev) => prev + 1);
-          setQuestionIndex((prev) => (prev + 1) % QUESTION_POOL.length);
-          setSelectedNum(null);
-          setIsCorrect(null);
-          setShowBeadVisual(false);
-          setIsBusy(false);
-        }
-      }, 2000);
     }
   };
 
@@ -298,7 +297,7 @@ export function HindiNumberBonds() {
             </button>
 
             {/* Equation Display Box */}
-            <div className="flex items-center justify-center gap-3 md:gap-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-200 px-8 py-5 rounded-3xl mb-8 shadow-sm">
+            <div className="flex items-center justify-center gap-3 md:gap-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-200 px-8 py-5 rounded-3xl mb-6 shadow-sm">
               <div className="flex flex-col items-center bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
                 <span className="text-3xl md:text-4xl font-black">{currentQ.base}</span>
                 <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[currentQ.base].hi} ({NUMBER_MAP[currentQ.base].word})</span>
@@ -311,7 +310,7 @@ export function HindiNumberBonds() {
                   isCorrect === true
                     ? 'bg-emerald-500 border-emerald-600 text-white shadow-md scale-105'
                     : isCorrect === false
-                    ? 'bg-amber-100 border-amber-400 text-amber-900'
+                    ? 'bg-rose-100 border-rose-400 text-rose-900'
                     : 'bg-white border-dashed border-amber-400 text-amber-600'
                 }`}
               >
@@ -333,11 +332,13 @@ export function HindiNumberBonds() {
               </div>
             </div>
 
-            {/* Visual Bead Clarification on Incorrect Choice */}
+            {/* Visual Bead Explanation with Explicit "Next" Button */}
             {showBeadVisual && (
-              <div className="w-full max-w-md bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-6 flex flex-col items-center">
-                <span className="text-xs font-black text-amber-900 mb-2">मनके जोड़कर देखें (Visual Clarification):</span>
-                <div className="flex flex-wrap items-center justify-center gap-2">
+              <div className="w-full max-w-md bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
+                <span className="text-xs font-black text-amber-900 mb-3">
+                  💡 समझिए: {NUMBER_MAP[currentQ.base].word} मनके + {NUMBER_MAP[currentQ.correct].word} मनके = कुल {NUMBER_MAP[currentQ.sum].word} मनके
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-4 bg-white px-4 py-2.5 rounded-xl border border-amber-200">
                   {Array.from({ length: currentQ.base }).map((_, i) => (
                     <span key={`b-${i}`} className="text-3xl filter drop-shadow">🔵</span>
                   ))}
@@ -345,48 +346,60 @@ export function HindiNumberBonds() {
                   {Array.from({ length: currentQ.correct }).map((_, i) => (
                     <span key={`a-${i}`} className="text-3xl filter drop-shadow">🟡</span>
                   ))}
+                  <span className="text-xl font-black text-amber-800 mx-1">=</span>
+                  <span className="text-xl font-black text-amber-900">{currentQ.sum}</span>
                 </div>
+
+                <button
+                  onClick={handleNextQuestion}
+                  className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>आगे बढ़ें (Next Question)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             )}
 
             {/* Numeral Selection Buttons */}
-            <div className="w-full max-w-lg">
-              <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
-                समीकरण पूरा करने के लिए सही संख्या चुनें (Choose missing number):
-              </p>
-              <div className="grid grid-cols-3 gap-4">
-                {currentQ.opts.map((num) => {
-                  const isSelected = selectedNum === num;
-                  const isRight = isSelected && isCorrect === true;
-                  const isWrong = isSelected && isCorrect === false;
+            {!showBeadVisual && (
+              <div className="w-full max-w-lg">
+                <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
+                  समीकरण पूरा करने के लिए सही संख्या चुनें (Choose missing number):
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  {currentQ.opts.map((num) => {
+                    const isSelected = selectedNum === num;
+                    const isRight = isSelected && isCorrect === true;
+                    const isWrong = isSelected && isCorrect === false;
 
-                  return (
-                    <button
-                      key={num}
-                      disabled={isBusy}
-                      onClick={() => handleSelect(num)}
-                      className={`relative py-4 md:py-6 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md cursor-pointer ${
-                        isRight
-                          ? 'bg-emerald-500 border-emerald-600 text-white scale-105 shadow-emerald-200'
-                          : isWrong
-                          ? 'bg-amber-100 border-amber-400 text-amber-900'
-                          : 'bg-amber-50/50 hover:bg-amber-100 border-amber-200 text-slate-800 hover:border-amber-400 hover:scale-102 active:scale-95'
-                      }`}
-                    >
-                      <span className="text-3xl md:text-4xl font-black">{num}</span>
-                      <span
-                        className={`text-xs md:text-sm font-extrabold mt-1 ${
-                          isRight ? 'text-emerald-100' : 'text-amber-800'
+                    return (
+                      <button
+                        key={num}
+                        disabled={isBusy}
+                        onClick={() => handleSelect(num)}
+                        className={`relative py-4 md:py-6 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md cursor-pointer ${
+                          isRight
+                            ? 'bg-emerald-500 border-emerald-600 text-white scale-105 shadow-emerald-200'
+                            : isWrong
+                            ? 'bg-rose-100 border-rose-400 text-rose-900'
+                            : 'bg-amber-50/50 hover:bg-amber-100 border-amber-200 text-slate-800 hover:border-amber-400 hover:scale-102 active:scale-95'
                         }`}
                       >
-                        {NUMBER_MAP[num].hi} • {NUMBER_MAP[num].eng}
-                      </span>
-                      {isRight && <CheckCircle2 className="w-5 h-5 text-white absolute top-2 right-2" />}
-                    </button>
-                  );
-                })}
+                        <span className="text-3xl md:text-4xl font-black">{num}</span>
+                        <span
+                          className={`text-xs md:text-sm font-extrabold mt-1 ${
+                            isRight ? 'text-emerald-100' : 'text-amber-800'
+                          }`}
+                        >
+                          {NUMBER_MAP[num].hi} • {NUMBER_MAP[num].eng}
+                        </span>
+                        {isRight && <CheckCircle2 className="w-5 h-5 text-white absolute top-2 right-2" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
