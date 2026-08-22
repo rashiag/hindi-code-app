@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, RotateCcw, Award, Sparkles, CheckCircle2, Trophy, Star, ArrowRight, Apple, Carrot, Sparkle } from 'lucide-react';
+import { Volume2, RotateCcw, Award, Sparkles, CheckCircle2, Trophy, Star, ArrowRight, Apple, Sparkle } from 'lucide-react';
 
 interface FloraItem {
   id: string;
   name: string;
   hindiName: string;
   type: 'fruit' | 'vegetable';
-  taste: 'sweet' | 'sour' | 'bitter' | 'pungent';
-  hindiTaste: string;
+  taste?: 'sweet' | 'sour' | 'bitter' | 'pungent';
+  hindiTaste?: string;
   emoji: string;
 }
 
-// Complete repository directly compiled from your uploaded syllabus PDF
-const FLORA_REPOSITORY: FloraItem[] = [
+// Full syllabus repository
+const FULL_FLORA_REPOSITORY: FloraItem[] = [
   // Fruits
   { id: 'mango', name: 'Mango', hindiName: 'आम', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🥭' },
   { id: 'apple', name: 'Apple', hindiName: 'सेब', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍎' },
@@ -24,13 +24,13 @@ const FLORA_REPOSITORY: FloraItem[] = [
   { id: 'fig', name: 'Fig', hindiName: 'अंजीर', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🟣' },
   { id: 'grape', name: 'Grape', hindiName: 'अंगूर', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा व खट्टा', emoji: '🍇' },
   { id: 'guava', name: 'Guava', hindiName: 'अमरूद', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍏' },
-  { id: 'jackfruit', name: 'Jack-fruit', hindiName: 'कटहल', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍈' },
+  { id: 'jackfruit', name: 'Jack-fruit', hindiName: 'कटहल', type: 'fruit', emoji: '🍈' },
   { id: 'lemon', name: 'Lemon', hindiName: 'नींबू', type: 'fruit', taste: 'sour', hindiTaste: 'खट्टा (Sour)', emoji: '🍋' },
   { id: 'orange', name: 'Orange', hindiName: 'संतरा', type: 'fruit', taste: 'sour', hindiTaste: 'खट्टा-मीठा', emoji: '🍊' },
   { id: 'papaya', name: 'Papaya', hindiName: 'पपीता', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍈' },
   { id: 'pomegranate', name: 'Pomegranate', hindiName: 'अनार', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍎' },
   { id: 'sugarcane', name: 'Sugar-cane', hindiName: 'गन्ना', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🎋' },
-  { id: 'sweet_lime', name: 'Sweet Lime', hindiName: 'मोसंबी', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा-खट्टा', emoji: '🍈' },
+  { id: 'sweet_lime', name: 'Sweet Lime', hindiName: 'मोसंबी', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍈' },
   { id: 'tamarind', name: 'Tamarind', hindiName: 'इमली', type: 'fruit', taste: 'sour', hindiTaste: 'खट्टा (Sour)', emoji: '🟤' },
   { id: 'watermelon', name: 'Watermelon', hindiName: 'तरबूज', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍉' },
   { id: 'musk_melon', name: 'Musk-melon', hindiName: 'खरबूजा', type: 'fruit', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍈' },
@@ -40,25 +40,28 @@ const FLORA_REPOSITORY: FloraItem[] = [
 
   // Vegetables
   { id: 'bitter_gourd', name: 'Bitter Gourd', hindiName: 'करेला', type: 'vegetable', taste: 'bitter', hindiTaste: 'कड़वा (Bitter)', emoji: '🥒' },
-  { id: 'brinjal', name: 'Brinjal', hindiName: 'बैंगन', type: 'vegetable', taste: 'pungent', hindiTaste: 'सब्जी स्वाद', emoji: '🍆' },
-  { id: 'cabbage', name: 'Cabbage', hindiName: 'पत्तागोभी', type: 'vegetable', taste: 'sweet', hindiTaste: 'सब्जी स्वाद', emoji: '🥬' },
+  { id: 'brinjal', name: 'Brinjal', hindiName: 'बैंगन', type: 'vegetable', emoji: '🍆' },
+  { id: 'cabbage', name: 'Cabbage', hindiName: 'पत्तागोभी', type: 'vegetable', emoji: '🥬' },
   { id: 'carrot', name: 'Carrot', hindiName: 'गाजर', type: 'vegetable', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🥕' },
-  { id: 'cauliflower', name: 'Cauliflower', hindiName: 'फूलगोभी', type: 'vegetable', taste: 'sweet', hindiTaste: 'सब्जी स्वाद', emoji: '🥦' },
-  { id: 'coriander', name: 'Coriander', hindiName: 'धनिया', type: 'vegetable', taste: 'pungent', hindiTaste: 'सुगंधित/मसालेदार', emoji: '🌿' },
+  { id: 'cauliflower', name: 'Cauliflower', hindiName: 'फूलगोभी', type: 'vegetable', emoji: '🥦' },
+  { id: 'coriander', name: 'Coriander', hindiName: 'धनिया', type: 'vegetable', emoji: '🌿' },
   { id: 'garlic', name: 'Garlic', hindiName: 'लहसुन', type: 'vegetable', taste: 'pungent', hindiTaste: 'तीखा (Pungent)', emoji: '🧄' },
   { id: 'ginger', name: 'Ginger', hindiName: 'अदरक', type: 'vegetable', taste: 'pungent', hindiTaste: 'तीखा (Pungent)', emoji: '🫚' },
   { id: 'green_chilli', name: 'Green Chilli', hindiName: 'हरी मिर्च', type: 'vegetable', taste: 'pungent', hindiTaste: 'तीखा (Spicy)', emoji: '🌶️' },
   { id: 'green_pea', name: 'Green Pea', hindiName: 'हरा मटर', type: 'vegetable', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🫛' },
-  { id: 'ladys_finger', name: "Lady's Finger", hindiName: 'भिंडी', type: 'vegetable', taste: 'sweet', hindiTaste: 'सब्जी स्वाद', emoji: '🥒' },
-  { id: 'mint', name: 'Mint', hindiName: 'पुदीना', type: 'vegetable', taste: 'pungent', hindiTaste: 'ताज़ा/मसालेदार', emoji: '🍃' },
-  { id: 'onion', name: 'Onion', hindiName: 'प्याज', type: 'vegetable', taste: 'pungent', hindiTaste: 'तीखा/मीठा', emoji: '🧅' },
-  { id: 'potato', name: 'Potato', hindiName: 'आलू', type: 'vegetable', taste: 'sweet', hindiTaste: 'सब्जी स्वाद', emoji: '🥔' },
-  { id: 'pumpkin', name: 'Pumpkin', hindiName: 'कद्दू', type: 'vegetable', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🎃' },
+  { id: 'ladys_finger', name: "Lady's Finger", hindiName: 'भिंडी', type: 'vegetable', emoji: '🥒' },
+  { id: 'mint', name: 'Mint', hindiName: 'पुदीना', type: 'vegetable', emoji: '🍃' },
+  { id: 'onion', name: 'Onion', hindiName: 'प्याज', type: 'vegetable', taste: 'pungent', hindiTaste: 'तीखा (Pungent)', emoji: '🧅' },
+  { id: 'potato', name: 'Potato', hindiName: 'आलू', type: 'vegetable', emoji: '🥔' },
+  { id: 'pumpkin', name: 'Pumpkin', hindiName: 'कद्दू', type: 'vegetable', emoji: '🎃' },
   { id: 'radish', name: 'Radish', hindiName: 'मूली', type: 'vegetable', taste: 'pungent', hindiTaste: 'तीखा (Pungent)', emoji: '🥕' },
-  { id: 'spinach', name: 'Spinach', hindiName: 'पालक', type: 'vegetable', taste: 'sweet', hindiTaste: 'पौष्टिक/सब्जी', emoji: '🥬' },
+  { id: 'spinach', name: 'Spinach', hindiName: 'पालक', type: 'vegetable', emoji: '🥬' },
   { id: 'sweet_potato', name: 'Sweet Potato', hindiName: 'शकरकंद', type: 'vegetable', taste: 'sweet', hindiTaste: 'मीठा (Sweet)', emoji: '🍠' },
   { id: 'tomato', name: 'Tomato', hindiName: 'टमाटर', type: 'vegetable', taste: 'sour', hindiTaste: 'खट्टा (Sour)', emoji: '🍅' }
 ];
+
+// Distinct items with clear, unambiguous natural taste profiles
+const DISTINCT_TASTE_ITEMS: FloraItem[] = FULL_FLORA_REPOSITORY.filter((item) => item.taste !== undefined);
 
 type GameMode = 'classify' | 'taste';
 const TOTAL_ROUNDS = 5;
@@ -66,7 +69,7 @@ const TOTAL_ROUNDS = 5;
 export function HindiPlantStudio() {
   const [mode, setMode] = useState<GameMode>('classify');
   const [currentRound, setCurrentRound] = useState<number>(1);
-  const [currentItem, setCurrentItem] = useState<FloraItem>(FLORA_REPOSITORY[0]);
+  const [quizQueue, setQuizQueue] = useState<FloraItem[]>([]);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
@@ -78,6 +81,8 @@ export function HindiPlantStudio() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const autoAdvanceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const currentItem = quizQueue[currentRound - 1] || FULL_FLORA_REPOSITORY[0];
 
   const clearTimer = () => {
     if (autoAdvanceTimer.current) {
@@ -128,26 +133,28 @@ export function HindiPlantStudio() {
     } catch (e) {}
   };
 
-  const generateQuestion = () => {
-    const randomItem = FLORA_REPOSITORY[Math.floor(Math.random() * FLORA_REPOSITORY.length)];
-    setCurrentItem(randomItem);
-    setSelectedChoice(null);
-    setIsCorrect(null);
-    setShowExplanation(false);
-    setIsBusy(false);
-  };
-
+  // Generate 5 completely unique questions without duplicates
   const startNewGame = (newMode: GameMode = mode) => {
     clearTimer();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+
+    const sourcePool = newMode === 'taste' ? [...DISTINCT_TASTE_ITEMS] : [...FULL_FLORA_REPOSITORY];
+    sourcePool.sort(() => Math.random() - 0.5);
+
+    const fiveUniqueItems = sourcePool.slice(0, TOTAL_ROUNDS);
+
+    setQuizQueue(fiveUniqueItems);
     setScore(0);
     setStreak(0);
     setCurrentRound(1);
     setIsGameOver(false);
     setFinalScore(0);
-    generateQuestion();
+    setSelectedChoice(null);
+    setIsCorrect(null);
+    setShowExplanation(false);
+    setIsBusy(false);
   };
 
   useEffect(() => {
@@ -162,7 +169,10 @@ export function HindiPlantStudio() {
       setIsBusy(false);
     } else {
       setCurrentRound((prev) => prev + 1);
-      generateQuestion();
+      setSelectedChoice(null);
+      setIsCorrect(null);
+      setShowExplanation(false);
+      setIsBusy(false);
     }
   };
 
@@ -186,7 +196,7 @@ export function HindiPlantStudio() {
       playSuccessChime();
 
       if (mode === 'classify') {
-        const typeLabel = currentItem.type === 'fruit' ? 'एक स्वादिष्ट फल (Fruit)' : 'एक पौष्टिक सब्जी (Vegetable)';
+        const typeLabel = currentItem.type === 'fruit' ? 'एक मीठा फल (Fruit)' : 'एक पौष्टिक सब्जी (Vegetable)';
         playSpeech(`शाबाश! ${currentItem.hindiName} ${typeLabel} है! ${currentItem.name} is a ${currentItem.type}!`);
       } else {
         playSpeech(`शाबाश! ${currentItem.hindiName} का स्वाद ${currentItem.hindiTaste} होता है!`);
@@ -199,7 +209,10 @@ export function HindiPlantStudio() {
           setIsBusy(false);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateQuestion();
+          setSelectedChoice(null);
+          setIsCorrect(null);
+          setShowExplanation(false);
+          setIsBusy(false);
         }
       }, 1600);
 
@@ -227,7 +240,7 @@ export function HindiPlantStudio() {
             <h1 className="text-xl md:text-2xl font-black text-emerald-950">फल, सब्जियाँ व स्वाद (Flora &amp; Taste)</h1>
           </div>
           <p className="text-xs md:text-sm font-semibold text-emerald-800">
-            फल/सब्जी का वर्गीकरण एवं स्वाद पहचानें • Identify &amp; Sort
+            फल/सब्जी का वर्गीकरण एवं विशिष्ट स्वाद पहचानें • Identify &amp; Sort
           </p>
         </div>
 
@@ -267,7 +280,7 @@ export function HindiPlantStudio() {
               mode === 'taste' ? 'bg-emerald-600 text-white shadow' : 'text-emerald-900 hover:bg-emerald-50'
             }`}
           >
-            <Sparkle className="w-3.5 h-3.5" /> स्वाद क्या है? (Taste)
+            <Sparkle className="w-3.5 h-3.5" /> स्वाद पहचानें (Distinct Tastes)
           </button>
         </div>
 
@@ -287,7 +300,7 @@ export function HindiPlantStudio() {
       {/* Main Play Container */}
       <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-emerald-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
         {isGameOver ? (
-          /* End Game Performance Card */
+          /* End Game Card */
           <div className="w-full max-w-md bg-gradient-to-b from-emerald-50 to-teal-50/50 rounded-3xl border-2 border-emerald-300 p-8 text-center flex flex-col items-center shadow-lg">
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-inner">
               <Trophy className="w-10 h-10" />
@@ -352,7 +365,7 @@ export function HindiPlantStudio() {
                 if (mode === 'classify') {
                   playSpeech(`${currentItem.hindiName} फल है या सब्जी? Is ${currentItem.name} a fruit or a vegetable?`);
                 } else {
-                  playSpeech(`${currentItem.hindiName} का स्वाद कैसा होता है? How does ${currentItem.name} taste?`);
+                  playSpeech(`${currentItem.hindiName} का प्राकृतिक स्वाद कैसा होता है? How does ${currentItem.name} taste?`);
                 }
               }}
               className="flex items-center gap-2 bg-emerald-100/70 hover:bg-emerald-200 text-emerald-950 font-bold px-4 py-2 rounded-full text-xs md:text-sm mb-6 transition cursor-pointer"
@@ -368,12 +381,12 @@ export function HindiPlantStudio() {
               </h3>
               <p className="text-xs font-bold text-emerald-700 mt-1">
                 {mode === 'classify'
-                  ? 'यह क्या है? (What is this?)'
-                  : 'इसका स्वाद क्या है? (What is the taste?)'}
+                  ? 'यह क्या है? (Is it a fruit or vegetable?)'
+                  : 'इसका प्राकृतिक स्वाद क्या है? (What is the taste?)'}
               </p>
             </div>
 
-            {/* Visual Explanation on Error */}
+            {/* Explanation Card on Error */}
             {showExplanation && (
               <div className="w-full max-w-md bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
                 <span className="text-xs font-black text-emerald-950 mb-3 text-center">
@@ -392,7 +405,7 @@ export function HindiPlantStudio() {
                   ) : (
                     <div className="text-left">
                       <span className="block text-sm font-black text-emerald-950">{currentItem.hindiTaste}</span>
-                      <span className="block text-xs font-bold text-emerald-700">स्वाद (Taste)</span>
+                      <span className="block text-xs font-bold text-emerald-700">प्राकृतिक स्वाद (Natural Taste)</span>
                     </div>
                   )}
                 </div>
@@ -407,7 +420,7 @@ export function HindiPlantStudio() {
               </div>
             )}
 
-            {/* Interactive Choices */}
+            {/* Classify Mode Choices */}
             {!showExplanation && mode === 'classify' && (
               <div className="w-full max-w-md grid grid-cols-2 gap-4">
                 <button
@@ -448,6 +461,7 @@ export function HindiPlantStudio() {
               </div>
             )}
 
+            {/* Distinct Taste Mode Choices */}
             {!showExplanation && mode === 'taste' && (
               <div className="w-full max-w-md grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
