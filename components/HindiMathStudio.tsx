@@ -43,12 +43,26 @@ export function HindiMathStudio() {
   const [selectedNum, setSelectedNum] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [countingIndex, setCountingIndex] = useState<number>(-1);
-  const [isCountingAnimation, setIsCountingAnimation] = useState<boolean>(false);
+  const [isBusy, setIsBusy] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const [finalScoreSummary, setFinalScoreSummary] = useState<number>(0);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timers on unmount or reset
+  const clearActiveTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => clearActiveTimeout();
+  }, []);
 
   const playSuccessChime = () => {
     try {
@@ -90,8 +104,8 @@ export function HindiMathStudio() {
     });
   };
 
-  const generateQuestion = () => {
-    const maxVal = tier === 1 ? 5 : 10;
+  const generateQuestionForTier = (selectedTier: 1 | 2) => {
+    const maxVal = selectedTier === 1 ? 5 : 10;
     const minVal = 1;
     const count = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
     const randomItem = RURAL_ITEMS[Math.floor(Math.random() * RURAL_ITEMS.length)];
@@ -108,88 +122,102 @@ export function HindiMathStudio() {
     setSelectedNum(null);
     setIsCorrect(null);
     setCountingIndex(-1);
-    setIsCountingAnimation(false);
+    setIsBusy(false);
   };
 
-  const triggerGameOver = async (finalScore: number) => {
-    setIsGameOver(true);
-    if (finalScore >= 4) {
-      await speakAudio(`अद्भुत प्रदर्शन! आपने पाँच में से ${finalScore} अंक प्राप्त किए हैं!`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Outstanding! You scored ${finalScore} out of 5!`, 'en-IN', 0.9);
-    } else {
-      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${finalScore} अंक प्राप्त किए हैं। आइए फिर से अभ्यास करें!`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Good job! You scored ${finalScore} out of 5. Let's practice again!`, 'en-IN', 0.9);
+  const startNewGame = (targetTier: 1 | 2 = tier) => {
+    clearActiveTimeout();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
     }
-  };
-
-  const handleRestart = () => {
     setScore(0);
     setStreak(0);
     setCurrentRound(1);
     setIsGameOver(false);
-    generateQuestion();
+    setFinalScoreSummary(0);
+    generateQuestionForTier(targetTier);
   };
 
+  // Initial load
   useEffect(() => {
-    handleRestart();
-  }, [tier]);
+    startNewGame(tier);
+  }, []);
+
+  const handleTierSwitch = (newTier: 1 | 2) => {
+    if (tier === newTier) return;
+    setTier(newTier);
+    startNewGame(newTier);
+  };
+
+  const handleGameOver = async (achievedScore: number) => {
+    setIsGameOver(true);
+    setFinalScoreSummary(achievedScore);
+    setIsBusy(false);
+
+    if (achievedScore >= 4) {
+      await speakAudio(`अद्भुत प्रदर्शन! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं!`, 'hi-IN');
+      await new Promise((r) => setTimeout(r, 200));
+      await speakAudio(`Outstanding! You scored ${achievedScore} out of 5!`, 'en-IN', 0.9);
+    } else {
+      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं।`, 'hi-IN');
+      await new Promise((r) => setTimeout(r, 200));
+      await speakAudio(`Good job! You scored ${achievedScore} out of 5. Keep practicing!`, 'en-IN', 0.9);
+    }
+  };
 
   const handleSelect = async (num: number) => {
-    if (isCountingAnimation || isCorrect || isGameOver) return;
-
+    if (isBusy || isGameOver || isCorrect !== null) return;
+    setIsBusy(true);
     setSelectedNum(num);
-    const itemName = num === 1 ? activeItem.name : activeItem.plural;
 
-    if (num === targetCount) {
+    const itemName = num === 1 ? activeItem.name : activeItem.plural;
+    const isAnswerCorrect = num === targetCount;
+
+    if (isAnswerCorrect) {
       setIsCorrect(true);
-      const updatedScore = score + 1;
-      setScore(updatedScore);
+      const nextScore = score + 1;
+      setScore(nextScore);
       setStreak((prev) => prev + 1);
       playSuccessChime();
 
       await speakAudio(`शाबाश! ${NUMBER_MAP[num].hindiWord} ${activeItem.hindi}!`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 120));
       await speakAudio(`Great! ${NUMBER_MAP[num].engWord} ${itemName}!`, 'en-IN', 0.9);
 
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
-          triggerGameOver(updatedScore);
+          handleGameOver(nextScore);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateQuestion();
+          generateQuestionForTier(tier);
         }
-      }, 1200);
+      }, 900);
+
     } else {
       setIsCorrect(false);
       setStreak(0);
-      setIsCountingAnimation(true);
 
       await speakAudio(`आइए मिलकर गिनते हैं...`, 'hi-IN');
 
       for (let i = 1; i <= targetCount; i++) {
         setCountingIndex(i - 1);
         await speakAudio(NUMBER_MAP[i].hindiWord, 'hi-IN', 0.9);
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 220));
       }
 
       setCountingIndex(-1);
-      
       await speakAudio(`यहाँ कुल ${NUMBER_MAP[targetCount].hindiWord} ${activeItem.hindi} हैं।`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 150));
       await speakAudio(`There are ${NUMBER_MAP[targetCount].engWord} ${itemName}.`, 'en-IN', 0.9);
 
-      setIsCountingAnimation(false);
-
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
-          triggerGameOver(score);
+          handleGameOver(score);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateQuestion();
+          generateQuestionForTier(tier);
         }
-      }, 800);
+      }, 700);
     }
   };
 
@@ -207,8 +235,8 @@ export function HindiMathStudio() {
           </p>
         </div>
 
-        {/* Turn Progress Indicators */}
-        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300">
+        {/* Round Indicators */}
+        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm">
           <span className="text-xs font-black text-amber-900 mr-1">राउंड:</span>
           {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
             <span
@@ -228,9 +256,9 @@ export function HindiMathStudio() {
         </div>
 
         {/* Tier Switcher */}
-        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-amber-300">
+        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-amber-300 shadow-sm">
           <button
-            onClick={() => setTier(1)}
+            onClick={() => handleTierSwitch(1)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               tier === 1 ? 'bg-amber-600 text-white shadow' : 'text-amber-900 hover:bg-amber-50'
             }`}
@@ -238,7 +266,7 @@ export function HindiMathStudio() {
             Tier 1 (१–५)
           </button>
           <button
-            onClick={() => setTier(2)}
+            onClick={() => handleTierSwitch(2)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
               tier === 2 ? 'bg-amber-600 text-white shadow' : 'text-amber-900 hover:bg-amber-50'
             }`}
@@ -247,76 +275,80 @@ export function HindiMathStudio() {
           </button>
         </div>
 
-        {/* Score Display */}
+        {/* Live Score Counter */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1 rounded-lg text-xs font-black">
+          <div className="flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-xs font-black border border-amber-200">
             <Award className="w-4 h-4 text-amber-600" /> सही: {score}/{TOTAL_ROUNDS}
           </div>
           {streak > 1 && (
-            <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-1 rounded-lg text-xs font-bold">
+            <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-orange-200">
               <Sparkles className="w-3.5 h-3.5 text-orange-600" /> {streak} लगातार!
             </div>
           )}
         </div>
       </div>
 
-      {/* Main Container */}
+      {/* Main Play Area */}
       <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-amber-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
         {isGameOver ? (
           /* End-of-Game Feedback Card */
-          <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg">
+          <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg animate-in fade-in zoom-in duration-200">
             <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 text-amber-600 shadow-inner">
               <Trophy className="w-10 h-10" />
             </div>
 
             <h2 className="text-2xl font-black text-amber-950 mb-1">खेल संपन्न! (Game Complete)</h2>
             <p className="text-sm font-bold text-amber-800 mb-5">
-              {score === 5
+              {finalScoreSummary === 5
                 ? '🌟 Excellent! All answers correct!'
-                : score >= 3
+                : finalScoreSummary >= 3
                 ? '👏 Great effort! बहुत बढ़िया प्रयास!'
                 : '💪 Keep practicing! अभ्यास जारी रखें!'}
             </p>
 
-            {/* Accurate Stars Earned */}
+            {/* Stars Matching Verified Final Score */}
             <div className="flex items-center gap-2 mb-6">
-              {Array.from({ length: 5 }).map((_, idx) => (
+              {Array.from({ length: TOTAL_ROUNDS }).map((_, idx) => (
                 <Star
                   key={idx}
                   className={`w-7 h-7 ${
-                    idx < score ? 'text-amber-500 fill-amber-400 drop-shadow' : 'text-slate-300'
+                    idx < finalScoreSummary
+                      ? 'text-amber-500 fill-amber-400 drop-shadow'
+                      : 'text-slate-200 fill-slate-100'
                   }`}
                 />
               ))}
             </div>
 
-            {/* Score Summary Box */}
-            <div className="w-full bg-white rounded-2xl p-4 border border-amber-200 mb-6 flex justify-around">
+            {/* Score Summary */}
+            <div className="w-full bg-white rounded-2xl p-4 border border-amber-200 mb-6 flex justify-around shadow-sm">
               <div>
                 <span className="block text-xs font-bold text-slate-500">कुल राउंड</span>
-                <span className="text-xl font-black text-slate-800">5</span>
+                <span className="text-xl font-black text-slate-800">{TOTAL_ROUNDS}</span>
               </div>
               <div className="w-px bg-slate-200" />
               <div>
                 <span className="block text-xs font-bold text-slate-500">सही उत्तर</span>
-                <span className="text-xl font-black text-emerald-600">{score}</span>
+                <span className="text-xl font-black text-emerald-600">{finalScoreSummary}</span>
               </div>
               <div className="w-px bg-slate-200" />
               <div>
-                <span className="block text-xs font-bold text-slate-500">सटीकता (Accuracy)</span>
-                <span className="text-xl font-black text-amber-600">{Math.round((score / 5) * 100)}%</span>
+                <span className="block text-xs font-bold text-slate-500">सटीकता</span>
+                <span className="text-xl font-black text-amber-600">
+                  {Math.round((finalScoreSummary / TOTAL_ROUNDS) * 100)}%
+                </span>
               </div>
             </div>
 
             <button
-              onClick={handleRestart}
+              onClick={() => startNewGame(tier)}
               className="w-full py-3.5 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white rounded-xl font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" /> पुनः खेलें (Play Again)
             </button>
           </div>
         ) : (
-          /* Active Round Screen */
+          /* Active Gameplay Screen */
           <>
             <button
               onClick={() => speakAudio(`चित्रों को गिनें: यहाँ कितने ${activeItem.hindi} हैं? How many ${activeItem.plural}?`, 'hi-IN')}
@@ -333,7 +365,7 @@ export function HindiMathStudio() {
                   <div
                     key={idx}
                     className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ${
-                      isCorrect
+                      isCorrect === true
                         ? 'animate-bounce scale-110'
                         : isHighlight
                         ? 'scale-125 bg-amber-200 border-2 border-amber-500 shadow-lg'
@@ -351,7 +383,7 @@ export function HindiMathStudio() {
               })}
             </div>
 
-            {/* Interactive Numeral Selection Buttons */}
+            {/* Selection Options */}
             <div className="w-full max-w-lg">
               <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
                 सही संख्या का चयन करें (Choose the correct numeral):
@@ -365,7 +397,7 @@ export function HindiMathStudio() {
                   return (
                     <button
                       key={num}
-                      disabled={isCountingAnimation || isCorrect === true}
+                      disabled={isBusy}
                       onClick={() => handleSelect(num)}
                       className={`relative py-4 md:py-6 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md cursor-pointer ${
                         isRight
