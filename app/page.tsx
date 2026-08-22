@@ -6,7 +6,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { LEVELS, Level, AgeGroup } from '../lib/levels';
 import { speakHindi, unlockAudio, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
 import { ActionItem } from '../components/BlocklyWorkspace';
-import { HindiMathStudio } from '@/components/HindiMathStudio';
 
 const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
 const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
@@ -17,14 +16,14 @@ const HindiVocabMatch = dynamic(() => import('../components/HindiVocabMatch'), {
 const HindiSentenceBuilder = dynamic(() => import('../components/HindiSentenceBuilder'), { ssr: false });
 const HindiPhonicsStudio = dynamic(() => import('../components/HindiPhonicsStudio'), { ssr: false });
 
-type TabType = 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence' | 'phonics' | 'maths';
+type TabType = 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence' | 'phonics';
 
 function StudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get('tab');
-  const validTabs: TabType[] = ['coding', 'scratch', 'ml', 'draw', 'vocab', 'sentence', 'phonics', 'maths'];
+  const validTabs: TabType[] = ['coding', 'scratch', 'ml', 'draw', 'vocab', 'sentence', 'phonics'];
   const activeTab: TabType = validTabs.includes(tabParam as TabType) ? (tabParam as TabType) : 'coding';
 
   const handleTabChange = (newTab: TabType) => {
@@ -223,31 +222,23 @@ function StudioContent() {
           <span className="text-2xl">🚀</span>
           <div>
             <h1 className="text-sm md:text-lg font-black text-slate-800 leading-tight">Young Researcher AI &amp; Code</h1>
-            <p className="text-[11px] md:text-xs text-slate-500">ओपन-एक्सेस प्रारंभिक साक्षरता, गणित व AI लैब (NEP 2020)</p>
+            <p className="text-[11px] md:text-xs text-slate-500">ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)</p>
           </div>
         </div>
 
-        {/* 8-Way Studio Navigation Switcher */}
+        {/* Navigation Switcher */}
         <div className="w-full md:w-auto flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1 overflow-x-auto no-scrollbar scroll-smooth">
           <button
-            onClick={() => handleTabChange('maths')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
-              activeTab === 'maths' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🔢 गिनती (Maths)
-          </button>
-          <button
             onClick={() => handleTabChange('phonics')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
-              activeTab === 'phonics' ? 'bg-red-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
+              activeTab === 'phonics' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             🔊 फोनिक्स (CVC)
           </button>
           <button
             onClick={() => handleTabChange('sentence')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'sentence' ? 'bg-teal-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -255,7 +246,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('vocab')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'vocab' ? 'bg-pink-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -263,7 +254,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('coding')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -271,7 +262,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('scratch')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'scratch' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -279,7 +270,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('ml')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -287,7 +278,7 @@ function StudioContent() {
           </button>
           <button
             onClick={() => handleTabChange('draw')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'draw' ? 'bg-orange-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -297,9 +288,7 @@ function StudioContent() {
       </header>
 
       {/* Render Active Studio */}
-      {activeTab === 'maths' ? (
-        <HindiMathStudio />
-      ) : activeTab === 'phonics' ? (
+      {activeTab === 'phonics' ? (
         <HindiPhonicsStudio />
       ) : activeTab === 'sentence' ? (
         <HindiSentenceBuilder />
@@ -353,7 +342,7 @@ function StudioContent() {
 
               <button
                 onClick={handlePlayVoiceInstruction}
-                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition active:scale-95 shadow-sm"
+                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition active:scale-95 shadow-sm cursor-pointer"
               >
                 <span>🔊</span> सुनें
               </button>
