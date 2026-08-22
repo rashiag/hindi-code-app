@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
+import { HindiPlantStudio } from '@/components/HindiPlantStudio';
 
 type EvsTab = 'animals' | 'plants' | 'seasons' | 'transport';
 
@@ -84,13 +85,7 @@ function EvsPortalContent() {
       {/* Render Active Module */}
       <div className="w-full max-w-5xl">
         {activeTab === 'animals' && <HindiAnimalStudio />}
-        {activeTab === 'plants' && (
-          <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-emerald-300 text-center text-emerald-900">
-            <span className="text-4xl block mb-3">🍎</span>
-            <h3 className="text-xl font-black mb-1">फल व सब्जियाँ (Fruits, Vegetables &amp; Taste)</h3>
-            <p className="text-xs text-slate-500 font-semibold">आगामी मॉड्यूल — जल्द उपलब्ध होगा</p>
-          </div>
-        )}
+        {activeTab === 'plants' && <HindiPlantStudio />}
         {activeTab === 'seasons' && (
           <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-emerald-300 text-center text-emerald-900">
             <span className="text-4xl block mb-3">🌦️</span>
