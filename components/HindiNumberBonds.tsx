@@ -19,15 +19,26 @@ const NUMBER_MAP: { [key: number]: { hi: string; word: string; eng: string } } =
 
 const TOTAL_ROUNDS = 5;
 
+// Pre-defined safe question bank so it can never enter any loop
+const QUESTION_POOL = [
+  { base: 2, sum: 5, correct: 3, opts: [3, 1, 4] },
+  { base: 3, sum: 7, correct: 4, opts: [4, 2, 5] },
+  { base: 4, sum: 6, correct: 2, opts: [2, 3, 1] },
+  { base: 1, sum: 4, correct: 3, opts: [3, 2, 4] },
+  { base: 5, sum: 8, correct: 3, opts: [3, 4, 2] },
+  { base: 3, sum: 8, correct: 5, opts: [5, 4, 6] },
+  { base: 4, sum: 9, correct: 5, opts: [5, 3, 6] },
+  { base: 6, sum: 10, correct: 4, opts: [4, 3, 5] },
+  { base: 7, sum: 10, correct: 3, opts: [3, 2, 4] },
+  { base: 2, sum: 6, correct: 4, opts: [4, 3, 5] }
+];
+
 export function HindiNumberBonds() {
   const [currentRound, setCurrentRound] = useState<number>(1);
-  const [baseNum, setBaseNum] = useState<number>(2);
-  const [targetSum, setTargetSum] = useState<number>(5);
-  const [options, setOptions] = useState<number[]>([]);
+  const [questionIndex, setQuestionIndex] = useState<number>(0);
   const [selectedNum, setSelectedNum] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showBeadVisual, setShowBeadVisual] = useState<boolean>(false);
-  const [animatedBeadCount, setAnimatedBeadCount] = useState<number>(0);
   const [isBusy, setIsBusy] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
@@ -35,20 +46,39 @@ export function HindiNumberBonds() {
   const [finalScore, setFinalScore] = useState<number>(0);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const activeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const missingCorrect = targetSum - baseNum;
+  const currentQ = QUESTION_POOL[questionIndex % QUESTION_POOL.length];
 
-  const clearActiveTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+  const clearTimer = () => {
+    if (activeTimerRef.current) {
+      clearTimeout(activeTimerRef.current);
+      activeTimerRef.current = null;
     }
   };
 
   useEffect(() => {
-    return () => clearActiveTimeout();
+    return () => {
+      clearTimer();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
   }, []);
+
+  // Fail-safe Web Speech function that cannot freeze the page
+  const playSpeech = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN') => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    } catch (e) {
+      console.log('Speech ignored', e);
+    }
+  };
 
   const playSuccessChime = () => {
     try {
@@ -61,100 +91,44 @@ export function HindiNumberBonds() {
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(523.25, now);
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
-      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.25);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.5);
-    } catch (e) {
-      console.log('Audio error:', e);
-    }
-  };
-
-  const speakAudio = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN', rate: number = 0.85): Promise<void> => {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-        resolve();
-        return;
-      }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = rate;
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      window.speechSynthesis.speak(utterance);
-    });
-  };
-
-  const generateQuestion = () => {
-    // Generate dynamic target sum between 4 and 10
-    const sum = Math.floor(Math.random() * 7) + 4; // 4 to 10
-    const base = Math.floor(Math.random() * (sum - 2)) + 1; // 1 to sum-2
-    const correct = sum - base;
-
-    // Safe option generation without while-loop freeze
-    const candidates = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(
-      (n) => n !== correct && n < 10
-    );
-    candidates.sort(() => Math.random() - 0.5);
-
-    const generatedOpts = [correct, candidates[0], candidates[1]].sort(
-      () => Math.random() - 0.5
-    );
-
-    setTargetSum(sum);
-    setBaseNum(base);
-    setOptions(generatedOpts);
-    setSelectedNum(null);
-    setIsCorrect(null);
-    setShowBeadVisual(false);
-    setAnimatedBeadCount(0);
-    setIsBusy(false);
+      osc.stop(now + 0.4);
+    } catch (e) {}
   };
 
   const startNewGame = () => {
-    clearActiveTimeout();
+    clearTimer();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     setScore(0);
     setStreak(0);
     setCurrentRound(1);
+    setQuestionIndex(Math.floor(Math.random() * QUESTION_POOL.length));
+    setSelectedNum(null);
+    setIsCorrect(null);
+    setShowBeadVisual(false);
     setIsGameOver(false);
     setFinalScore(0);
-    generateQuestion();
+    setIsBusy(false);
   };
 
   useEffect(() => {
     startNewGame();
   }, []);
 
-  const handleGameOver = async (achievedScore: number) => {
-    setIsGameOver(true);
-    setFinalScore(achievedScore);
-    setIsBusy(false);
-
-    if (achievedScore >= 4) {
-      await speakAudio(`शानदार प्रदर्शन! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं!`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Outstanding! You scored ${achievedScore} out of 5!`, 'en-IN', 0.9);
-    } else {
-      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${achievedScore} अंक प्राप्त किए।`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Good job! You scored ${achievedScore} out of 5. Keep practicing!`, 'en-IN', 0.9);
-    }
-  };
-
-  const handleSelect = async (num: number) => {
+  const handleSelect = (num: number) => {
     if (isBusy || isGameOver || isCorrect !== null) return;
     setIsBusy(true);
     setSelectedNum(num);
 
-    const isAnswerCorrect = num === missingCorrect;
+    const isAnswerCorrect = num === currentQ.correct;
 
     if (isAnswerCorrect) {
       setIsCorrect(true);
@@ -162,56 +136,43 @@ export function HindiNumberBonds() {
       setScore(nextScore);
       setStreak((prev) => prev + 1);
       playSuccessChime();
+      playSpeech(`शाबाश! ${NUMBER_MAP[currentQ.base].word} और ${NUMBER_MAP[num].word} मिलकर बनते हैं ${NUMBER_MAP[currentQ.sum].word}!`);
 
-      await speakAudio(
-        `शाबाश! ${NUMBER_MAP[baseNum].word} और ${NUMBER_MAP[num].word} मिलकर बनते हैं ${NUMBER_MAP[targetSum].word}!`,
-        'hi-IN'
-      );
-      await new Promise((r) => setTimeout(r, 120));
-      await speakAudio(
-        `Great! ${NUMBER_MAP[baseNum].eng} plus ${NUMBER_MAP[num].eng} equals ${NUMBER_MAP[targetSum].eng}!`,
-        'en-IN',
-        0.9
-      );
-
-      timeoutRef.current = setTimeout(() => {
+      activeTimerRef.current = setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
-          handleGameOver(nextScore);
+          setIsGameOver(true);
+          setFinalScore(nextScore);
+          setIsBusy(false);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateQuestion();
+          setQuestionIndex((prev) => (prev + 1) % QUESTION_POOL.length);
+          setSelectedNum(null);
+          setIsCorrect(null);
+          setShowBeadVisual(false);
+          setIsBusy(false);
         }
-      }, 1000);
+      }, 1400);
 
     } else {
       setIsCorrect(false);
       setStreak(0);
       setShowBeadVisual(true);
+      playSpeech(`यहाँ ${NUMBER_MAP[currentQ.correct].word} और मनके चाहिए! ${NUMBER_MAP[currentQ.base].eng} plus ${NUMBER_MAP[currentQ.correct].eng} equals ${NUMBER_MAP[currentQ.sum].eng}!`);
 
-      await speakAudio(
-        `आइए देखें: ${NUMBER_MAP[baseNum].word} में कितने जोड़ने पर ${NUMBER_MAP[targetSum].word} बनेगा?`,
-        'hi-IN'
-      );
-
-      for (let i = 1; i <= missingCorrect; i++) {
-        setAnimatedBeadCount(i);
-        await speakAudio(NUMBER_MAP[i].word, 'hi-IN', 0.9);
-        await new Promise((r) => setTimeout(r, 200));
-      }
-
-      await speakAudio(
-        `यहाँ हमें ${NUMBER_MAP[missingCorrect].word} और मनके चाहिए! ${NUMBER_MAP[baseNum].eng} plus ${NUMBER_MAP[missingCorrect].eng} equals ${NUMBER_MAP[targetSum].eng}!`,
-        'hi-IN'
-      );
-
-      timeoutRef.current = setTimeout(() => {
+      activeTimerRef.current = setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
-          handleGameOver(score);
+          setIsGameOver(true);
+          setFinalScore(score);
+          setIsBusy(false);
         } else {
           setCurrentRound((prev) => prev + 1);
-          generateQuestion();
+          setQuestionIndex((prev) => (prev + 1) % QUESTION_POOL.length);
+          setSelectedNum(null);
+          setIsCorrect(null);
+          setShowBeadVisual(false);
+          setIsBusy(false);
         }
-      }, 1200);
+      }, 2000);
     }
   };
 
@@ -225,7 +186,7 @@ export function HindiNumberBonds() {
             <h1 className="text-xl md:text-2xl font-black text-amber-950">अंक जोड़ (Missing Number Bond)</h1>
           </div>
           <p className="text-xs md:text-sm font-semibold text-amber-800">
-            समीकरण को पूरा करने के लिए सही संख्या चुनें • Complete the equation
+            समीकरण पूरा करने के लिए सही संख्या चुनें • Complete the equation
           </p>
         </div>
 
@@ -266,7 +227,7 @@ export function HindiNumberBonds() {
       <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-amber-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
         {isGameOver ? (
           /* End Game Modal */
-          <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg">
             <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 text-amber-600 shadow-inner">
               <Trophy className="w-10 h-10" />
             </div>
@@ -327,9 +288,8 @@ export function HindiNumberBonds() {
             {/* Audio Prompt Button */}
             <button
               onClick={() =>
-                speakAudio(
-                  `${NUMBER_MAP[baseNum].word} में कितना जोड़ें कि ${NUMBER_MAP[targetSum].word} बन जाए? ${NUMBER_MAP[baseNum].eng} plus what equals ${NUMBER_MAP[targetSum].eng}?`,
-                  'hi-IN'
+                playSpeech(
+                  `${NUMBER_MAP[currentQ.base].word} में कितना जोड़ें कि ${NUMBER_MAP[currentQ.sum].word} बन जाए?`
                 )
               }
               className="flex items-center gap-2 bg-amber-100/70 hover:bg-amber-200 text-amber-900 font-bold px-4 py-2 rounded-full text-xs md:text-sm mb-6 transition cursor-pointer"
@@ -340,8 +300,8 @@ export function HindiNumberBonds() {
             {/* Equation Display Box */}
             <div className="flex items-center justify-center gap-3 md:gap-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-200 px-8 py-5 rounded-3xl mb-8 shadow-sm">
               <div className="flex flex-col items-center bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
-                <span className="text-3xl md:text-4xl font-black">{baseNum}</span>
-                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[baseNum].hi} ({NUMBER_MAP[baseNum].word})</span>
+                <span className="text-3xl md:text-4xl font-black">{currentQ.base}</span>
+                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[currentQ.base].hi} ({NUMBER_MAP[currentQ.base].word})</span>
               </div>
 
               <span className="text-3xl md:text-4xl font-black text-amber-900">+</span>
@@ -368,29 +328,22 @@ export function HindiNumberBonds() {
               <span className="text-3xl md:text-4xl font-black text-amber-900">=</span>
 
               <div className="flex flex-col items-center bg-amber-700 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
-                <span className="text-3xl md:text-4xl font-black">{targetSum}</span>
-                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[targetSum].hi} ({NUMBER_MAP[targetSum].word})</span>
+                <span className="text-3xl md:text-4xl font-black">{currentQ.sum}</span>
+                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[currentQ.sum].hi} ({NUMBER_MAP[currentQ.sum].word})</span>
               </div>
             </div>
 
             {/* Visual Bead Clarification on Incorrect Choice */}
             {showBeadVisual && (
-              <div className="w-full max-w-md bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
+              <div className="w-full max-w-md bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-6 flex flex-col items-center">
                 <span className="text-xs font-black text-amber-900 mb-2">मनके जोड़कर देखें (Visual Clarification):</span>
                 <div className="flex flex-wrap items-center justify-center gap-2">
-                  {Array.from({ length: baseNum }).map((_, i) => (
+                  {Array.from({ length: currentQ.base }).map((_, i) => (
                     <span key={`b-${i}`} className="text-3xl filter drop-shadow">🔵</span>
                   ))}
                   <span className="text-xl font-black text-amber-800 mx-1">+</span>
-                  {Array.from({ length: missingCorrect }).map((_, i) => (
-                    <span
-                      key={`a-${i}`}
-                      className={`text-3xl filter drop-shadow transition-all ${
-                        i < animatedBeadCount ? 'scale-110 opacity-100' : 'scale-75 opacity-30'
-                      }`}
-                    >
-                      🟡
-                    </span>
+                  {Array.from({ length: currentQ.correct }).map((_, i) => (
+                    <span key={`a-${i}`} className="text-3xl filter drop-shadow">🟡</span>
                   ))}
                 </div>
               </div>
@@ -402,7 +355,7 @@ export function HindiNumberBonds() {
                 समीकरण पूरा करने के लिए सही संख्या चुनें (Choose missing number):
               </p>
               <div className="grid grid-cols-3 gap-4">
-                {options.map((num) => {
+                {currentQ.opts.map((num) => {
                   const isSelected = selectedNum === num;
                   const isRight = isSelected && isCorrect === true;
                   const isWrong = isSelected && isCorrect === false;
