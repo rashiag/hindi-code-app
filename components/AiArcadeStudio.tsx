@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2 } from 'lucide-react';
+import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2, Trophy, Star } from 'lucide-react';
+import { MachineLearningStudio } from '@/components/MachineLearningStudio';
 
 type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
 
@@ -14,7 +15,7 @@ interface AiOrNotItem {
   speechText: string;
 }
 
-const AI_OR_NOT_ITEMS: AiOrNotItem[] = [
+const AI_OR_NOT_POOL: AiOrNotItem[] = [
   { 
     id: 'maps', 
     name: 'Google Maps (रास्ता व ट्रैफिक)', 
@@ -54,14 +55,6 @@ const AI_OR_NOT_ITEMS: AiOrNotItem[] = [
     isAi: true, 
     explanation: 'सही जवाब! कैमरा आपके चेहरे के खास पैटर्न्स को AI विज़न से पहचानता है।',
     speechText: 'फोन का फेस अनलॉक। क्या यह ए आई है?'
-  },
-  { 
-    id: 'calculator', 
-    name: 'कैलकुलेटर (Calculator)', 
-    emoji: '🧮', 
-    isAi: false, 
-    explanation: 'सही! कैलकुलेटर सिर्फ गणित के तय फॉर्मूलों पर चलता है, डेटा से कुछ नया नहीं सीखता।',
-    speechText: 'कैलकुलेटर। क्या इसमें ए आई है?'
   }
 ];
 
@@ -83,10 +76,11 @@ const ALL_ANIMALS: AnimalItem[] = [
 export function AiArcadeStudio() {
   const [activeLevel, setActiveLevel] = useState<AiLevel>('level1');
 
-  // Level 1 State: AI है या नहीं?
+  // Level 1: 5 Questions Round State
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
   const [quizFeedback, setQuizFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
+  const [isQuizFinished, setIsQuizFinished] = useState<boolean>(false);
 
   // Level 2 State: AI को सिखाओ
   const [trainedDomestic, setTrainedDomestic] = useState<string[]>([]);
@@ -95,8 +89,7 @@ export function AiArcadeStudio() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Web Audio Tone Synthesizers for UI feedback
-  const playSoundEffect = (type: 'correct' | 'wrong' | 'pop') => {
+  const playSoundEffect = (type: 'correct' | 'wrong' | 'pop' | 'fanfare') => {
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -109,10 +102,9 @@ export function AiArcadeStudio() {
       const gain = ctx.createGain();
 
       if (type === 'correct') {
-        // High ascending cheerful chime
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2);
         gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
         osc.connect(gain);
@@ -120,7 +112,6 @@ export function AiArcadeStudio() {
         osc.start(now);
         osc.stop(now + 0.45);
       } else if (type === 'wrong') {
-        // Low buzzing descending tone
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(220, now);
         osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
@@ -130,8 +121,19 @@ export function AiArcadeStudio() {
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.35);
+      } else if (type === 'fanfare') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.15);
+        osc.frequency.setValueAtTime(659.25, now + 0.3);
+        osc.frequency.setValueAtTime(880, now + 0.45);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.8);
       } else {
-        // Subtle tap pop
         osc.type = 'sine';
         osc.frequency.setValueAtTime(440, now);
         gain.gain.setValueAtTime(0.2, now);
@@ -144,7 +146,6 @@ export function AiArcadeStudio() {
     } catch (e) {}
   };
 
-  // Hindi Speech Synthesis
   const playSpeech = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
@@ -156,15 +157,14 @@ export function AiArcadeStudio() {
     } catch (e) {}
   };
 
-  // Automatically narrate question when current item changes
   useEffect(() => {
-    if (activeLevel === 'level1' && !quizFeedback) {
-      playSpeech(AI_OR_NOT_ITEMS[currentQuizIndex].speechText);
+    if (activeLevel === 'level1' && !quizFeedback && !isQuizFinished) {
+      playSpeech(AI_OR_NOT_POOL[currentQuizIndex].speechText);
     }
-  }, [currentQuizIndex, activeLevel]);
+  }, [currentQuizIndex, activeLevel, isQuizFinished]);
 
   const handleQuizAnswer = (userChoseAi: boolean) => {
-    const currentItem = AI_OR_NOT_ITEMS[currentQuizIndex];
+    const currentItem = AI_OR_NOT_POOL[currentQuizIndex];
     const correct = userChoseAi === currentItem.isAi;
 
     if (correct) {
@@ -179,7 +179,6 @@ export function AiArcadeStudio() {
       text: currentItem.explanation
     });
 
-    // Voice explanation
     setTimeout(() => {
       playSpeech(currentItem.explanation);
     }, 250);
@@ -188,11 +187,23 @@ export function AiArcadeStudio() {
   const handleNextQuiz = () => {
     playSoundEffect('pop');
     setQuizFeedback(null);
-    if (currentQuizIndex + 1 < AI_OR_NOT_ITEMS.length) {
+    if (currentQuizIndex + 1 < AI_OR_NOT_POOL.length) {
       setCurrentQuizIndex((prev) => prev + 1);
     } else {
-      setCurrentQuizIndex(0);
+      setIsQuizFinished(true);
+      playSoundEffect('fanfare');
+      setTimeout(() => {
+        playSpeech(`शाबाश! आपने ५ में से ${quizScore} अंक प्राप्त किए हैं।`);
+      }, 300);
     }
+  };
+
+  const handleRestartQuiz = () => {
+    playSoundEffect('pop');
+    setCurrentQuizIndex(0);
+    setQuizScore(0);
+    setQuizFeedback(null);
+    setIsQuizFinished(false);
   };
 
   const trainItem = (animal: AnimalItem, asDomestic: boolean) => {
@@ -255,9 +266,9 @@ export function AiArcadeStudio() {
           <div className="bg-white px-3 py-1.5 rounded-xl border border-purple-300 text-xs font-bold text-purple-900 shadow-sm flex items-center gap-2">
             <span>मार्गदर्शक स्तर:</span>
             <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-black">
-              {activeLevel === 'level1' && 'Level 1: पहचानो'}
+              {activeLevel === 'level1' && 'Level 1: पहचानो (5 प्रश्न)'}
               {activeLevel === 'level2_tray' && 'Level 2: डेटा व ट्रेनिंग'}
-              {activeLevel === 'level2_trainer' && 'Level 2: कैमरा ट्रेनर'}
+              {activeLevel === 'level2_trainer' && 'Level 2: हिंदी मशीन ट्रेनर'}
               {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न'}
               {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
             </span>
@@ -319,18 +330,18 @@ export function AiArcadeStudio() {
       </div>
 
       {/* Main Interactive Stage */}
-      <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
+      <div className="bg-white rounded-3xl p-6 md:p-8 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
         
-        {/* LEVEL 1: AI है या नहीं? */}
-        {activeLevel === 'level1' && (
+        {/* LEVEL 1: AI है या नहीं? 5-Questions Round */}
+        {activeLevel === 'level1' && !isQuizFinished && (
           <div className="w-full max-w-lg flex flex-col items-center text-center">
             
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full">
-                सवाल {currentQuizIndex + 1} / {AI_OR_NOT_ITEMS.length} • स्कोर: {quizScore}
+                प्रश्न {currentQuizIndex + 1} / 5 • वर्तमान स्कोर: {quizScore}
               </span>
               <button
-                onClick={() => playSpeech(AI_OR_NOT_ITEMS[currentQuizIndex].speechText)}
+                onClick={() => playSpeech(AI_OR_NOT_POOL[currentQuizIndex].speechText)}
                 className="p-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-full transition cursor-pointer"
                 title="आवाज़ सुनें"
               >
@@ -340,15 +351,14 @@ export function AiArcadeStudio() {
 
             <div className="w-full bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 mb-6 shadow-inner flex flex-col items-center">
               <span className="text-6xl md:text-7xl mb-3 animate-bounce">
-                {AI_OR_NOT_ITEMS[currentQuizIndex].emoji}
+                {AI_OR_NOT_POOL[currentQuizIndex].emoji}
               </span>
               <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-1">
-                {AI_OR_NOT_ITEMS[currentQuizIndex].name}
+                {AI_OR_NOT_POOL[currentQuizIndex].name}
               </h2>
               <p className="text-xs text-slate-600">क्या यह काम करने के लिए AI (स्मार्ट लर्निंग) का इस्तेमाल करता है?</p>
             </div>
 
-            {/* User Choices */}
             {!quizFeedback ? (
               <div className="grid grid-cols-2 gap-4 w-full">
                 <button
@@ -381,14 +391,62 @@ export function AiArcadeStudio() {
                   onClick={handleNextQuiz}
                   className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  अगला सवाल ➔
+                  {currentQuizIndex + 1 === 5 ? 'रिजल्ट रिपोर्ट देखें ➔' : 'अगला सवाल ➔'}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* LEVEL 2: AI को सिखाओ */}
+        {/* LEVEL 1: Report Card */}
+        {activeLevel === 'level1' && isQuizFinished && (
+          <div className="w-full max-w-md bg-gradient-to-b from-purple-50 via-white to-pink-50 rounded-3xl border-2 border-purple-300 p-6 md:p-8 text-center shadow-xl animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-purple-600 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg">
+              🏆
+            </div>
+            
+            <h2 className="text-2xl font-black text-purple-950 mb-1">शानदार प्रयास!</h2>
+            <p className="text-xs font-bold text-purple-800 mb-6">AI है या नहीं? - राउंड रिपोर्ट कार्ड</p>
+
+            <div className="bg-white border-2 border-purple-200 rounded-2xl p-4 shadow-sm mb-6 flex justify-around items-center">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">कुल प्रश्न</span>
+                <span className="text-2xl font-black text-slate-800">5</span>
+              </div>
+              <div className="w-px h-10 bg-purple-100" />
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">सही उत्तर</span>
+                <span className="text-2xl font-black text-emerald-600">{quizScore} / 5</span>
+              </div>
+              <div className="w-px h-10 bg-purple-100" />
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">सटीकता</span>
+                <span className="text-2xl font-black text-purple-900">{Math.round((quizScore / 5) * 100)}%</span>
+              </div>
+            </div>
+
+            <div className="bg-purple-100/70 p-3.5 rounded-xl text-left text-xs font-bold text-purple-950 mb-6">
+              💡 मुख्य सबक: हर मशीन में AI नहीं होता! लिफ्ट और वॉशिंग मशीन तय कोड/सेंसर से चलती हैं, जबकि Maps व Face Unlock नए डेटा से सीखकर निर्णय लेते हैं।
+            </div>
+
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleRestartQuiz}
+                className="py-2.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4" /> पुनः खेलें
+              </button>
+              <button
+                onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
+                className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
+              >
+                लेवल २ पर आगे बढ़ें ➔
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* LEVEL 2: AI को सिखाओ (Supervised Data Tray) */}
         {activeLevel === 'level2_tray' && (
           <div className="w-full max-w-2xl flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-4">
@@ -400,11 +458,10 @@ export function AiArcadeStudio() {
                 onClick={() => { setActiveLevel('level2_trainer'); playSoundEffect('pop'); }}
                 className="text-xs font-black bg-purple-100 text-purple-900 hover:bg-purple-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
               >
-                कैमरा ट्रेनर खोलें ➔
+                हिंदी मशीन ट्रेनर खोलें ➔
               </button>
             </div>
 
-            {/* Animal Staging Tray */}
             <div className="w-full bg-slate-50 border-2 border-dashed border-purple-300 rounded-2xl p-3 mb-4 flex flex-wrap justify-center gap-2">
               {ALL_ANIMALS.map((a) => (
                 <div key={a.id} className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
@@ -432,7 +489,6 @@ export function AiArcadeStudio() {
               ))}
             </div>
 
-            {/* Model Test Arena */}
             <div className="w-full bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 text-center mb-4">
               <span className="text-xs font-bold text-purple-900 block mb-1">अब नए जानवर की परीक्षा लें:</span>
               <div className="inline-flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-purple-300 shadow-sm mb-3">
@@ -460,29 +516,29 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 2: Live Teachable Machine */}
+        {/* LEVEL 2: Direct Native Hindi Machine Trainer Studio */}
         {activeLevel === 'level2_trainer' && (
-          <div className="w-full flex flex-col items-center text-center">
-            <div className="flex justify-between items-center w-full max-w-xl mb-4">
+          <div className="w-full flex flex-col items-center">
+            <div className="flex justify-between items-center w-full mb-4">
               <button
                 onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
-                className="text-xs font-black text-purple-800 bg-purple-100 px-3 py-1.5 rounded-xl cursor-pointer"
+                className="text-xs font-black text-purple-800 bg-purple-100 hover:bg-purple-200 px-3.5 py-1.5 rounded-xl cursor-pointer"
               >
                 ⬅ डेटा ट्रे पर लौटें
               </button>
-              <span className="text-xs font-bold text-slate-500">Google Teachable Machine हिंदी इंजन</span>
+              <span className="text-xs font-bold text-purple-900 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
+                हिंदी AI मशीन ट्रेनर (Native Edge Vision)
+              </span>
             </div>
-            <div className="w-full max-w-xl h-96 bg-slate-900 rounded-3xl overflow-hidden border-4 border-purple-300 shadow-xl">
-              <iframe
-                src="https://teachablemachine.withgoogle.com/train/image"
-                className="w-full h-full border-0"
-                title="Teachable Machine"
-              />
+
+            {/* Embedded Native Component */}
+            <div className="w-full">
+              <MachineLearningStudio />
             </div>
           </div>
         )}
 
-        {/* LEVEL 3: जल्दी बनाओ AI (Hindi Quick Draw) */}
+        {/* LEVEL 3: जल्दी बनाओ AI */}
         {activeLevel === 'level3_draw' && (
           <div className="w-full flex flex-col items-center text-center">
             <h3 className="text-lg font-black text-purple-950 mb-1">जल्दी बनाओ AI (Quick Draw Doodle Recognition)</h3>
