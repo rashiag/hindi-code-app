@@ -1,23 +1,25 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import HindiPhonicsStudio from '@/components/HindiPhonicsStudio';
+import { EnglishLiteracyHub } from '@/components/EnglishLiteracyHub';
 import { AiArcadeStudio } from '@/components/AiArcadeStudio';
 import BlocklyWorkspace from '@/components/BlocklyWorkspace';
-import HindiMusicStudio from '@/components/HindiMusicStudio';
-import HindiAnimalStudio from '@/components/HindiAnimalStudio';
-import JuniorResearcherStudio from '@/components/JuniorResearcherStudio';
-import HindiMathStudio from '@/components/HindiMathStudio';
+import { HindiMusicStudio } from '@/components/HindiMusicStudio';
+import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
+import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
+import { HindiMathStudio } from '@/components/HindiMathStudio';
 
 function MainRouter() {
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') || 'coding';
 
+  const [isRunning, setIsRunning] = useState(false);
+
   switch (tab) {
     case 'phonics':
     case 'english':
-      return <HindiPhonicsStudio />;
+      return <EnglishLiteracyHub />;
     case 'ai':
     case 'ml':
       return <AiArcadeStudio />;
@@ -33,7 +35,19 @@ function MainRouter() {
       return <JuniorResearcherStudio />;
     case 'coding':
     default:
-      return <BlocklyWorkspace />;
+      return (
+        <BlocklyWorkspace
+          onRunCode={() => setIsRunning(true)}
+          onReset={() => setIsRunning(false)}
+          isRunning={isRunning}
+          allowedBlocks={{
+            moveForward: true,
+            turnLeft: true,
+            turnRight: true,
+            repeat: true
+          }}
+        />
+      );
   }
 }
 

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { HindiPhonicsStudio } from '@/components/HindiPhonicsStudio';
-import { HindiSentenceBuilder } from '@/components/HindiSentenceBuilder';
-import { HindiVocabMatch } from '@/components/HindiVocabMatch';
+import HindiPhonicsStudio from '@/components/HindiPhonicsStudio';
+import HindiSentenceBuilder from '@/components/HindiSentenceBuilder';
+import HindiVocabMatch from '@/components/HindiVocabMatch';
 
 type EnglishTab = 'phonics' | 'syntax' | 'vocab';
 
