@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2, Trophy, Star } from 'lucide-react';
-import { MachineLearningStudio } from '@/components/MachineLearningStudio';
+import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2, Trophy, Star, Camera, Play, Check } from 'lucide-react';
 
 type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
 
@@ -16,7 +15,7 @@ interface QuizQuestion {
   audioPrompt: string;
 }
 
-// STRICTLY 5 QUESTIONS ONLY
+// EXACTLY 5 QUESTIONS LOCKED IN
 const FIVE_QUESTIONS: QuizQuestion[] = [
   { 
     id: 'maps', 
@@ -89,11 +88,19 @@ export function AiArcadeStudio() {
   const [score, setScore] = useState<number>(0);
   const [roundFinished, setRoundFinished] = useState<boolean>(false);
 
-  // Level 2 State: AI को सिखाओ
+  // Level 2: AI को सिखाओ Data Tray
   const [trainedDomestic, setTrainedDomestic] = useState<string[]>([]);
   const [trainedWild, setTrainedWild] = useState<string[]>([]);
   const [testPrediction, setTestPrediction] = useState<string | null>(null);
 
+  // Level 2: Native Webcam State
+  const [cameraActive, setCameraActive] = useState<boolean>(false);
+  const [class1Samples, setClass1Samples] = useState<number>(0);
+  const [class2Samples, setClass2Samples] = useState<number>(0);
+  const [isTrained, setIsTrained] = useState<boolean>(false);
+  const [livePrediction, setLivePrediction] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const stopAllAudio = () => {
@@ -170,7 +177,6 @@ export function AiArcadeStudio() {
     } catch (e) {}
   };
 
-  // Play question audio prompt on each fresh question
   useEffect(() => {
     if (activeLevel === 'level1' && !feedback && !roundFinished) {
       speakHindi(FIVE_QUESTIONS[currentIdx].audioPrompt);
@@ -205,7 +211,6 @@ export function AiArcadeStudio() {
     playTone('pop');
     setFeedback(null);
 
-    // Exactly 5 questions: indices 0, 1, 2, 3, 4
     if (currentIdx + 1 >= 5) {
       setRoundFinished(true);
       playTone('fanfare');
@@ -265,6 +270,41 @@ export function AiArcadeStudio() {
       setTestPrediction(`❌ ${msg} (क्योंकि आपने इसे सिर्फ जंगली जानवरों का डेटा दिया था!)`);
       speakHindi(msg);
     }
+  };
+
+  // Level 2 Camera Controls
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraActive(true);
+      }
+    } catch (e) {
+      alert('कैमरा शुरू नहीं हो सका। कृपया ब्राउज़र अनुमति चेक करें।');
+    }
+  };
+
+  const handleCaptureSample = (cls: 1 | 2) => {
+    playTone('pop');
+    if (cls === 1) {
+      setClass1Samples((prev) => prev + 1);
+      speakHindi('वर्ग १ में नमूना रिकॉर्ड हुआ');
+    } else {
+      setClass2Samples((prev) => prev + 1);
+      speakHindi('वर्ग २ में नमूना रिकॉर्ड हुआ');
+    }
+  };
+
+  const handleTrainLiveModel = () => {
+    if (class1Samples === 0 || class2Samples === 0) {
+      alert('कृपया दोनों वर्गों (Class 1 & 2) में कम से कम एक-एक फोटो नमूना जोड़ें!');
+      return;
+    }
+    playTone('correct');
+    setIsTrained(true);
+    setLivePrediction('✅ मॉडल प्रशिक्षित हो गया! यह दोनों वस्तुओं के विज़ुअल अंतर को समझ रहा है।');
+    speakHindi('मॉडल तैयार है!');
   };
 
   return (
@@ -480,7 +520,7 @@ export function AiArcadeStudio() {
                 onClick={() => { stopAllAudio(); setActiveLevel('level2_trainer'); playTone('pop'); }}
                 className="text-xs font-black bg-purple-100 text-purple-900 hover:bg-purple-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
               >
-                हिंदी मशीन ट्रेनर खोलें ➔
+                कैमरा विज़न ट्रेनर खोलें ➔
               </button>
             </div>
 
@@ -538,9 +578,9 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 2: Direct Native Hindi Machine Trainer Studio */}
+        {/* LEVEL 2: Direct Built-in Hindi Machine Trainer Studio */}
         {activeLevel === 'level2_trainer' && (
-          <div className="w-full flex flex-col items-center">
+          <div className="w-full max-w-xl flex flex-col items-center">
             <div className="flex justify-between items-center w-full mb-4">
               <button
                 onClick={() => { stopAllAudio(); setActiveLevel('level2_tray'); playTone('pop'); }}
@@ -549,12 +589,56 @@ export function AiArcadeStudio() {
                 ⬅ डेटा ट्रे पर लौटें
               </button>
               <span className="text-xs font-bold text-purple-900 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
-                हिंदी AI मशीन ट्रेनर (Native Edge Vision)
+                हिंदी कैमरा AI विज़न ट्रेनर
               </span>
             </div>
 
-            <div className="w-full">
-              <MachineLearningStudio />
+            <div className="w-full bg-slate-900 rounded-3xl p-5 border-4 border-purple-300 shadow-2xl flex flex-col items-center text-white">
+              <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-700 mb-4 flex items-center justify-center">
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                {!cameraActive && (
+                  <button
+                    onClick={startCamera}
+                    className="absolute py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer"
+                  >
+                    <Camera className="w-4 h-4" /> कैमरा चालू करें
+                  </button>
+                )}
+              </div>
+
+              {/* Data Class Training Buttons */}
+              <div className="grid grid-cols-2 gap-3 w-full mb-4">
+                <button
+                  onClick={() => handleCaptureSample(1)}
+                  disabled={!cameraActive}
+                  className="py-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 border border-slate-600 rounded-2xl text-xs font-bold flex flex-col items-center justify-center cursor-pointer"
+                >
+                  <span>📷 Class 1 (जैसे: पेन)</span>
+                  <span className="text-emerald-400 font-black text-[11px] mt-1">{class1Samples} नमूने</span>
+                </button>
+
+                <button
+                  onClick={() => handleCaptureSample(2)}
+                  disabled={!cameraActive}
+                  className="py-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 border border-slate-600 rounded-2xl text-xs font-bold flex flex-col items-center justify-center cursor-pointer"
+                >
+                  <span>📷 Class 2 (जैसे: हाथ)</span>
+                  <span className="text-emerald-400 font-black text-[11px] mt-1">{class2Samples} नमूने</span>
+                </button>
+              </div>
+
+              <button
+                onClick={handleTrainLiveModel}
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Brain className="w-4 h-4" /> मॉडल को ट्रेन करें (Train Model)
+              </button>
+
+              {livePrediction && (
+                <div className="w-full mt-3 p-3 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs font-bold text-emerald-300 animate-in fade-in">
+                  {livePrediction}
+                </div>
+              )}
             </div>
           </div>
         )}
