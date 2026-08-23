@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2 } from 'lucide-react';
 
 type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
 
@@ -11,15 +11,58 @@ interface AiOrNotItem {
   emoji: string;
   isAi: boolean;
   explanation: string;
+  speechText: string;
 }
 
 const AI_OR_NOT_ITEMS: AiOrNotItem[] = [
-  { id: 'maps', name: 'Google Maps (रास्ता व ट्रैफिक)', emoji: '🗺️', isAi: true, explanation: 'सही! Maps लाखों गाड़ियों के लाइव डेटा और AI से सबसे तेज़ रास्ता खोजता है।' },
-  { id: 'washing', name: 'वाशिंग मशीन (Washing Machine)', emoji: '🧺', isAi: false, explanation: 'बिल्कुल! इसमें तय मोटर टाइमर और सेंसर हैं, यह खुद सोचकर नया निर्णय नहीं लेती।' },
-  { id: 'youtube', name: 'YouTube वीडियो सुझाव (Recommendations)', emoji: '📺', isAi: true, explanation: 'शानदार! YouTube AI आपकी पसंद सीखकर वैसे ही नए वीडियो सुझाता है।' },
-  { id: 'lift', name: 'लिफ्ट का बटन (Elevator / Lift)', emoji: '🛗', isAi: false, explanation: 'सही! लिफ्ट तय नियमों (Rules) पर काम करती है, इसमें AI नहीं होता।' },
-  { id: 'faceunlock', name: 'फोन का Face Unlock', emoji: '📱', isAi: true, explanation: 'सही जवाब! कैमरा आपके चेहरे के खास पैटर्न्स को AI विज़न से पहचानता है।' },
-  { id: 'calculator', name: 'कैलकुलेटर (Calculator)', emoji: '🧮', isAi: false, explanation: 'सही! कैलकुलेटर सिर्फ गणित के तय फॉर्मूलों पर चलता है, डेटा से कुछ नया नहीं सीखता।' }
+  { 
+    id: 'maps', 
+    name: 'Google Maps (रास्ता व ट्रैफिक)', 
+    emoji: '🗺️', 
+    isAi: true, 
+    explanation: 'सही! Maps लाखों गाड़ियों के लाइव डेटा और AI से सबसे तेज़ रास्ता खोजता है।',
+    speechText: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?'
+  },
+  { 
+    id: 'washing', 
+    name: 'वाशिंग मशीन (Washing Machine)', 
+    emoji: '🧺', 
+    isAi: false, 
+    explanation: 'बिल्कुल! इसमें तय मोटर टाइमर और सेंसर हैं, यह खुद सोचकर नया निर्णय नहीं लेती।',
+    speechText: 'वाशिंग मशीन। क्या इसमें ए आई है?'
+  },
+  { 
+    id: 'youtube', 
+    name: 'YouTube वीडियो सुझाव (Recommendations)', 
+    emoji: '📺', 
+    isAi: true, 
+    explanation: 'शानदार! YouTube AI आपकी पसंद सीखकर वैसे ही नए वीडियो सुझाता है।',
+    speechText: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?'
+  },
+  { 
+    id: 'lift', 
+    name: 'लिफ्ट का बटन (Elevator / Lift)', 
+    emoji: '🛗', 
+    isAi: false, 
+    explanation: 'सही! लिफ्ट तय नियमों पर काम करती है, इसमें AI नहीं होता।',
+    speechText: 'लिफ्ट का बटन। क्या इसमें ए आई है?'
+  },
+  { 
+    id: 'faceunlock', 
+    name: 'फोन का Face Unlock', 
+    emoji: '📱', 
+    isAi: true, 
+    explanation: 'सही जवाब! कैमरा आपके चेहरे के खास पैटर्न्स को AI विज़न से पहचानता है।',
+    speechText: 'फोन का फेस अनलॉक। क्या यह ए आई है?'
+  },
+  { 
+    id: 'calculator', 
+    name: 'कैलकुलेटर (Calculator)', 
+    emoji: '🧮', 
+    isAi: false, 
+    explanation: 'सही! कैलकुलेटर सिर्फ गणित के तय फॉर्मूलों पर चलता है, डेटा से कुछ नया नहीं सीखता।',
+    speechText: 'कैलकुलेटर। क्या इसमें ए आई है?'
+  }
 ];
 
 interface AnimalItem {
@@ -50,18 +93,100 @@ export function AiArcadeStudio() {
   const [trainedWild, setTrainedWild] = useState<string[]>([]);
   const [testPrediction, setTestPrediction] = useState<string | null>(null);
 
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Web Audio Tone Synthesizers for UI feedback
+  const playSoundEffect = (type: 'correct' | 'wrong' | 'pop') => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      if (type === 'correct') {
+        // High ascending cheerful chime
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } else if (type === 'wrong') {
+        // Low buzzing descending tone
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else {
+        // Subtle tap pop
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+    } catch (e) {}
+  };
+
+  // Hindi Speech Synthesis
+  const playSpeech = (text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'hi-IN';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  };
+
+  // Automatically narrate question when current item changes
+  useEffect(() => {
+    if (activeLevel === 'level1' && !quizFeedback) {
+      playSpeech(AI_OR_NOT_ITEMS[currentQuizIndex].speechText);
+    }
+  }, [currentQuizIndex, activeLevel]);
+
   const handleQuizAnswer = (userChoseAi: boolean) => {
     const currentItem = AI_OR_NOT_ITEMS[currentQuizIndex];
     const correct = userChoseAi === currentItem.isAi;
-    if (correct) setQuizScore((prev) => prev + 1);
+
+    if (correct) {
+      playSoundEffect('correct');
+      setQuizScore((prev) => prev + 1);
+    } else {
+      playSoundEffect('wrong');
+    }
 
     setQuizFeedback({
       isCorrect: correct,
       text: currentItem.explanation
     });
+
+    // Voice explanation
+    setTimeout(() => {
+      playSpeech(currentItem.explanation);
+    }, 250);
   };
 
   const handleNextQuiz = () => {
+    playSoundEffect('pop');
     setQuizFeedback(null);
     if (currentQuizIndex + 1 < AI_OR_NOT_ITEMS.length) {
       setCurrentQuizIndex((prev) => prev + 1);
@@ -71,30 +196,41 @@ export function AiArcadeStudio() {
   };
 
   const trainItem = (animal: AnimalItem, asDomestic: boolean) => {
+    playSoundEffect('pop');
     if (asDomestic) {
       setTrainedDomestic((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
       setTrainedWild((prev) => prev.filter((id) => id !== animal.id));
+      playSpeech(`${animal.name.split(' ')[0]} को पालतू श्रेणी में जोड़ा गया`);
     } else {
       setTrainedWild((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
       setTrainedDomestic((prev) => prev.filter((id) => id !== animal.id));
+      playSpeech(`${animal.name.split(' ')[0]} को जंगली श्रेणी में जोड़ा गया`);
     }
     setTestPrediction(null);
   };
 
   const testNewAnimal = () => {
-    // Check if training data has domestic animals trained
     const hasDomesticTrained = trainedDomestic.length > 0;
     const hasWildTrained = trainedWild.length > 0;
 
     if (!hasDomesticTrained && !hasWildTrained) {
-      setTestPrediction('कृपया पहले AI को ऊपर उदाहरण (Data) देकर सिखाएं!');
+      const msg = 'कृपया पहले AI को ऊपर उदाहरण देकर सिखाएं!';
+      playSoundEffect('wrong');
+      setTestPrediction(msg);
+      playSpeech(msg);
       return;
     }
 
     if (trainedDomestic.includes('cow') || trainedDomestic.includes('dog')) {
-      setTestPrediction('✅ AI का अनुमान: "बकरी (Goat)" एक पालतू जानवर है! (क्योंकि आपने गाय/कुत्ते से सिखाया)');
+      const msg = 'AI का अनुमान: बकरी एक पालतू जानवर है!';
+      playSoundEffect('correct');
+      setTestPrediction(`✅ ${msg} (क्योंकि आपने गाय/कुत्ते से सिखाया)`);
+      playSpeech(msg);
     } else {
-      setTestPrediction('❌ AI का गलत अनुमान: "बकरी जंगली जानवर है" (क्योंकि आपने इसे सिर्फ जंगली जानवरों का डेटा दिया था!)');
+      const msg = 'AI का गलत अनुमान: बकरी जंगली जानवर है!';
+      playSoundEffect('wrong');
+      setTestPrediction(`❌ ${msg} (क्योंकि आपने इसे सिर्फ जंगली जानवरों का डेटा दिया था!)`);
+      playSpeech(msg);
     }
   };
 
@@ -131,7 +267,7 @@ export function AiArcadeStudio() {
         {/* 4-Stage Guided Progression Roadmap */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-5">
           <button
-            onClick={() => setActiveLevel('level1')}
+            onClick={() => { setActiveLevel('level1'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level1' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
@@ -143,7 +279,7 @@ export function AiArcadeStudio() {
           </button>
 
           <button
-            onClick={() => setActiveLevel('level2_tray')}
+            onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level2_tray' || activeLevel === 'level2_trainer'
                 ? 'bg-purple-600 border-purple-700 text-white shadow-md'
@@ -157,7 +293,7 @@ export function AiArcadeStudio() {
           </button>
 
           <button
-            onClick={() => setActiveLevel('level3_draw')}
+            onClick={() => { setActiveLevel('level3_draw'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level3_draw' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
@@ -169,7 +305,7 @@ export function AiArcadeStudio() {
           </button>
 
           <button
-            onClick={() => setActiveLevel('level4_fact')}
+            onClick={() => { setActiveLevel('level4_fact'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level4_fact' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
@@ -188,9 +324,19 @@ export function AiArcadeStudio() {
         {/* LEVEL 1: AI है या नहीं? */}
         {activeLevel === 'level1' && (
           <div className="w-full max-w-lg flex flex-col items-center text-center">
-            <span className="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full mb-3">
-              सवाल {currentQuizIndex + 1} / {AI_OR_NOT_ITEMS.length} • स्कोर: {quizScore}
-            </span>
+            
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full">
+                सवाल {currentQuizIndex + 1} / {AI_OR_NOT_ITEMS.length} • स्कोर: {quizScore}
+              </span>
+              <button
+                onClick={() => playSpeech(AI_OR_NOT_ITEMS[currentQuizIndex].speechText)}
+                className="p-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-full transition cursor-pointer"
+                title="आवाज़ सुनें"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            </div>
 
             <div className="w-full bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 mb-6 shadow-inner flex flex-col items-center">
               <span className="text-6xl md:text-7xl mb-3 animate-bounce">
@@ -242,7 +388,7 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 2: AI को सिखाओ (Supervised Data Tray) */}
+        {/* LEVEL 2: AI को सिखाओ */}
         {activeLevel === 'level2_tray' && (
           <div className="w-full max-w-2xl flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-4">
@@ -251,7 +397,7 @@ export function AiArcadeStudio() {
                 <p className="text-xs text-slate-600">जानवरों को सही ट्रे में डालें। AI आपके दिए डेटा से सीखेगा!</p>
               </div>
               <button
-                onClick={() => setActiveLevel('level2_trainer')}
+                onClick={() => { setActiveLevel('level2_trainer'); playSoundEffect('pop'); }}
                 className="text-xs font-black bg-purple-100 text-purple-900 hover:bg-purple-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
               >
                 कैमरा ट्रेनर खोलें ➔
@@ -267,16 +413,16 @@ export function AiArcadeStudio() {
                   <div className="flex gap-1 ml-1">
                     <button
                       onClick={() => trainItem(a, true)}
-                      className={`text-[10px] font-black px-2 py-1 rounded cursor-pointer ${
-                        trainedDomestic.includes(a.id) ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800'
+                      className={`text-[10px] font-black px-2.5 py-1 rounded cursor-pointer ${
+                        trainedDomestic.includes(a.id) ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                       }`}
                     >
                       पालतू
                     </button>
                     <button
                       onClick={() => trainItem(a, false)}
-                      className={`text-[10px] font-black px-2 py-1 rounded cursor-pointer ${
-                        trainedWild.includes(a.id) ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-800'
+                      className={`text-[10px] font-black px-2.5 py-1 rounded cursor-pointer ${
+                        trainedWild.includes(a.id) ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
                       }`}
                     >
                       जंगली
@@ -296,9 +442,9 @@ export function AiArcadeStudio() {
               <div>
                 <button
                   onClick={testNewAnimal}
-                  className="py-2 px-5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer"
+                  className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer inline-flex items-center gap-2"
                 >
-                  AI से पूछें: बकरी क्या है? ➔
+                  <Brain className="w-4 h-4" /> AI से पूछें: बकरी क्या है? ➔
                 </button>
               </div>
               {testPrediction && (
@@ -319,7 +465,7 @@ export function AiArcadeStudio() {
           <div className="w-full flex flex-col items-center text-center">
             <div className="flex justify-between items-center w-full max-w-xl mb-4">
               <button
-                onClick={() => setActiveLevel('level2_tray')}
+                onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
                 className="text-xs font-black text-purple-800 bg-purple-100 px-3 py-1.5 rounded-xl cursor-pointer"
               >
                 ⬅ डेटा ट्रे पर लौटें
@@ -353,7 +499,7 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 4: सच या कल्पना? (Hallucination Detective) */}
+        {/* LEVEL 4: सच या कल्पना? */}
         {activeLevel === 'level4_fact' && (
           <div className="w-full max-w-lg text-center flex flex-col items-center">
             <div className="w-12 h-12 bg-amber-100 text-amber-900 rounded-2xl flex items-center justify-center text-2xl mb-3">
@@ -364,7 +510,15 @@ export function AiArcadeStudio() {
               AI बहुत आत्मविश्वास से जवाब देता है, लेकिन क्या हर बात सच होती है?
             </p>
             <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 text-left mb-4 shadow-sm w-full">
-              <span className="text-[11px] font-black text-amber-950 block mb-1">दावा / Statement:</span>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] font-black text-amber-950">दावा / Statement:</span>
+                <button
+                  onClick={() => playSpeech("दावा: भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं। सबक: यह गलत है। AI कई बार गलत जानकारी बनाता है।")}
+                  className="p-1 text-amber-900 hover:bg-amber-200 rounded cursor-pointer"
+                >
+                  <Volume2 className="w-4 h-4" />
+                </button>
+              </div>
               <p className="text-sm font-bold text-slate-800 mb-3">
                 "भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं।"
               </p>
