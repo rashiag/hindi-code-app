@@ -13,7 +13,7 @@ interface AiOrNotItem {
   isAi: boolean;
   correctExplanation: string;
   wrongExplanation: string;
-  speechText: string;
+  questionAudioText: string;
 }
 
 const AI_OR_NOT_POOL: AiOrNotItem[] = [
@@ -22,45 +22,45 @@ const AI_OR_NOT_POOL: AiOrNotItem[] = [
     name: 'Google Maps (रास्ता व ट्रैफिक)', 
     emoji: '🗺️', 
     isAi: true, 
-    correctExplanation: 'शाबाश! Maps लाइव ट्रैफिक डेटा और AI अल्गोरिदम से सबसे तेज़ रास्ता खोजता है।',
-    wrongExplanation: 'गलत जवाब! Google Maps में AI का इस्तेमाल होता है, यह लाखों गाड़ियों के डेटा से सीखता है।',
-    speechText: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?'
+    correctExplanation: 'सही जवाब! Google Maps लाखों गाड़ियों के लाइव डेटा और AI से सबसे तेज़ रास्ता खोजता है।',
+    wrongExplanation: 'गलत उत्तर! Google Maps में AI का इस्तेमाल होता है। यह लाइव डेटा सीखकर रास्ता तय करता है।',
+    questionAudioText: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?'
   },
   { 
     id: 'washing', 
     name: 'वाशिंग मशीन (Washing Machine)', 
     emoji: '🧺', 
     isAi: false, 
-    correctExplanation: 'बिल्कुल सही! इसमें तय मोटर टाइमर और सेंसर हैं, यह खुद सोचकर नया निर्णय नहीं लेती।',
-    wrongExplanation: 'गलत जवाब! साधारण वाशिंग मशीन में AI नहीं होता, यह सिर्फ पहले से तय टाइमर पर चलती है।',
-    speechText: 'वाशिंग मशीन। क्या इसमें ए आई है?'
+    correctExplanation: 'सही जवाब! इसमें पहले से तय मोटर टाइमर होते हैं। यह खुद सोचकर नया निर्णय नहीं लेती।',
+    wrongExplanation: 'गलत उत्तर! साधारण वाशिंग मशीन में AI नहीं होता। यह सिर्फ पहले से तय टाइमर और मोटर से चलती है।',
+    questionAudioText: 'वाशिंग मशीन। क्या इसमें ए आई है?'
   },
   { 
     id: 'youtube', 
     name: 'YouTube वीडियो सुझाव (Recommendations)', 
     emoji: '📺', 
     isAi: true, 
-    correctExplanation: 'शानदार! YouTube AI आपकी पिछली पसंद सीखकर वैसे ही नए वीडियो सुझाता है।',
-    wrongExplanation: 'गलत जवाब! YouTube सुझावों में AI का इस्तेमाल होता है, जो आपकी पसंद को ट्रैक करता है।',
-    speechText: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?'
+    correctExplanation: 'सही जवाब! YouTube AI आपकी पसंद को समझकर वैसे ही नए वीडियो खोजकर सुझाता है।',
+    wrongExplanation: 'गलत उत्तर! YouTube में AI होता है। यह आपकी पुरानी पसंद को ट्रैक करके नए सुझाव देता है।',
+    questionAudioText: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?'
   },
   { 
     id: 'lift', 
     name: 'लिफ्ट का बटन (Elevator / Lift)', 
     emoji: '🛗', 
     isAi: false, 
-    correctExplanation: 'सही जवाब! लिफ्ट तय नियमों और स्विच पर काम करती है, इसमें AI नहीं होता।',
-    wrongExplanation: 'गलत जवाब! लिफ्ट में AI नहीं होता, यह साधारण इलेक्ट्रॉनिक सर्किट और बटन से चलती है।',
-    speechText: 'लिफ्ट का बटन। क्या इसमें ए आई है?'
+    correctExplanation: 'सही जवाब! लिफ्ट साधारण इलेक्ट्रिक स्विच और तय नियमों पर चलती है। इसमें AI नहीं होता।',
+    wrongExplanation: 'गलत उत्तर! लिफ्ट में AI नहीं होता। यह साधारण स्विच और मोटर से काम करती है।',
+    questionAudioText: 'लिफ्ट का बटन। क्या इसमें ए आई है?'
   },
   { 
     id: 'faceunlock', 
     name: 'फोन का Face Unlock', 
     emoji: '📱', 
     isAi: true, 
-    correctExplanation: 'अद्भुत! कैमरा आपके चेहरे के बायोमेट्रिक पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।',
-    wrongExplanation: 'गलत जवाब! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि सिर्फ आपका चेहरा पहचाना जा सके।',
-    speechText: 'फोन का फेस अनलॉक। क्या यह ए आई है?'
+    correctExplanation: 'सही जवाब! कैमरा आपके चेहरे के खास पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।',
+    wrongExplanation: 'गलत उत्तर! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि आपका चेहरा पहचाना जा सके।',
+    questionAudioText: 'फोन का फेस अनलॉक। क्या यह ए आई है?'
   }
 ];
 
@@ -95,6 +95,12 @@ export function AiArcadeStudio() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
+  const stopAllSpeech = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
   const playSoundEffect = (type: 'correct' | 'wrong' | 'pop' | 'fanfare') => {
     try {
       if (!audioCtxRef.current) {
@@ -121,7 +127,7 @@ export function AiArcadeStudio() {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(220, now);
         osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
-        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -133,7 +139,7 @@ export function AiArcadeStudio() {
         osc.frequency.setValueAtTime(554.37, now + 0.15);
         osc.frequency.setValueAtTime(659.25, now + 0.3);
         osc.frequency.setValueAtTime(880, now + 0.45);
-        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.setValueAtTime(0.35, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -155,7 +161,7 @@ export function AiArcadeStudio() {
   const playSpeech = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel(); // immediately stop any previous audio
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'hi-IN';
       u.rate = 0.9;
@@ -163,16 +169,18 @@ export function AiArcadeStudio() {
     } catch (e) {}
   };
 
+  // Play question audio automatically on fresh question
   useEffect(() => {
     if (activeLevel === 'level1' && !quizFeedback && !isQuizFinished) {
-      playSpeech(AI_OR_NOT_POOL[currentQuizIndex].speechText);
+      playSpeech(AI_OR_NOT_POOL[currentQuizIndex].questionAudioText);
     }
-  }, [currentQuizIndex, activeLevel, isQuizFinished]);
+  }, [currentQuizIndex, activeLevel, isQuizFinished, quizFeedback]);
 
   const handleQuizAnswer = (userChoseAi: boolean) => {
+    stopAllSpeech();
     const currentItem = AI_OR_NOT_POOL[currentQuizIndex];
-    const isCorrect = userChoseAi === currentItem.isAi;
-    const explanationText = isCorrect ? currentItem.correctExplanation : currentItem.wrongExplanation;
+    const isCorrect = (userChoseAi === currentItem.isAi);
+    const feedbackText = isCorrect ? currentItem.correctExplanation : currentItem.wrongExplanation;
 
     if (isCorrect) {
       playSoundEffect('correct');
@@ -183,31 +191,33 @@ export function AiArcadeStudio() {
 
     setQuizFeedback({
       isCorrect: isCorrect,
-      text: explanationText
+      text: feedbackText
     });
 
     setTimeout(() => {
-      playSpeech(explanationText);
-    }, 200);
+      playSpeech(feedbackText);
+    }, 150);
   };
 
   const handleNextQuiz = () => {
+    stopAllSpeech();
     playSoundEffect('pop');
     setQuizFeedback(null);
     
-    // Check if 5th question (index 4) was just answered
+    // Terminate exactly after 5 questions (index 0, 1, 2, 3, 4)
     if (currentQuizIndex + 1 >= 5) {
       setIsQuizFinished(true);
       playSoundEffect('fanfare');
       setTimeout(() => {
-        playSpeech(`शाबाश! आपने ५ में से ${quizScore} अंक प्राप्त किए हैं।`);
-      }, 300);
+        playSpeech(`राउंड पूरा हुआ! आपने पांच में से ${quizScore} अंक प्राप्त किए हैं।`);
+      }, 250);
     } else {
       setCurrentQuizIndex((prev) => prev + 1);
     }
   };
 
   const handleRestartQuiz = () => {
+    stopAllSpeech();
     playSoundEffect('pop');
     setCurrentQuizIndex(0);
     setQuizScore(0);
@@ -216,6 +226,7 @@ export function AiArcadeStudio() {
   };
 
   const trainItem = (animal: AnimalItem, asDomestic: boolean) => {
+    stopAllSpeech();
     playSoundEffect('pop');
     if (asDomestic) {
       setTrainedDomestic((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
@@ -230,6 +241,7 @@ export function AiArcadeStudio() {
   };
 
   const testNewAnimal = () => {
+    stopAllSpeech();
     const hasDomesticTrained = trainedDomestic.length > 0;
     const hasWildTrained = trainedWild.length > 0;
 
@@ -287,7 +299,7 @@ export function AiArcadeStudio() {
         {/* 4-Stage Guided Progression Roadmap */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-5">
           <button
-            onClick={() => { setActiveLevel('level1'); playSoundEffect('pop'); }}
+            onClick={() => { stopAllSpeech(); setActiveLevel('level1'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level1' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
@@ -299,7 +311,7 @@ export function AiArcadeStudio() {
           </button>
 
           <button
-            onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
+            onClick={() => { stopAllSpeech(); setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level2_tray' || activeLevel === 'level2_trainer'
                 ? 'bg-purple-600 border-purple-700 text-white shadow-md'
@@ -313,7 +325,7 @@ export function AiArcadeStudio() {
           </button>
 
           <button
-            onClick={() => { setActiveLevel('level3_draw'); playSoundEffect('pop'); }}
+            onClick={() => { stopAllSpeech(); setActiveLevel('level3_draw'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level3_draw' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
@@ -325,7 +337,7 @@ export function AiArcadeStudio() {
           </button>
 
           <button
-            onClick={() => { setActiveLevel('level4_fact'); playSoundEffect('pop'); }}
+            onClick={() => { stopAllSpeech(); setActiveLevel('level4_fact'); playSoundEffect('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
               activeLevel === 'level4_fact' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
@@ -341,16 +353,16 @@ export function AiArcadeStudio() {
       {/* Main Interactive Stage */}
       <div className="bg-white rounded-3xl p-6 md:p-8 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
         
-        {/* LEVEL 1: AI है या नहीं? Active 5 Questions */}
+        {/* LEVEL 1: Active 5 Questions */}
         {activeLevel === 'level1' && !isQuizFinished && (
           <div className="w-full max-w-lg flex flex-col items-center text-center">
             
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full">
-                प्रश्न {currentQuizIndex + 1} / 5 • वर्तमान स्कोर: {quizScore}
+                प्रश्न {currentQuizIndex + 1} / 5 • स्कोर: {quizScore}
               </span>
               <button
-                onClick={() => playSpeech(AI_OR_NOT_POOL[currentQuizIndex].speechText)}
+                onClick={() => playSpeech(AI_OR_NOT_POOL[currentQuizIndex].questionAudioText)}
                 className="p-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-full transition cursor-pointer"
                 title="आवाज़ सुनें"
               >
@@ -395,7 +407,7 @@ export function AiArcadeStudio() {
                     {quizFeedback.isCorrect ? 'बिल्कुल सही जवाब!' : 'गलत उत्तर!'}
                   </span>
                 </div>
-                <p className="text-xs font-bold text-purple-950 mb-4">{quizFeedback.text}</p>
+                <p className="text-xs font-bold text-purple-950 mb-4 leading-relaxed">{quizFeedback.text}</p>
                 <button
                   onClick={handleNextQuiz}
                   className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer inline-flex items-center gap-1.5"
@@ -434,7 +446,7 @@ export function AiArcadeStudio() {
               </div>
             </div>
 
-            <div className="bg-purple-100/70 p-3.5 rounded-xl text-left text-xs font-bold text-purple-950 mb-6">
+            <div className="bg-purple-100/70 p-3.5 rounded-xl text-left text-xs font-bold text-purple-950 mb-6 leading-relaxed">
               💡 मुख्य निष्कर्ष: हर मशीन में AI नहीं होता! लिफ्ट और वॉशिंग मशीन तय कोड/सेंसर से चलती हैं, जबकि Maps व Face Unlock नए डेटा से सीखकर निर्णय लेते हैं।
             </div>
 
@@ -446,7 +458,7 @@ export function AiArcadeStudio() {
                 <RotateCcw className="w-4 h-4" /> पुनः खेलें
               </button>
               <button
-                onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
+                onClick={() => { stopAllSpeech(); setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
                 className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
               >
                 लेवल २ पर आगे बढ़ें ➔
@@ -464,7 +476,7 @@ export function AiArcadeStudio() {
                 <p className="text-xs text-slate-600">जानवरों को सही ट्रे में डालें। AI आपके दिए डेटा से सीखेगा!</p>
               </div>
               <button
-                onClick={() => { setActiveLevel('level2_trainer'); playSoundEffect('pop'); }}
+                onClick={() => { stopAllSpeech(); setActiveLevel('level2_trainer'); playSoundEffect('pop'); }}
                 className="text-xs font-black bg-purple-100 text-purple-900 hover:bg-purple-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
               >
                 हिंदी मशीन ट्रेनर खोलें ➔
@@ -530,7 +542,7 @@ export function AiArcadeStudio() {
           <div className="w-full flex flex-col items-center">
             <div className="flex justify-between items-center w-full mb-4">
               <button
-                onClick={() => { setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
+                onClick={() => { stopAllSpeech(); setActiveLevel('level2_tray'); playSoundEffect('pop'); }}
                 className="text-xs font-black text-purple-800 bg-purple-100 hover:bg-purple-200 px-3.5 py-1.5 rounded-xl cursor-pointer"
               >
                 ⬅ डेटा ट्रे पर लौटें
