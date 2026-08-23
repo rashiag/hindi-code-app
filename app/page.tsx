@@ -1,20 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BlocklyWorkspace from '@/components/BlocklyWorkspace';
 import GameCanvas from '@/components/GameCanvas';
-import HindiScratchStudio from '@/components/HindiScratchStudio';
-import HindiPhonicsStudio from '@/components/HindiPhonicsStudio';
-import HindiSentenceBuilder from '@/components/HindiSentenceBuilder';
-import HindiVocabMatch from '@/components/HindiVocabMatch';
+import { EnglishLiteracyHub } from '@/components/EnglishLiteracyHub';
 import { AiArcadeStudio } from '@/components/AiArcadeStudio';
 import { HindiMusicStudio } from '@/components/HindiMusicStudio';
 import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
 import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
 import { LEVELS, Level } from '@/lib/levels';
-import { HelpCircle } from 'lucide-react';
+import { Trophy, HelpCircle, RotateCcw, Sparkles } from 'lucide-react';
 
 type Direction = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
 
@@ -26,18 +23,77 @@ function CodingAppInner() {
   const [activeTab, setActiveTab] = useState<string>(tabParam);
   const [currentLevelIndex, setCurrentLevelIndex] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isLevelSuccess, setIsLevelSuccess] = useState<boolean>(false);
 
   const levelList = Array.isArray(LEVELS) && LEVELS.length > 0 ? LEVELS : [];
   const currentLevel: Level = (levelList[currentLevelIndex] || levelList[0]) as Level;
 
-  const defaultPos: { x: number; y: number; dir: Direction } = {
-    x: (currentLevel as any)?.playerStart?.x ?? (currentLevel as any)?.startPos?.x ?? 0,
-    y: (currentLevel as any)?.playerStart?.y ?? (currentLevel as any)?.startPos?.y ?? 2,
-    dir: ((currentLevel as any)?.playerStart?.dir ?? (currentLevel as any)?.startPos?.dir ?? 'EAST') as Direction,
-  };
+  const getInitialPos = (lvl: any) => ({
+    x: lvl?.playerStart?.x ?? lvl?.startPos?.x ?? 0,
+    y: lvl?.playerStart?.y ?? lvl?.startPos?.y ?? 2,
+    dir: (lvl?.playerStart?.dir ?? lvl?.startPos?.dir ?? 'EAST') as Direction,
+  });
 
-  const [playerPos, setPlayerPos] = useState<{ x: number; y: number; dir: Direction }>(defaultPos);
+  const [playerPos, setPlayerPos] = useState(getInitialPos(currentLevel));
   const [collectedTargets, setCollectedTargets] = useState<{ x: number; y: number }[]>([]);
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playSound = (type: 'step' | 'turn' | 'success' | 'fail') => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      if (type === 'step') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(500, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'turn') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(450, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      } else if (type === 'success') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.12);
+        osc.frequency.setValueAtTime(659.25, now + 0.24);
+        osc.frequency.setValueAtTime(880, now + 0.36);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      } else if (type === 'fail') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.3);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+    } catch (e) {}
+  };
 
   useEffect(() => {
     if (tabParam) setActiveTab(tabParam);
@@ -45,30 +101,126 @@ function CodingAppInner() {
 
   useEffect(() => {
     if (currentLevel) {
-      setPlayerPos({
-        x: (currentLevel as any)?.playerStart?.x ?? (currentLevel as any)?.startPos?.x ?? 0,
-        y: (currentLevel as any)?.playerStart?.y ?? (currentLevel as any)?.startPos?.y ?? 2,
-        dir: ((currentLevel as any)?.playerStart?.dir ?? (currentLevel as any)?.startPos?.dir ?? 'EAST') as Direction,
-      });
+      setPlayerPos(getInitialPos(currentLevel));
+      setCollectedTargets([]);
+      setIsRunning(false);
+      setIsLevelSuccess(false);
     }
-    setCollectedTargets([]);
-    setIsRunning(false);
   }, [currentLevelIndex, currentLevel]);
 
-  const handleRunCode = () => {
+  // Turn logic
+  const turn = (dir: Direction, turnTo: 'LEFT' | 'RIGHT'): Direction => {
+    const dirs: Direction[] = ['NORTH', 'EAST', 'SOUTH', 'WEST'];
+    const idx = dirs.indexOf(dir);
+    if (turnTo === 'LEFT') {
+      return dirs[(idx + 3) % 4];
+    } else {
+      return dirs[(idx + 1) % 4];
+    }
+  };
+
+  // Step forward logic
+  const stepForward = (pos: { x: number; y: number; dir: Direction }, gridSize: number) => {
+    let nextX = pos.x;
+    let nextY = pos.y;
+    if (pos.dir === 'NORTH') nextY -= 1;
+    if (pos.dir === 'SOUTH') nextY += 1;
+    if (pos.dir === 'EAST') nextX += 1;
+    if (pos.dir === 'WEST') nextX -= 1;
+
+    // Check bounds
+    if (nextX < 0 || nextX >= gridSize || nextY < 0 || nextY >= gridSize) {
+      return null;
+    }
+    return { x: nextX, y: nextY, dir: pos.dir };
+  };
+
+  // Execute Blockly Actions Step-by-Step
+  const handleRunCode = async (actionPlan: any[], totalBlocks: number) => {
+    if (isRunning || isLevelSuccess) return;
     setIsRunning(true);
+
+    let currentPos = { ...playerPos };
+    let collected: { x: number; y: number }[] = [];
+    const obstacles = currentLevel.obstacles || [];
+    const targets = currentLevel.targets || [];
+    const gridSize = currentLevel.gridSize || 5;
+
+    for (let i = 0; i < actionPlan.length; i++) {
+      const action = typeof actionPlan[i] === 'string' ? actionPlan[i] : actionPlan[i]?.type;
+
+      if (action === 'move_forward') {
+        const next = stepForward(currentPos, gridSize);
+        if (!next) {
+          playSound('fail');
+          alert('⚠️ रोबोट ग्रिड से बाहर जा रहा है!');
+          setIsRunning(false);
+          return;
+        }
+
+        const hitObstacle = obstacles.some(ob => ob.x === next.x && ob.y === next.y);
+        if (hitObstacle) {
+          playSound('fail');
+          alert('💥 रोबोट रुकावट से टकरा गया!');
+          setIsRunning(false);
+          return;
+        }
+
+        currentPos = next;
+        setPlayerPos({ ...currentPos });
+        playSound('step');
+
+        // Check if landed on target
+        const hitTarget = targets.find(tg => tg.x === next.x && tg.y === next.y);
+        if (hitTarget && !collected.some(c => c.x === hitTarget.x && c.y === hitTarget.y)) {
+          collected = [...collected, { x: hitTarget.x, y: hitTarget.y }];
+          setCollectedTargets([...collected]);
+        }
+      } else if (action === 'turn_left') {
+        currentPos.dir = turn(currentPos.dir, 'LEFT');
+        setPlayerPos({ ...currentPos });
+        playSound('turn');
+      } else if (action === 'turn_right') {
+        currentPos.dir = turn(currentPos.dir, 'RIGHT');
+        setPlayerPos({ ...currentPos });
+        playSound('turn');
+      }
+
+      // Delay between steps for visual animation
+      await new Promise(res => setTimeout(res, 450));
+    }
+
+    // Evaluate Goal Completion
+    const allTargetsCollected = targets.every(tg =>
+      collected.some(c => c.x === tg.x && c.y === tg.y)
+    );
+
+    if (allTargetsCollected && targets.length > 0) {
+      playSound('success');
+      setIsLevelSuccess(true);
+    } else {
+      playSound('fail');
+      alert('रोबोट लक्ष्य तक नहीं पहुँचा। पुनः प्रयास करें!');
+    }
+    setIsRunning(false);
   };
 
   const handleReset = () => {
     setIsRunning(false);
+    setIsLevelSuccess(false);
     if (currentLevel) {
-      setPlayerPos({
-        x: (currentLevel as any)?.playerStart?.x ?? (currentLevel as any)?.startPos?.x ?? 0,
-        y: (currentLevel as any)?.playerStart?.y ?? (currentLevel as any)?.startPos?.y ?? 2,
-        dir: ((currentLevel as any)?.playerStart?.dir ?? (currentLevel as any)?.startPos?.dir ?? 'EAST') as Direction,
-      });
+      setPlayerPos(getInitialPos(currentLevel));
+      setCollectedTargets([]);
     }
-    setCollectedTargets([]);
+  };
+
+  const handleNextLevel = () => {
+    setIsLevelSuccess(false);
+    if (currentLevelIndex + 1 < levelList.length) {
+      setCurrentLevelIndex(prev => prev + 1);
+    } else {
+      setCurrentLevelIndex(0);
+    }
   };
 
   const switchTab = (tabKey: string) => {
@@ -79,7 +231,7 @@ function CodingAppInner() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none">
       
-      {/* Universal Header with Navigation Tabs */}
+      {/* Top Universal App Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm px-4 py-2.5">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           
@@ -97,50 +249,24 @@ function CodingAppInner() {
             </div>
           </div>
 
+          {/* Clean Sub-Tabs: Phonics, Coding, AI Arcade, EVS, Maths, Music, Science */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
-            <button
-              onClick={() => switchTab('phonics')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
-                activeTab === 'phonics' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              🔤 फोनिक्स (CVC)
-            </button>
-
-            <button
-              onClick={() => switchTab('syntax')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
-                activeTab === 'syntax' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              🧩 वाक्य बनाओ
-            </button>
-
-            <button
-              onClick={() => switchTab('vocab')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
-                activeTab === 'vocab' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              🖼️ शब्द मिलाओ
-            </button>
-
             <button
               onClick={() => switchTab('coding')}
               className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
                 activeTab === 'coding' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🎮 मेज़ कोडिंग
+              🎮 मेज़ कोडिंग (Logic)
             </button>
 
             <button
-              onClick={() => switchTab('scratch')}
+              onClick={() => switchTab('english')}
               className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
-                activeTab === 'scratch' ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                activeTab === 'english' || activeTab === 'phonics' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🐱 स्क्रैच स्टूडियो
+              🔤 English Lab
             </button>
 
             <button
@@ -151,22 +277,66 @@ function CodingAppInner() {
             >
               🤖 AI खेलघर (Arcade)
             </button>
+
+            <button
+              onClick={() => switchTab('maths')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'maths' ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🔢 गणित (Maths)
+            </button>
+
+            <button
+              onClick={() => switchTab('music')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'music' ? 'bg-orange-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🎹 संगीत (Music)
+            </button>
+
+            <button
+              onClick={() => switchTab('researcher')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'researcher' ? 'bg-violet-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🔬 विज्ञान (Science)
+            </button>
+
+            <button
+              onClick={() => switchTab('evs')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'evs' ? 'bg-green-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🌍 EVS
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Content Area */}
       <main className="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
         
-        {/* CODING TAB */}
+        {/* CODING LOGIC MAZE */}
         {activeTab === 'coding' && (
           <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)] min-h-[620px]">
             
+            {/* Left Column: Visual Game Canvas */}
             <div className="w-full lg:w-1/3 flex flex-col gap-3">
+              
+              {/* Level Selector Bar */}
               <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <span className="text-xs font-black text-slate-700">
-                  स्तर {currentLevel?.id ?? 1}: {currentLevel?.title ?? 'मेज़'}
-                </span>
+                <div>
+                  <span className="text-xs font-black text-slate-900 block">
+                    स्तर {currentLevel?.id ?? 1}: {currentLevel?.title ?? 'मेज़'}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-700">
+                    {currentLevel?.concept || 'Sequencing'}
+                  </span>
+                </div>
                 <div className="flex gap-1">
                   {levelList.map((lvl: Level, i: number) => (
                     <button
@@ -182,6 +352,7 @@ function CodingAppInner() {
                 </div>
               </div>
 
+              {/* Game Viewport Canvas */}
               <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-center items-center relative overflow-hidden">
                 {currentLevel && (
                   <GameCanvas
@@ -190,14 +361,33 @@ function CodingAppInner() {
                     collectedTargets={collectedTargets}
                   />
                 )}
+
+                {/* Level Success Modal */}
+                {isLevelSuccess && (
+                  <div className="absolute inset-0 bg-slate-900/75 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 z-20">
+                    <div className="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-lg">
+                      🏆
+                    </div>
+                    <h3 className="text-xl font-black text-white mb-1">शानदार! स्तर पार हुआ</h3>
+                    <p className="text-xs font-bold text-emerald-300 mb-4">रोबोट सही क्रम में लक्ष्य तक पहुँच गया!</p>
+                    <button
+                      onClick={handleNextLevel}
+                      className="py-2.5 px-6 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer"
+                    >
+                      अगला स्तर (Next Level) ➔
+                    </button>
+                  </div>
+                )}
               </div>
 
+              {/* Hint Box */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-950 flex items-center gap-2 shadow-sm">
                 <HelpCircle className="w-4 h-4 shrink-0 text-emerald-700" />
                 <span>💡 {(currentLevel as any)?.hint || (currentLevel as any)?.instruction || 'ब्लॉक जोड़ें!'}</span>
               </div>
             </div>
 
+            {/* Right Column: Blockly Workspace */}
             <div className="w-full lg:w-2/3 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
               <BlocklyWorkspace
                 onRunCode={handleRunCode}
@@ -209,16 +399,13 @@ function CodingAppInner() {
           </div>
         )}
 
-        {activeTab === 'scratch' && <HindiScratchStudio />}
-        {activeTab === 'phonics' && <HindiPhonicsStudio />}
-        {activeTab === 'syntax' && <HindiSentenceBuilder />}
-        {activeTab === 'vocab' && <HindiVocabMatch />}
+        {/* OTHER VERTICAL HUBS */}
+        {(activeTab === 'english' || activeTab === 'phonics' || activeTab === 'syntax' || activeTab === 'vocab') && <EnglishLiteracyHub />}
         {(activeTab === 'ai' || activeTab === 'ml') && <AiArcadeStudio />}
-
         {activeTab === 'maths' && <HindiMathStudio />}
-        {activeTab === 'evs' && <HindiAnimalStudio />}
         {activeTab === 'music' && <HindiMusicStudio />}
         {activeTab === 'researcher' && <JuniorResearcherStudio />}
+        {activeTab === 'evs' && <HindiAnimalStudio />}
 
       </main>
     </div>
