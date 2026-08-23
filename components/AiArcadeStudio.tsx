@@ -11,7 +11,8 @@ interface AiOrNotItem {
   name: string;
   emoji: string;
   isAi: boolean;
-  explanation: string;
+  correctExplanation: string;
+  wrongExplanation: string;
   speechText: string;
 }
 
@@ -21,7 +22,8 @@ const AI_OR_NOT_POOL: AiOrNotItem[] = [
     name: 'Google Maps (रास्ता व ट्रैफिक)', 
     emoji: '🗺️', 
     isAi: true, 
-    explanation: 'सही! Maps लाखों गाड़ियों के लाइव डेटा और AI से सबसे तेज़ रास्ता खोजता है।',
+    correctExplanation: 'शाबाश! Maps लाइव ट्रैफिक डेटा और AI अल्गोरिदम से सबसे तेज़ रास्ता खोजता है।',
+    wrongExplanation: 'गलत जवाब! Google Maps में AI का इस्तेमाल होता है, यह लाखों गाड़ियों के डेटा से सीखता है।',
     speechText: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?'
   },
   { 
@@ -29,7 +31,8 @@ const AI_OR_NOT_POOL: AiOrNotItem[] = [
     name: 'वाशिंग मशीन (Washing Machine)', 
     emoji: '🧺', 
     isAi: false, 
-    explanation: 'बिल्कुल! इसमें तय मोटर टाइमर और सेंसर हैं, यह खुद सोचकर नया निर्णय नहीं लेती।',
+    correctExplanation: 'बिल्कुल सही! इसमें तय मोटर टाइमर और सेंसर हैं, यह खुद सोचकर नया निर्णय नहीं लेती।',
+    wrongExplanation: 'गलत जवाब! साधारण वाशिंग मशीन में AI नहीं होता, यह सिर्फ पहले से तय टाइमर पर चलती है।',
     speechText: 'वाशिंग मशीन। क्या इसमें ए आई है?'
   },
   { 
@@ -37,7 +40,8 @@ const AI_OR_NOT_POOL: AiOrNotItem[] = [
     name: 'YouTube वीडियो सुझाव (Recommendations)', 
     emoji: '📺', 
     isAi: true, 
-    explanation: 'शानदार! YouTube AI आपकी पसंद सीखकर वैसे ही नए वीडियो सुझाता है।',
+    correctExplanation: 'शानदार! YouTube AI आपकी पिछली पसंद सीखकर वैसे ही नए वीडियो सुझाता है।',
+    wrongExplanation: 'गलत जवाब! YouTube सुझावों में AI का इस्तेमाल होता है, जो आपकी पसंद को ट्रैक करता है।',
     speechText: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?'
   },
   { 
@@ -45,7 +49,8 @@ const AI_OR_NOT_POOL: AiOrNotItem[] = [
     name: 'लिफ्ट का बटन (Elevator / Lift)', 
     emoji: '🛗', 
     isAi: false, 
-    explanation: 'सही! लिफ्ट तय नियमों पर काम करती है, इसमें AI नहीं होता।',
+    correctExplanation: 'सही जवाब! लिफ्ट तय नियमों और स्विच पर काम करती है, इसमें AI नहीं होता।',
+    wrongExplanation: 'गलत जवाब! लिफ्ट में AI नहीं होता, यह साधारण इलेक्ट्रॉनिक सर्किट और बटन से चलती है।',
     speechText: 'लिफ्ट का बटन। क्या इसमें ए आई है?'
   },
   { 
@@ -53,7 +58,8 @@ const AI_OR_NOT_POOL: AiOrNotItem[] = [
     name: 'फोन का Face Unlock', 
     emoji: '📱', 
     isAi: true, 
-    explanation: 'सही जवाब! कैमरा आपके चेहरे के खास पैटर्न्स को AI विज़न से पहचानता है।',
+    correctExplanation: 'अद्भुत! कैमरा आपके चेहरे के बायोमेट्रिक पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।',
+    wrongExplanation: 'गलत जवाब! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि सिर्फ आपका चेहरा पहचाना जा सके।',
     speechText: 'फोन का फेस अनलॉक। क्या यह ए आई है?'
   }
 ];
@@ -165,9 +171,10 @@ export function AiArcadeStudio() {
 
   const handleQuizAnswer = (userChoseAi: boolean) => {
     const currentItem = AI_OR_NOT_POOL[currentQuizIndex];
-    const correct = userChoseAi === currentItem.isAi;
+    const isCorrect = userChoseAi === currentItem.isAi;
+    const explanationText = isCorrect ? currentItem.correctExplanation : currentItem.wrongExplanation;
 
-    if (correct) {
+    if (isCorrect) {
       playSoundEffect('correct');
       setQuizScore((prev) => prev + 1);
     } else {
@@ -175,26 +182,28 @@ export function AiArcadeStudio() {
     }
 
     setQuizFeedback({
-      isCorrect: correct,
-      text: currentItem.explanation
+      isCorrect: isCorrect,
+      text: explanationText
     });
 
     setTimeout(() => {
-      playSpeech(currentItem.explanation);
-    }, 250);
+      playSpeech(explanationText);
+    }, 200);
   };
 
   const handleNextQuiz = () => {
     playSoundEffect('pop');
     setQuizFeedback(null);
-    if (currentQuizIndex + 1 < AI_OR_NOT_POOL.length) {
-      setCurrentQuizIndex((prev) => prev + 1);
-    } else {
+    
+    // Check if 5th question (index 4) was just answered
+    if (currentQuizIndex + 1 >= 5) {
       setIsQuizFinished(true);
       playSoundEffect('fanfare');
       setTimeout(() => {
         playSpeech(`शाबाश! आपने ५ में से ${quizScore} अंक प्राप्त किए हैं।`);
       }, 300);
+    } else {
+      setCurrentQuizIndex((prev) => prev + 1);
     }
   };
 
@@ -332,7 +341,7 @@ export function AiArcadeStudio() {
       {/* Main Interactive Stage */}
       <div className="bg-white rounded-3xl p-6 md:p-8 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
         
-        {/* LEVEL 1: AI है या नहीं? 5-Questions Round */}
+        {/* LEVEL 1: AI है या नहीं? Active 5 Questions */}
         {activeLevel === 'level1' && !isQuizFinished && (
           <div className="w-full max-w-lg flex flex-col items-center text-center">
             
@@ -383,7 +392,7 @@ export function AiArcadeStudio() {
                     <XCircle className="w-6 h-6 text-rose-600" />
                   )}
                   <span className={`text-base font-black ${quizFeedback.isCorrect ? 'text-emerald-900' : 'text-rose-900'}`}>
-                    {quizFeedback.isCorrect ? 'बिल्कुल सही!' : 'सोचिए फिर से!'}
+                    {quizFeedback.isCorrect ? 'बिल्कुल सही जवाब!' : 'गलत उत्तर!'}
                   </span>
                 </div>
                 <p className="text-xs font-bold text-purple-950 mb-4">{quizFeedback.text}</p>
@@ -398,15 +407,15 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 1: Report Card */}
+        {/* LEVEL 1: Strict Termination Report Card after 5 Questions */}
         {activeLevel === 'level1' && isQuizFinished && (
           <div className="w-full max-w-md bg-gradient-to-b from-purple-50 via-white to-pink-50 rounded-3xl border-2 border-purple-300 p-6 md:p-8 text-center shadow-xl animate-in zoom-in-95">
             <div className="w-16 h-16 bg-purple-600 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg">
               🏆
             </div>
             
-            <h2 className="text-2xl font-black text-purple-950 mb-1">शानदार प्रयास!</h2>
-            <p className="text-xs font-bold text-purple-800 mb-6">AI है या नहीं? - राउंड रिपोर्ट कार्ड</p>
+            <h2 className="text-2xl font-black text-purple-950 mb-1">राउंड पूरा हुआ!</h2>
+            <p className="text-xs font-bold text-purple-800 mb-6">AI है या नहीं? - आपका रिपोर्ट कार्ड</p>
 
             <div className="bg-white border-2 border-purple-200 rounded-2xl p-4 shadow-sm mb-6 flex justify-around items-center">
               <div>
@@ -426,7 +435,7 @@ export function AiArcadeStudio() {
             </div>
 
             <div className="bg-purple-100/70 p-3.5 rounded-xl text-left text-xs font-bold text-purple-950 mb-6">
-              💡 मुख्य सबक: हर मशीन में AI नहीं होता! लिफ्ट और वॉशिंग मशीन तय कोड/सेंसर से चलती हैं, जबकि Maps व Face Unlock नए डेटा से सीखकर निर्णय लेते हैं।
+              💡 मुख्य निष्कर्ष: हर मशीन में AI नहीं होता! लिफ्ट और वॉशिंग मशीन तय कोड/सेंसर से चलती हैं, जबकि Maps व Face Unlock नए डेटा से सीखकर निर्णय लेते हैं।
             </div>
 
             <div className="flex gap-3 justify-center">
@@ -446,7 +455,7 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 2: AI को सिखाओ (Supervised Data Tray) */}
+        {/* LEVEL 2: AI को सिखाओ */}
         {activeLevel === 'level2_tray' && (
           <div className="w-full max-w-2xl flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-4">
@@ -531,7 +540,6 @@ export function AiArcadeStudio() {
               </span>
             </div>
 
-            {/* Embedded Native Component */}
             <div className="w-full">
               <MachineLearningStudio />
             </div>
