@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2, Trophy, Star, Camera, Play, Check } from 'lucide-react';
+import HindiQuickDraw from '@/components/HindiQuickDraw';
 
 type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
 
@@ -22,45 +23,45 @@ const FIVE_QUESTIONS: QuizQuestion[] = [
     name: 'Google Maps (रास्ता व ट्रैफिक)', 
     emoji: '🗺️', 
     isAi: true, 
-    onCorrectText: 'सही उत्तर! Maps लाइव ट्रैफिक डेटा और AI से सबसे तेज़ रास्ता खोजता है।',
-    onWrongText: 'गलत उत्तर! Google Maps में AI का इस्तेमाल होता है। यह डेटा सीखकर रास्ता तय करता है।',
-    audioPrompt: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?'
+    onCorrectText: 'सही उत्तर! Maps लाइव ट्रैफिक डेटा और AI से सबसे तेज़ रास्ता खोजता है।', 
+    onWrongText: 'गलत उत्तर! Google Maps में AI का इस्तेमाल होता है। यह डेटा सीखकर रास्ता तय करता है।', 
+    audioPrompt: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?' 
   },
   { 
     id: 'washing', 
     name: 'वाशिंग मशीन (Washing Machine)', 
     emoji: '🧺', 
     isAi: false, 
-    onCorrectText: 'सही उत्तर! इसमें पहले से तय मोटर टाइमर होते हैं। यह खुद सोचकर नया निर्णय नहीं लेती।',
-    onWrongText: 'गलत उत्तर! साधारण वाशिंग मशीन में AI नहीं होता। यह सिर्फ पहले से तय टाइमर और मोटर से चलती है।',
-    audioPrompt: 'वाशिंग मशीन। क्या इसमें ए आई है?'
+    onCorrectText: 'सही उत्तर! इसमें पहले से तय मोटर टाइमर होते हैं। यह खुद सोचकर नया निर्णय नहीं लेती।', 
+    onWrongText: 'गलत उत्तर! साधारण वाशिंग मशीन में AI नहीं होता। यह सिर्फ पहले से तय टाइमर और मोटर से चलती है।', 
+    audioPrompt: 'वाशिंग मशीन। क्या इसमें ए आई है?' 
   },
   { 
     id: 'youtube', 
     name: 'YouTube वीडियो सुझाव (Recommendations)', 
     emoji: '📺', 
     isAi: true, 
-    onCorrectText: 'सही उत्तर! YouTube AI आपकी पसंद को समझकर वैसे ही नए वीडियो खोजकर सुझाता है।',
-    onWrongText: 'गलत उत्तर! YouTube में AI होता है। यह आपकी पुरानी पसंद को देखकर नए वीडियो सुझाता है।',
-    audioPrompt: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?'
+    onCorrectText: 'सही उत्तर! YouTube AI आपकी पसंद को समझकर वैसे ही नए वीडियो खोजकर सुझाता है।', 
+    onWrongText: 'गलत उत्तर! YouTube में AI होता है। यह आपकी पुरानी पसंद को देखकर नए वीडियो सुझाता है।', 
+    audioPrompt: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?' 
   },
   { 
     id: 'lift', 
     name: 'लिफ्ट का बटन (Elevator / Lift)', 
     emoji: '🛗', 
     isAi: false, 
-    onCorrectText: 'सही उत्तर! लिफ्ट साधारण इलेक्ट्रिक स्विच और तय नियमों पर चलती है। इसमें AI नहीं होता।',
-    onWrongText: 'गलत उत्तर! लिफ्ट में AI नहीं होता। यह साधारण स्विच और मोटर से काम करती है।',
-    audioPrompt: 'लिफ्ट का बटन। क्या इसमें ए आई है?'
+    onCorrectText: 'सही उत्तर! लिफ्ट साधारण इलेक्ट्रिक स्विच और तय नियमों पर चलती है। इसमें AI नहीं होता।', 
+    onWrongText: 'गलत उत्तर! लिफ्ट में AI नहीं होता। यह साधारण स्विच और मोटर से काम करती है।', 
+    audioPrompt: 'लिफ्ट का बटन। क्या इसमें ए आई है?' 
   },
   { 
     id: 'faceunlock', 
     name: 'फोन का Face Unlock', 
     emoji: '📱', 
     isAi: true, 
-    onCorrectText: 'सही उत्तर! कैमरा आपके चेहरे के खास पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।',
-    onWrongText: 'गलत उत्तर! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि आपका चेहरा पहचाना जा सके।',
-    audioPrompt: 'फोन का फेस अनलॉक। क्या यह ए आई है?'
+    onCorrectText: 'सही उत्तर! कैमरा आपके चेहरे के खास पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।', 
+    onWrongText: 'गलत उत्तर! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि आपका चेहरा पहचाना जा सके।', 
+    audioPrompt: 'फोन का फेस अनलॉक। क्या यह ए आई है?' 
   }
 ];
 
@@ -331,7 +332,7 @@ export function AiArcadeStudio() {
               {activeLevel === 'level1' && 'Level 1: पहचानो (५ प्रश्न)'}
               {activeLevel === 'level2_tray' && 'Level 2: डेटा व ट्रेनिंग'}
               {activeLevel === 'level2_trainer' && 'Level 2: हिंदी मशीन ट्रेनर'}
-              {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न'}
+              {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न (Quick Draw)'}
               {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
             </span>
           </div>
@@ -392,7 +393,7 @@ export function AiArcadeStudio() {
       </div>
 
       {/* Stage Container */}
-      <div className="bg-white rounded-3xl p-6 md:p-8 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
+      <div className="bg-white rounded-3xl p-4 md:p-6 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
         
         {/* LEVEL 1: Active 5-Question Flow */}
         {activeLevel === 'level1' && !roundFinished && (
@@ -460,7 +461,7 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 1: Strict Termination Report Card for exactly 5 Questions */}
+        {/* LEVEL 1: Strict Termination Report Card */}
         {activeLevel === 'level1' && roundFinished && (
           <div className="w-full max-w-md bg-gradient-to-b from-purple-50 via-white to-pink-50 rounded-3xl border-2 border-purple-300 p-6 md:p-8 text-center shadow-xl animate-in zoom-in-95">
             <div className="w-16 h-16 bg-purple-600 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg">
@@ -643,20 +644,10 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 3: जल्दी बनाओ AI */}
+        {/* LEVEL 3: Native HindiQuickDraw Component (5 Rounds, 50 Doodles, Live CNN) */}
         {activeLevel === 'level3_draw' && (
-          <div className="w-full flex flex-col items-center text-center">
-            <h3 className="text-lg font-black text-purple-950 mb-1">जल्दी बनाओ AI (Quick Draw Doodle Recognition)</h3>
-            <p className="text-xs text-slate-600 mb-4 max-w-md">
-              आप चित्र बनाएंगे और AI न्यूरल नेटवर्क लाइव गेस करेगा कि आप क्या बना रहे हैं!
-            </p>
-            <div className="w-full max-w-xl h-96 bg-white rounded-3xl overflow-hidden border-4 border-purple-300 shadow-xl">
-              <iframe
-                src="https://quickdraw.withgoogle.com/"
-                className="w-full h-full border-0"
-                title="Hindi Quick Draw"
-              />
-            </div>
+          <div className="w-full">
+            <HindiQuickDraw />
           </div>
         )}
 
