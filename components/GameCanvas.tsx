@@ -10,9 +10,8 @@ interface GameCanvasProps {
 }
 
 export default function GameCanvas({ level, playerPos, collectedTargets }: GameCanvasProps) {
-  const { gridSize, obstacles, targets } = level;
+  const { gridSize = 5, obstacles = [], targets = [] } = level;
 
-  // Clear directional rotation: UP (0°), RIGHT (90°), DOWN (180°), LEFT (270°)
   const getRotationDegrees = (dir: 'NORTH' | 'EAST' | 'SOUTH' | 'WEST') => {
     switch (dir) {
       case 'NORTH': return 'rotate-0';
@@ -40,12 +39,17 @@ export default function GameCanvas({ level, playerPos, collectedTargets }: GameC
           className={`aspect-square flex items-center justify-center relative select-none rounded-sm transition-colors duration-150 ${bgColour}`}
         >
           {isObstacle && <span className="text-2xl md:text-3xl">🪨</span>}
-          {isTarget && !isCollected && !isPlayer && (
-            <span className="text-2xl md:text-3xl animate-bounce">🍌</span>
+          
+          {/* Keep target visible until explicitly collected */}
+          {isTarget && !isCollected && (
+            <span className={`text-2xl md:text-3xl animate-bounce ${isPlayer ? 'opacity-80 scale-90' : ''}`}>
+              🍌
+            </span>
           )}
+
           {isPlayer && (
             <div
-              className={`relative flex items-center justify-center transition-transform duration-300 transform ${getRotationDegrees(
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 transform ${getRotationDegrees(
                 playerPos.dir
               )}`}
             >

@@ -1,386 +1,512 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { LEVELS, Level, AgeGroup } from '../lib/levels';
-import { speakHindi, unlockAudio, playStepSound, playCollectSound, playWinSound, playBumpSound } from '../lib/audio';
-import { ActionItem } from '../components/BlocklyWorkspace';
+import BlocklyWorkspace from '@/components/BlocklyWorkspace';
+import GameCanvas from '@/components/GameCanvas';
+import { EnglishLiteracyHub } from '@/components/EnglishLiteracyHub';
+import { AiArcadeStudio } from '@/components/AiArcadeStudio';
+import { HindiMusicStudio } from '@/components/HindiMusicStudio';
+import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
+import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
+import { HindiMathStudio } from '@/components/HindiMathStudio';
+import { LEVELS, Level } from '@/lib/levels';
+import { Trophy, HelpCircle, Volume2, RotateCcw } from 'lucide-react';
 
-const GameCanvas = dynamic(() => import('../components/GameCanvas'), { ssr: false });
-const BlocklyWorkspace = dynamic(() => import('../components/BlocklyWorkspace'), { ssr: false });
-const HindiMLStudio = dynamic(() => import('../components/HindiMLStudio'), { ssr: false });
-const HindiQuickDraw = dynamic(() => import('../components/HindiQuickDraw'), { ssr: false });
-const HindiScratchStudio = dynamic(() => import('../components/HindiScratchStudio'), { ssr: false });
-const HindiVocabMatch = dynamic(() => import('../components/HindiVocabMatch'), { ssr: false });
-const HindiSentenceBuilder = dynamic(() => import('../components/HindiSentenceBuilder'), { ssr: false });
-const HindiPhonicsStudio = dynamic(() => import('../components/HindiPhonicsStudio'), { ssr: false });
+type Direction = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
 
-type TabType = 'coding' | 'scratch' | 'ml' | 'draw' | 'vocab' | 'sentence' | 'phonics';
-
-function StudioContent() {
-  const router = useRouter();
+function CodingAppInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const tabParam = searchParams.get('tab');
-  const validTabs: TabType[] = ['coding', 'scratch', 'ml', 'draw', 'vocab', 'sentence', 'phonics'];
-  const activeTab: TabType = validTabs.includes(tabParam as TabType) ? (tabParam as TabType) : 'coding';
+  const tabParam = searchParams.get('tab') || 'coding';
+  const [activeTab, setActiveTab] = useState<string>(tabParam);
+  const [currentLevelIndex, setCurrentLevelIndex] = useState<number>(0);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isLevelSuccess, setIsLevelSuccess] = useState<boolean>(false);
 
-  const handleTabChange = (newTab: TabType) => {
-    unlockAudio();
-    router.push(`/?tab=${newTab}`, { scroll: false });
-  };
+  const levelList = Array.isArray(LEVELS) && LEVELS.length > 0 ? LEVELS : [];
+  const currentLevel: Level = (levelList[currentLevelIndex] || levelList[0]) as Level;
 
-  const [selectedAge, setSelectedAge] = useState<AgeGroup>('junior');
-  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
-  const [unlockedLevels, setUnlockedLevels] = useState<{ [key: string]: number }>({
-    junior: 0,
-    intermediate: 0,
-    senior: 0,
+  const getInitialPos = (lvl: any) => ({
+    x: lvl?.playerStart?.x ?? lvl?.startPos?.x ?? 0,
+    y: lvl?.playerStart?.y ?? lvl?.startPos?.y ?? 2,
+    dir: (lvl?.playerStart?.dir ?? lvl?.startPos?.dir ?? 'EAST') as Direction,
   });
-  const [levelStars, setLevelStars] = useState<{ [key: number]: number }>({});
-  const [speed, setSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
 
-  const filteredLevels = LEVELS.filter((lvl) => lvl.ageGroup === selectedAge);
-  const currentLevel: Level = filteredLevels[currentLevelIndex] || filteredLevels[0] || LEVELS[0];
-
-  const [playerPos, setPlayerPos] = useState({
-    x: currentLevel.startPos.x,
-    y: currentLevel.startPos.y,
-    dir: currentLevel.startDir,
-  });
+  const [playerPos, setPlayerPos] = useState(getInitialPos(currentLevel));
   const [collectedTargets, setCollectedTargets] = useState<{ x: number; y: number }[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isVictory, setIsVictory] = useState(false);
-  const [earnedStars, setEarnedStars] = useState(3);
-  const [message, setMessage] = useState('');
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Native Hindi Speech Engine
+  const speakHindi = (text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'hi-IN';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  };
+
+  // Sound effects
+  const playSound = (type: 'step' | 'turn' | 'collect' | 'success' | 'fail') => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      if (type === 'step') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(500, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'turn') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(450, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      } else if (type === 'collect') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'success') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.12);
+        osc.frequency.setValueAtTime(659.25, now + 0.24);
+        osc.frequency.setValueAtTime(880, now + 0.36);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      } else if (type === 'fail') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.3);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+    } catch (e) {}
+  };
 
   useEffect(() => {
-    const savedAge = localStorage.getItem('yr_selected_age') as AgeGroup | null;
-    const savedProgress = localStorage.getItem('yr_unlocked_tracks');
-    const savedStars = localStorage.getItem('yr_level_stars');
+    if (tabParam) setActiveTab(tabParam);
+  }, [tabParam]);
 
-    if (savedAge) setSelectedAge(savedAge);
-    if (savedProgress) setUnlockedLevels(JSON.parse(savedProgress));
-    if (savedStars) setLevelStars(JSON.parse(savedStars));
-  }, []);
-
-  const handleAgeChange = (age: AgeGroup) => {
-    setSelectedAge(age);
-    setCurrentLevelIndex(0);
-    localStorage.setItem('yr_selected_age', age);
-  };
-
-  const resetGameState = () => {
-    setPlayerPos({
-      x: currentLevel.startPos.x,
-      y: currentLevel.startPos.y,
-      dir: currentLevel.startDir,
-    });
-    setCollectedTargets([]);
-    setIsVictory(false);
-    setMessage(currentLevel.instruction);
-  };
-
+  // Voice narration on level change
   useEffect(() => {
-    resetGameState();
-    if (activeTab === 'coding') {
-      speakHindi(currentLevel.voiceText);
-    }
-  }, [currentLevelIndex, selectedAge, activeTab]);
+    if (currentLevel) {
+      setPlayerPos(getInitialPos(currentLevel));
+      setCollectedTargets([]);
+      setIsRunning(false);
+      setIsLevelSuccess(false);
 
-  const handlePlayVoiceInstruction = () => {
-    unlockAudio();
-    speakHindi(currentLevel.voiceText, true);
-  };
-
-  const handleRunCode = async (actions: ActionItem[], blockCount: number) => {
-    unlockAudio();
-    if (isRunning || actions.length === 0) return;
-    setIsRunning(true);
-    setMessage('कोड चल रहा है...');
-
-    let curX = currentLevel.startPos.x;
-    let curY = currentLevel.startPos.y;
-    let curDir = currentLevel.startDir;
-    let collected: { x: number; y: number }[] = [];
-
-    setPlayerPos({ x: curX, y: curY, dir: curDir });
-    setCollectedTargets([]);
-
-    const directions = ['NORTH', 'EAST', 'SOUTH', 'WEST'] as const;
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const delay = speed === 'slow' ? 650 : speed === 'fast' ? 200 : 400;
-
-    let hasCollided = false;
-
-    const isObstacleAhead = () => {
-      let lookX = curX;
-      let lookY = curY;
-      if (curDir === 'NORTH') lookY -= 1;
-      if (curDir === 'EAST') lookX += 1;
-      if (curDir === 'SOUTH') lookY += 1;
-      if (curDir === 'WEST') lookX += 1;
-      return currentLevel.obstacles.some((obs) => obs.x === lookX && obs.y === lookY);
-    };
-
-    const executeActionList = async (items: ActionItem[]): Promise<boolean> => {
-      for (const item of items) {
-        if (hasCollided) return false;
-
-        if (item.type === 'MOVE_FORWARD') {
-          let nextX = curX;
-          let nextY = curY;
-          if (curDir === 'NORTH') nextY -= 1;
-          if (curDir === 'EAST') nextX += 1;
-          if (curDir === 'SOUTH') nextY += 1;
-          if (curDir === 'WEST') nextX += 1;
-
-          if (nextX < 0 || nextX >= currentLevel.gridSize || nextY < 0 || nextY >= currentLevel.gridSize) {
-            playBumpSound();
-            setMessage('अरे! आप ग्रिड से बाहर चले गए!');
-            hasCollided = true;
-            return false;
-          }
-
-          const hitObs = currentLevel.obstacles.some((obs) => obs.x === nextX && obs.y === nextY);
-          if (hitObs) {
-            playBumpSound();
-            setMessage('अरे! रास्ते में पत्थर 🪨 है!');
-            hasCollided = true;
-            return false;
-          }
-
-          curX = nextX;
-          curY = nextY;
-          setPlayerPos({ x: curX, y: curY, dir: curDir });
-          playStepSound();
-          await sleep(delay);
-        } else if (item.type === 'TURN_RIGHT') {
-          const idx = directions.indexOf(curDir);
-          curDir = directions[(idx + 1) % 4];
-          setPlayerPos({ x: curX, y: curY, dir: curDir });
-          await sleep(delay * 0.7);
-        } else if (item.type === 'TURN_LEFT') {
-          const idx = directions.indexOf(curDir);
-          curDir = directions[(idx + 3) % 4];
-          setPlayerPos({ x: curX, y: curY, dir: curDir });
-          await sleep(delay * 0.7);
-        } else if (item.type === 'COLLECT_ITEM') {
-          const found = currentLevel.targets.find(
-            (t) => t.x === curX && t.y === curY && !collected.some((c) => c.x === t.x && c.y === t.y)
-          );
-          if (found) {
-            collected = [...collected, found];
-            setCollectedTargets([...collected]);
-            playCollectSound();
-            await sleep(delay * 0.7);
-            if (collected.length === currentLevel.targets.length) return true;
-          }
-        } else if (item.type === 'IF_OBSTACLE') {
-          if (isObstacleAhead()) {
-            const finished = await executeActionList(item.branch);
-            if (finished) return true;
-          }
+      if (activeTab === 'coding') {
+        const textToRead = (currentLevel as any)?.voiceText || (currentLevel as any)?.instruction || (currentLevel as any)?.hint;
+        if (textToRead) {
+          const timer = setTimeout(() => speakHindi(textToRead), 300);
+          return () => clearTimeout(timer);
         }
       }
-      return false;
-    };
+    }
+  }, [currentLevelIndex, currentLevel, activeTab]);
 
-    await executeActionList(actions);
+  const turn = (dir: Direction, turnTo: 'LEFT' | 'RIGHT'): Direction => {
+    const dirs: Direction[] = ['NORTH', 'EAST', 'SOUTH', 'WEST'];
+    const idx = dirs.indexOf(dir);
+    return turnTo === 'LEFT' ? dirs[(idx + 3) % 4] : dirs[(idx + 1) % 4];
+  };
 
-    if (hasCollided) {
-      await sleep(1000);
-      resetGameState();
-    } else if (collected.length === currentLevel.targets.length) {
-      let stars = 3;
-      if (blockCount > currentLevel.optimalBlocks + 2) stars = 1;
-      else if (blockCount > currentLevel.optimalBlocks) stars = 2;
+  const stepForward = (pos: { x: number; y: number; dir: Direction }, gridSize: number) => {
+    let nextX = pos.x;
+    let nextY = pos.y;
+    if (pos.dir === 'NORTH') nextY -= 1;
+    if (pos.dir === 'SOUTH') nextY += 1;
+    if (pos.dir === 'EAST') nextX += 1;
+    if (pos.dir === 'WEST') nextX -= 1;
 
-      setEarnedStars(stars);
-      const nextTrackUnlocked = Math.max(unlockedLevels[selectedAge] || 0, currentLevelIndex + 1);
-      const updatedTracks = { ...unlockedLevels, [selectedAge]: nextTrackUnlocked };
-      setUnlockedLevels(updatedTracks);
-      localStorage.setItem('yr_unlocked_tracks', JSON.stringify(updatedTracks));
+    if (nextX < 0 || nextX >= gridSize || nextY < 0 || nextY >= gridSize) {
+      return null;
+    }
+    return { x: nextX, y: nextY, dir: pos.dir };
+  };
 
-      const updatedStars = { ...levelStars, [currentLevel.id]: Math.max(levelStars[currentLevel.id] || 0, stars) };
-      setLevelStars(updatedStars);
-      localStorage.setItem('yr_level_stars', JSON.stringify(updatedStars));
+  // Robustly extract all action types from whatever format BlocklyWorkspace provides
+  const extractActions = (plan: any): string[] => {
+    const res: string[] = [];
+    if (!plan) return res;
 
-      playWinSound();
-      setIsVictory(true);
-      speakHindi('शाबाश! आपने यह स्तर पूरा कर लिया!', true);
+    if (typeof plan === 'string') {
+      return [plan];
+    }
+
+    if (Array.isArray(plan)) {
+      for (const item of plan) {
+        res.push(...extractActions(item));
+      }
+      return res;
+    }
+
+    if (typeof plan === 'object') {
+      const type = plan.type || plan.action || plan.name;
+      const times = Number(plan.times || plan.count || plan.repeatCount || 1);
+      const inner = plan.children || plan.body || plan.blocks || plan.inner;
+
+      if (type === 'repeat' || type === 'controls_repeat' || type === 'controls_repeat_ext') {
+        const innerActions = extractActions(inner);
+        for (let r = 0; r < times; r++) {
+          res.push(...innerActions);
+        }
+      } else if (type) {
+        res.push(type);
+      }
+    }
+
+    return res;
+  };
+
+  // Complete Code Execution Runner
+  const handleRunCode = async (actionPlan: any, totalBlocks: number) => {
+    if (isRunning || isLevelSuccess) return;
+    setIsRunning(true);
+
+    const flattenedActions = extractActions(actionPlan);
+    let currentPos = { ...playerPos };
+    let collected: { x: number; y: number }[] = [];
+    const obstacles = currentLevel.obstacles || [];
+    const targets = currentLevel.targets || [];
+    const gridSize = currentLevel.gridSize || 5;
+
+    for (let i = 0; i < flattenedActions.length; i++) {
+      const rawAction = flattenedActions[i];
+      const action = rawAction.toLowerCase().replace(/[^a-z_]/g, '');
+
+      if (action.includes('forward') || action === 'move_forward') {
+        const next = stepForward(currentPos, gridSize);
+        if (!next) {
+          playSound('fail');
+          speakHindi('रोबोट ग्रिड से बाहर जा रहा है!');
+          alert('⚠️ रोबोट ग्रिड से बाहर जा रहा है!');
+          setIsRunning(false);
+          return;
+        }
+
+        const hitObstacle = obstacles.some((ob) => ob.x === next.x && ob.y === next.y);
+        if (hitObstacle) {
+          playSound('fail');
+          speakHindi('रोबोट रुकावट से टकरा गया!');
+          alert('💥 रोबोट रुकावट से टकरा गया!');
+          setIsRunning(false);
+          return;
+        }
+
+        currentPos = next;
+        setPlayerPos({ ...currentPos });
+        playSound('step');
+      } else if (action.includes('left')) {
+        currentPos.dir = turn(currentPos.dir, 'LEFT');
+        setPlayerPos({ ...currentPos });
+        playSound('turn');
+      } else if (action.includes('right')) {
+        currentPos.dir = turn(currentPos.dir, 'RIGHT');
+        setPlayerPos({ ...currentPos });
+        playSound('turn');
+      } else if (action.includes('collect') || action.includes('banana') || action.includes('target') || action.includes('kela')) {
+        // Collect banana if standing on a target cell
+        const targetAtPos = targets.find((tg) => tg.x === currentPos.x && tg.y === currentPos.y);
+        if (targetAtPos && !collected.some((c) => c.x === targetAtPos.x && c.y === targetAtPos.y)) {
+          collected = [...collected, { x: targetAtPos.x, y: targetAtPos.y }];
+          setCollectedTargets([...collected]);
+          playSound('collect');
+        }
+      }
+
+      await new Promise((res) => setTimeout(res, 450));
+    }
+
+    // Auto-collect target if standing directly on it at end of run
+    const finalTarget = targets.find((tg) => tg.x === currentPos.x && tg.y === currentPos.y);
+    if (finalTarget && !collected.some((c) => c.x === finalTarget.x && c.y === finalTarget.y)) {
+      collected = [...collected, { x: finalTarget.x, y: finalTarget.y }];
+      setCollectedTargets([...collected]);
+    }
+
+    // Check completion
+    const allTargetsCollected = targets.every((tg) =>
+      collected.some((c) => c.x === tg.x && c.y === tg.y)
+    );
+
+    if (allTargetsCollected && targets.length > 0) {
+      playSound('success');
+      setIsLevelSuccess(true);
+      speakHindi('शाबाश! आपने केला उठा लिया और स्तर पूरा कर लिया!');
+    } else {
+      playSound('fail');
+      speakHindi('रोबोट केला नहीं उठा पाया, पुनः प्रयास करें।');
+      alert('रोबोट लक्ष्य तक नहीं पहुँचा। पुनः प्रयास करें!');
     }
     setIsRunning(false);
   };
 
-  return (
-    <main className="min-h-screen bg-slate-50 flex flex-col items-center p-2.5 md:p-6 w-full overflow-x-hidden">
-      {/* Top Header */}
-      <header className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-between bg-white px-3.5 py-3 md:px-5 md:py-3.5 rounded-2xl shadow-sm border border-slate-200 mb-3 gap-2.5">
-        <div className="flex items-center gap-2.5 w-full md:w-auto">
-          <span className="text-2xl">🚀</span>
-          <div>
-            <h1 className="text-sm md:text-lg font-black text-slate-800 leading-tight">Young Researcher AI &amp; Code</h1>
-            <p className="text-[11px] md:text-xs text-slate-500">ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)</p>
-          </div>
-        </div>
+  const handleReset = () => {
+    setIsRunning(false);
+    setIsLevelSuccess(false);
+    if (currentLevel) {
+      setPlayerPos(getInitialPos(currentLevel));
+      setCollectedTargets([]);
+    }
+  };
 
-        {/* Navigation Switcher */}
-        <div className="w-full md:w-auto flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1 overflow-x-auto no-scrollbar scroll-smooth">
-          <button
-            onClick={() => handleTabChange('phonics')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'phonics' ? 'bg-amber-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🔊 फोनिक्स (CVC)
-          </button>
-          <button
-            onClick={() => handleTabChange('sentence')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'sentence' ? 'bg-teal-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🧩 वाक्य बनाओ
-          </button>
-          <button
-            onClick={() => handleTabChange('vocab')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'vocab' ? 'bg-pink-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🔤 शब्द मिलाओ
-          </button>
-          <button
-            onClick={() => handleTabChange('coding')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'coding' ? 'bg-green-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🎮 मेज़ कोडिंग
-          </button>
-          <button
-            onClick={() => handleTabChange('scratch')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'scratch' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🐱 स्क्रैच स्टूडियो
-          </button>
-          <button
-            onClick={() => handleTabChange('ml')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'ml' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🧠 AI मशीन ट्रेनर
-          </button>
-          <button
-            onClick={() => handleTabChange('draw')}
-            className={`px-3 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
-              activeTab === 'draw' ? 'bg-orange-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🎨 जल्दी बनाओ AI
-          </button>
+  const handleNextLevel = () => {
+    setIsLevelSuccess(false);
+    if (currentLevelIndex + 1 < levelList.length) {
+      setCurrentLevelIndex((prev) => prev + 1);
+    } else {
+      setCurrentLevelIndex(0);
+    }
+  };
+
+  const switchTab = (tabKey: string) => {
+    setActiveTab(tabKey);
+    router.push(`/?tab=${tabKey}`);
+  };
+
+  const displayTitle = (currentLevel?.title || 'पहला कदम').replace(/^स्तर\s*\d+\s*:\s*/i, '');
+
+  return (
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none">
+      
+      {/* Universal Navigation Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm px-4 py-2.5">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => switchTab('coding')}>
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center text-xl shadow-md text-white">
+              🚀
+            </div>
+            <div>
+              <h1 className="text-base md:text-lg font-black text-slate-900 leading-tight">
+                Young Researcher AI &amp; Code
+              </h1>
+              <p className="text-[11px] font-bold text-purple-700">
+                ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
+            <button
+              onClick={() => switchTab('coding')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'coding' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🎮 मेज़ कोडिंग (Logic)
+            </button>
+
+            <button
+              onClick={() => switchTab('english')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'english' || activeTab === 'phonics' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🔤 English Lab
+            </button>
+
+            <button
+              onClick={() => switchTab('ai')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'ai' || activeTab === 'ml' ? 'bg-purple-600 text-white shadow' : 'bg-purple-100 hover:bg-purple-200 text-purple-900'
+              }`}
+            >
+              🤖 AI खेलघर (Arcade)
+            </button>
+
+            <button
+              onClick={() => switchTab('maths')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'maths' ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🔢 गणित (Maths)
+            </button>
+
+            <button
+              onClick={() => switchTab('music')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'music' ? 'bg-orange-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🎹 संगीत (Music)
+            </button>
+
+            <button
+              onClick={() => switchTab('researcher')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'researcher' ? 'bg-violet-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🔬 विज्ञान (Science)
+            </button>
+
+            <button
+              onClick={() => switchTab('evs')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'evs' ? 'bg-green-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🌍 EVS
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Render Active Studio */}
-      {activeTab === 'phonics' ? (
-        <HindiPhonicsStudio />
-      ) : activeTab === 'sentence' ? (
-        <HindiSentenceBuilder />
-      ) : activeTab === 'vocab' ? (
-        <HindiVocabMatch />
-      ) : activeTab === 'scratch' ? (
-        <HindiScratchStudio />
-      ) : activeTab === 'draw' ? (
-        <HindiQuickDraw />
-      ) : activeTab === 'ml' ? (
-        <HindiMLStudio />
-      ) : (
-        <>
-          {/* Level & Age Bracket Selection Bar */}
-          <section className="w-full max-w-6xl mb-3 bg-white border border-slate-200 p-3 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-2.5 shadow-sm">
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              <div className="flex items-center gap-1">
-                <label className="text-xs font-bold text-slate-700">आयु:</label>
-                <select
-                  value={selectedAge}
-                  onChange={(e) => handleAgeChange(e.target.value as AgeGroup)}
-                  className="bg-slate-100 text-slate-800 font-semibold py-1 px-2 rounded-lg border border-slate-300 text-xs"
-                >
-                  <option value="junior">5–7 (Junior)</option>
-                  <option value="intermediate">8–10 (Explorer)</option>
-                  <option value="senior">11+ (Researcher)</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <label className="text-xs font-bold text-slate-700">स्तर:</label>
-                <select
-                  value={currentLevelIndex}
-                  onChange={(e) => {
-                    unlockAudio();
-                    setCurrentLevelIndex(Number(e.target.value));
-                  }}
-                  className="bg-slate-100 text-slate-800 font-medium py-1 px-2 rounded-lg border border-slate-300 text-xs"
-                >
-                  {filteredLevels.map((lvl, i) => {
-                    const isLocked = i > (unlockedLevels[selectedAge] || 0);
-                    const stars = levelStars[lvl.id] ? '⭐'.repeat(levelStars[lvl.id]) : '';
-                    return (
-                      <option key={lvl.id} value={i} disabled={isLocked}>
-                        {isLocked ? `🔒 ${lvl.title}` : `${lvl.title} ${stars}`}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <button
-                onClick={handlePlayVoiceInstruction}
-                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition active:scale-95 shadow-sm cursor-pointer"
-              >
-                <span>🔊</span> सुनें
-              </button>
-            </div>
-
-            <div className="text-xs text-slate-600 font-medium">{currentLevel.instruction}</div>
-          </section>
-
-          {/* Blockly & Canvas */}
-          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1">
-            <div className="lg:col-span-5 flex flex-col items-center">
-              <GameCanvas level={currentLevel} playerPos={playerPos} collectedTargets={collectedTargets} />
-              {message && (
-                <div className="mt-2.5 text-center text-xs md:text-sm font-semibold px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm w-full">
-                  {message}
+      {/* Main Sandbox Area */}
+      <main className="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
+        
+        {/* CODING LOGIC MAZE */}
+        {activeTab === 'coding' && (
+          <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)] min-h-[620px]">
+            
+            {/* Left Column: Visual Game Canvas */}
+            <div className="w-full lg:w-1/3 flex flex-col gap-3">
+              
+              {/* Level Selector Bar with Audio Button */}
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black text-slate-900">
+                      स्तर {currentLevel?.id ?? 1}: {displayTitle}
+                    </span>
+                    <button
+                      onClick={() => speakHindi((currentLevel as any)?.voiceText || (currentLevel as any)?.instruction || displayTitle)}
+                      className="p-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg transition cursor-pointer"
+                      title="आवाज़ सुनें"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    {currentLevel?.concept || 'Sequence'}
+                  </span>
                 </div>
-              )}
+
+                <div className="flex gap-1 overflow-x-auto py-1">
+                  {levelList.map((lvl: Level, i: number) => (
+                    <button
+                      key={lvl.id}
+                      onClick={() => setCurrentLevelIndex(i)}
+                      className={`w-7 h-7 rounded-lg font-black text-xs shrink-0 cursor-pointer ${
+                        currentLevelIndex === i ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {lvl.id}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Game Viewport Canvas */}
+              <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-center items-center relative overflow-hidden">
+                {currentLevel && (
+                  <GameCanvas
+                    level={currentLevel}
+                    playerPos={playerPos}
+                    collectedTargets={collectedTargets}
+                  />
+                )}
+
+                {/* Level Success Overlay */}
+                {isLevelSuccess && (
+                  <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 z-20">
+                    <div className="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-lg">
+                      🏆
+                    </div>
+                    <h3 className="text-xl font-black text-white mb-1">शाबाश! स्तर पार हुआ</h3>
+                    <p className="text-xs font-bold text-emerald-300 mb-4">रोबोट ने सफलतापूर्वक केला उठा लिया!</p>
+                    <button
+                      onClick={handleNextLevel}
+                      className="py-2.5 px-6 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer"
+                    >
+                      अगला स्तर (Next Level) ➔
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Instruction / Hint Card with Audio Prompt */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-950 flex items-center justify-between gap-2 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 shrink-0 text-emerald-700" />
+                  <span>💡 {(currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!'}</span>
+                </div>
+                <button
+                  onClick={() => speakHindi((currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!')}
+                  className="p-1 text-emerald-800 hover:bg-emerald-200 rounded transition cursor-pointer shrink-0"
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
-            <div className="lg:col-span-7 flex flex-col bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-slate-200">
+            {/* Right Column: Blockly Workspace */}
+            <div className="w-full lg:w-2/3 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
               <BlocklyWorkspace
                 onRunCode={handleRunCode}
-                onReset={resetGameState}
+                onReset={handleReset}
                 isRunning={isRunning}
-                allowedBlocks={currentLevel.allowedBlocks}
+                allowedBlocks={currentLevel?.allowedBlocks}
               />
             </div>
           </div>
-        </>
-      )}
-    </main>
+        )}
+
+        {/* OTHER MODULE TABS */}
+        {(activeTab === 'english' || activeTab === 'phonics' || activeTab === 'syntax' || activeTab === 'vocab') && <EnglishLiteracyHub />}
+        {(activeTab === 'ai' || activeTab === 'ml') && <AiArcadeStudio />}
+        {activeTab === 'maths' && <HindiMathStudio />}
+        {activeTab === 'music' && <HindiMusicStudio />}
+        {activeTab === 'researcher' && <JuniorResearcherStudio />}
+        {activeTab === 'evs' && <HindiAnimalStudio />}
+
+      </main>
+    </div>
   );
 }
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">लोड हो रहा है...</div>}>
-      <StudioContent />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-bold text-slate-700">लोड हो रहा है...</div>}>
+      <CodingAppInner />
     </Suspense>
   );
 }
