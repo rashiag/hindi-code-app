@@ -1,0 +1,381 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu } from 'lucide-react';
+
+type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
+
+interface AiOrNotItem {
+  id: string;
+  name: string;
+  emoji: string;
+  isAi: boolean;
+  explanation: string;
+}
+
+const AI_OR_NOT_ITEMS: AiOrNotItem[] = [
+  { id: 'maps', name: 'Google Maps (रास्ता व ट्रैफिक)', emoji: '🗺️', isAi: true, explanation: 'सही! Maps लाखों गाड़ियों के लाइव डेटा और AI से सबसे तेज़ रास्ता खोजता है।' },
+  { id: 'washing', name: 'वाशिंग मशीन (Washing Machine)', emoji: '🧺', isAi: false, explanation: 'बिल्कुल! इसमें तय मोटर टाइमर और सेंसर हैं, यह खुद सोचकर नया निर्णय नहीं लेती।' },
+  { id: 'youtube', name: 'YouTube वीडियो सुझाव (Recommendations)', emoji: '📺', isAi: true, explanation: 'शानदार! YouTube AI आपकी पसंद सीखकर वैसे ही नए वीडियो सुझाता है।' },
+  { id: 'lift', name: 'लिफ्ट का बटन (Elevator / Lift)', emoji: '🛗', isAi: false, explanation: 'सही! लिफ्ट तय नियमों (Rules) पर काम करती है, इसमें AI नहीं होता।' },
+  { id: 'faceunlock', name: 'फोन का Face Unlock', emoji: '📱', isAi: true, explanation: 'सही जवाब! कैमरा आपके चेहरे के खास पैटर्न्स को AI विज़न से पहचानता है।' },
+  { id: 'calculator', name: 'कैलकुलेटर (Calculator)', emoji: '🧮', isAi: false, explanation: 'सही! कैलकुलेटर सिर्फ गणित के तय फॉर्मूलों पर चलता है, डेटा से कुछ नया नहीं सीखता।' }
+];
+
+interface AnimalItem {
+  id: string;
+  name: string;
+  emoji: string;
+  isDomestic: boolean;
+}
+
+const ALL_ANIMALS: AnimalItem[] = [
+  { id: 'dog', name: 'कुत्ता (Dog)', emoji: '🐶', isDomestic: true },
+  { id: 'cat', name: 'बिल्ली (Cat)', emoji: '🐱', isDomestic: true },
+  { id: 'cow', name: 'गाय (Cow)', emoji: '🐄', isDomestic: true },
+  { id: 'tiger', name: 'बाघ (Tiger)', emoji: '🐯', isDomestic: false },
+  { id: 'lion', name: 'शेर (Lion)', emoji: '🦁', isDomestic: false }
+];
+
+export function AiArcadeStudio() {
+  const [activeLevel, setActiveLevel] = useState<AiLevel>('level1');
+
+  // Level 1 State: AI है या नहीं?
+  const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
+  const [quizFeedback, setQuizFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
+  const [quizScore, setQuizScore] = useState<number>(0);
+
+  // Level 2 State: AI को सिखाओ
+  const [trainedDomestic, setTrainedDomestic] = useState<string[]>([]);
+  const [trainedWild, setTrainedWild] = useState<string[]>([]);
+  const [testPrediction, setTestPrediction] = useState<string | null>(null);
+
+  const handleQuizAnswer = (userChoseAi: boolean) => {
+    const currentItem = AI_OR_NOT_ITEMS[currentQuizIndex];
+    const correct = userChoseAi === currentItem.isAi;
+    if (correct) setQuizScore((prev) => prev + 1);
+
+    setQuizFeedback({
+      isCorrect: correct,
+      text: currentItem.explanation
+    });
+  };
+
+  const handleNextQuiz = () => {
+    setQuizFeedback(null);
+    if (currentQuizIndex + 1 < AI_OR_NOT_ITEMS.length) {
+      setCurrentQuizIndex((prev) => prev + 1);
+    } else {
+      setCurrentQuizIndex(0);
+    }
+  };
+
+  const trainItem = (animal: AnimalItem, asDomestic: boolean) => {
+    if (asDomestic) {
+      setTrainedDomestic((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
+      setTrainedWild((prev) => prev.filter((id) => id !== animal.id));
+    } else {
+      setTrainedWild((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
+      setTrainedDomestic((prev) => prev.filter((id) => id !== animal.id));
+    }
+    setTestPrediction(null);
+  };
+
+  const testNewAnimal = () => {
+    // Check if training data has domestic animals trained
+    const hasDomesticTrained = trainedDomestic.length > 0;
+    const hasWildTrained = trainedWild.length > 0;
+
+    if (!hasDomesticTrained && !hasWildTrained) {
+      setTestPrediction('कृपया पहले AI को ऊपर उदाहरण (Data) देकर सिखाएं!');
+      return;
+    }
+
+    if (trainedDomestic.includes('cow') || trainedDomestic.includes('dog')) {
+      setTestPrediction('✅ AI का अनुमान: "बकरी (Goat)" एक पालतू जानवर है! (क्योंकि आपने गाय/कुत्ते से सिखाया)');
+    } else {
+      setTestPrediction('❌ AI का गलत अनुमान: "बकरी जंगली जानवर है" (क्योंकि आपने इसे सिर्फ जंगली जानवरों का डेटा दिया था!)');
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto p-3 md:p-6 font-sans select-none">
+      
+      {/* Top Banner */}
+      <div className="bg-purple-50/80 p-4 md:p-6 rounded-3xl border border-purple-200 mb-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-purple-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">
+              🤖
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-black text-purple-950">AI खेलघर (Desi AI Arcade)</h1>
+              <p className="text-xs md:text-sm font-semibold text-purple-800">
+                खेलो • सिखाओ • आज़माओ • सोचो (NEP 2020 Aligned AI Literacy)
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white px-3 py-1.5 rounded-xl border border-purple-300 text-xs font-bold text-purple-900 shadow-sm flex items-center gap-2">
+            <span>मार्गदर्शक स्तर:</span>
+            <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-black">
+              {activeLevel === 'level1' && 'Level 1: पहचानो'}
+              {activeLevel === 'level2_tray' && 'Level 2: डेटा व ट्रेनिंग'}
+              {activeLevel === 'level2_trainer' && 'Level 2: कैमरा ट्रेनर'}
+              {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न'}
+              {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
+            </span>
+          </div>
+        </div>
+
+        {/* 4-Stage Guided Progression Roadmap */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-5">
+          <button
+            onClick={() => setActiveLevel('level1')}
+            className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+              activeLevel === 'level1' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-black opacity-80 block">चरण १ (LEVEL 1)</span>
+            <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
+              🔍 AI है या नहीं?
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveLevel('level2_tray')}
+            className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+              activeLevel === 'level2_tray' || activeLevel === 'level2_trainer'
+                ? 'bg-purple-600 border-purple-700 text-white shadow-md'
+                : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-black opacity-80 block">चरण २ (LEVEL 2)</span>
+            <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
+              🧪 AI को सिखाओ
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveLevel('level3_draw')}
+            className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+              activeLevel === 'level3_draw' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-black opacity-80 block">चरण ३ (LEVEL 3)</span>
+            <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
+              🎨 जल्दी बनाओ AI
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveLevel('level4_fact')}
+            className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+              activeLevel === 'level4_fact' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-black opacity-80 block">चरण ४ (LEVEL 4)</span>
+            <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
+              🧐 सच या कल्पना?
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Interactive Stage */}
+      <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
+        
+        {/* LEVEL 1: AI है या नहीं? */}
+        {activeLevel === 'level1' && (
+          <div className="w-full max-w-lg flex flex-col items-center text-center">
+            <span className="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full mb-3">
+              सवाल {currentQuizIndex + 1} / {AI_OR_NOT_ITEMS.length} • स्कोर: {quizScore}
+            </span>
+
+            <div className="w-full bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 mb-6 shadow-inner flex flex-col items-center">
+              <span className="text-6xl md:text-7xl mb-3 animate-bounce">
+                {AI_OR_NOT_ITEMS[currentQuizIndex].emoji}
+              </span>
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-1">
+                {AI_OR_NOT_ITEMS[currentQuizIndex].name}
+              </h2>
+              <p className="text-xs text-slate-600">क्या यह काम करने के लिए AI (स्मार्ट लर्निंग) का इस्तेमाल करता है?</p>
+            </div>
+
+            {/* User Choices */}
+            {!quizFeedback ? (
+              <div className="grid grid-cols-2 gap-4 w-full">
+                <button
+                  onClick={() => handleQuizAnswer(true)}
+                  className="py-4 px-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-base rounded-2xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Bot className="w-5 h-5" /> 🤖 AI है
+                </button>
+                <button
+                  onClick={() => handleQuizAnswer(false)}
+                  className="py-4 px-6 bg-stone-700 hover:bg-stone-800 text-white font-black text-base rounded-2xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Cpu className="w-5 h-5" /> ⚙️ साधारण नियम है
+                </button>
+              </div>
+            ) : (
+              <div className="w-full bg-purple-50 border-2 border-purple-300 rounded-2xl p-5 text-center animate-in fade-in">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  {quizFeedback.isCorrect ? (
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  ) : (
+                    <XCircle className="w-6 h-6 text-rose-600" />
+                  )}
+                  <span className={`text-base font-black ${quizFeedback.isCorrect ? 'text-emerald-900' : 'text-rose-900'}`}>
+                    {quizFeedback.isCorrect ? 'बिल्कुल सही!' : 'सोचिए फिर से!'}
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-purple-950 mb-4">{quizFeedback.text}</p>
+                <button
+                  onClick={handleNextQuiz}
+                  className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  अगला सवाल ➔
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LEVEL 2: AI को सिखाओ (Supervised Data Tray) */}
+        {activeLevel === 'level2_tray' && (
+          <div className="w-full max-w-2xl flex flex-col items-center">
+            <div className="flex items-center justify-between w-full mb-4">
+              <div>
+                <h3 className="text-lg font-black text-purple-950">AI को पालतू vs जंगली जानवर सिखाओ</h3>
+                <p className="text-xs text-slate-600">जानवरों को सही ट्रे में डालें। AI आपके दिए डेटा से सीखेगा!</p>
+              </div>
+              <button
+                onClick={() => setActiveLevel('level2_trainer')}
+                className="text-xs font-black bg-purple-100 text-purple-900 hover:bg-purple-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
+              >
+                कैमरा ट्रेनर खोलें ➔
+              </button>
+            </div>
+
+            {/* Animal Staging Tray */}
+            <div className="w-full bg-slate-50 border-2 border-dashed border-purple-300 rounded-2xl p-3 mb-4 flex flex-wrap justify-center gap-2">
+              {ALL_ANIMALS.map((a) => (
+                <div key={a.id} className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+                  <span className="text-2xl">{a.emoji}</span>
+                  <span className="text-xs font-bold text-slate-800">{a.name.split(' ')[0]}</span>
+                  <div className="flex gap-1 ml-1">
+                    <button
+                      onClick={() => trainItem(a, true)}
+                      className={`text-[10px] font-black px-2 py-1 rounded cursor-pointer ${
+                        trainedDomestic.includes(a.id) ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      पालतू
+                    </button>
+                    <button
+                      onClick={() => trainItem(a, false)}
+                      className={`text-[10px] font-black px-2 py-1 rounded cursor-pointer ${
+                        trainedWild.includes(a.id) ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      जंगली
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Model Test Arena */}
+            <div className="w-full bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 text-center mb-4">
+              <span className="text-xs font-bold text-purple-900 block mb-1">अब नए जानवर की परीक्षा लें:</span>
+              <div className="inline-flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-purple-300 shadow-sm mb-3">
+                <span className="text-3xl">🐐</span>
+                <span className="text-sm font-black text-slate-800">नया जानवर: बकरी (Goat)</span>
+              </div>
+              <div>
+                <button
+                  onClick={testNewAnimal}
+                  className="py-2 px-5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer"
+                >
+                  AI से पूछें: बकरी क्या है? ➔
+                </button>
+              </div>
+              {testPrediction && (
+                <div className="mt-3 p-3 bg-white rounded-xl border border-purple-300 text-xs font-black text-purple-950 animate-in fade-in">
+                  {testPrediction}
+                </div>
+              )}
+            </div>
+
+            <div className="text-[11px] text-slate-500 text-center font-semibold">
+              💡 वैज्ञानिक सबक: गलत या अधूरा डेटा = AI का गलत अनुमान (Garbage In = Garbage Out).
+            </div>
+          </div>
+        )}
+
+        {/* LEVEL 2: Live Teachable Machine */}
+        {activeLevel === 'level2_trainer' && (
+          <div className="w-full flex flex-col items-center text-center">
+            <div className="flex justify-between items-center w-full max-w-xl mb-4">
+              <button
+                onClick={() => setActiveLevel('level2_tray')}
+                className="text-xs font-black text-purple-800 bg-purple-100 px-3 py-1.5 rounded-xl cursor-pointer"
+              >
+                ⬅ डेटा ट्रे पर लौटें
+              </button>
+              <span className="text-xs font-bold text-slate-500">Google Teachable Machine हिंदी इंजन</span>
+            </div>
+            <div className="w-full max-w-xl h-96 bg-slate-900 rounded-3xl overflow-hidden border-4 border-purple-300 shadow-xl">
+              <iframe
+                src="https://teachablemachine.withgoogle.com/train/image"
+                className="w-full h-full border-0"
+                title="Teachable Machine"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* LEVEL 3: जल्दी बनाओ AI (Hindi Quick Draw) */}
+        {activeLevel === 'level3_draw' && (
+          <div className="w-full flex flex-col items-center text-center">
+            <h3 className="text-lg font-black text-purple-950 mb-1">जल्दी बनाओ AI (Quick Draw Doodle Recognition)</h3>
+            <p className="text-xs text-slate-600 mb-4 max-w-md">
+              आप चित्र बनाएंगे और AI न्यूरल नेटवर्क लाइव गेस करेगा कि आप क्या बना रहे हैं!
+            </p>
+            <div className="w-full max-w-xl h-96 bg-white rounded-3xl overflow-hidden border-4 border-purple-300 shadow-xl">
+              <iframe
+                src="https://quickdraw.withgoogle.com/"
+                className="w-full h-full border-0"
+                title="Hindi Quick Draw"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* LEVEL 4: सच या कल्पना? (Hallucination Detective) */}
+        {activeLevel === 'level4_fact' && (
+          <div className="w-full max-w-lg text-center flex flex-col items-center">
+            <div className="w-12 h-12 bg-amber-100 text-amber-900 rounded-2xl flex items-center justify-center text-2xl mb-3">
+              🧐
+            </div>
+            <h3 className="text-lg font-black text-purple-950 mb-1">AI ने कहा — सच या कल्पना? (Fact Check Lab)</h3>
+            <p className="text-xs text-slate-600 mb-4">
+              AI बहुत आत्मविश्वास से जवाब देता है, लेकिन क्या हर बात सच होती है?
+            </p>
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 text-left mb-4 shadow-sm w-full">
+              <span className="text-[11px] font-black text-amber-950 block mb-1">दावा / Statement:</span>
+              <p className="text-sm font-bold text-slate-800 mb-3">
+                "भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं।"
+              </p>
+              <div className="bg-white p-3 rounded-xl border border-amber-200 text-xs font-bold text-purple-900">
+                🔍 सबक: AI कई बार गलत जानकारियाँ भी आत्मविश्वास से बनाता है (Hallucination)। इसलिए हमेशा जाँच (Fact-Check) करें!
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
