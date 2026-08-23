@@ -11,7 +11,7 @@ import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
 import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
 import { LEVELS, Level } from '@/lib/levels';
-import { Trophy, HelpCircle, Volume2, RotateCcw } from 'lucide-react';
+import { Trophy, HelpCircle, Volume2, RotateCcw, Star, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
 type Direction = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
 
@@ -24,6 +24,7 @@ function CodingAppInner() {
   const [currentLevelIndex, setCurrentLevelIndex] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isLevelSuccess, setIsLevelSuccess] = useState<boolean>(false);
+  const [usedBlocksCount, setUsedBlocksCount] = useState<number>(0);
 
   const levelList = Array.isArray(LEVELS) && LEVELS.length > 0 ? LEVELS : [];
   const currentLevel: Level = (levelList[currentLevelIndex] || levelList[0]) as Level;
@@ -52,7 +53,7 @@ function CodingAppInner() {
   };
 
   // Sound effects
-  const playSound = (type: 'step' | 'turn' | 'collect' | 'success' | 'fail') => {
+  const playSound = (type: 'step' | 'turn' | 'collect' | 'success' | 'fail' | 'fanfare') => {
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -92,18 +93,18 @@ function CodingAppInner() {
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.2);
-      } else if (type === 'success') {
+      } else if (type === 'fanfare' || type === 'success') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(440, now);
         osc.frequency.setValueAtTime(554.37, now + 0.12);
         osc.frequency.setValueAtTime(659.25, now + 0.24);
         osc.frequency.setValueAtTime(880, now + 0.36);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.6);
+        osc.stop(now + 0.7);
       } else if (type === 'fail') {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(220, now);
@@ -160,7 +161,6 @@ function CodingAppInner() {
     return { x: nextX, y: nextY, dir: pos.dir };
   };
 
-  // Robustly extract all action types from whatever format BlocklyWorkspace provides
   const extractActions = (plan: any): string[] => {
     const res: string[] = [];
     if (!plan) return res;
@@ -194,10 +194,11 @@ function CodingAppInner() {
     return res;
   };
 
-  // Complete Code Execution Runner
+  // Run Blockly Code Step-by-Step
   const handleRunCode = async (actionPlan: any, totalBlocks: number) => {
     if (isRunning || isLevelSuccess) return;
     setIsRunning(true);
+    setUsedBlocksCount(totalBlocks || 1);
 
     const flattenedActions = extractActions(actionPlan);
     let currentPos = { ...playerPos };
@@ -215,7 +216,6 @@ function CodingAppInner() {
         if (!next) {
           playSound('fail');
           speakHindi('रोबोट ग्रिड से बाहर जा रहा है!');
-          alert('⚠️ रोबोट ग्रिड से बाहर जा रहा है!');
           setIsRunning(false);
           return;
         }
@@ -224,7 +224,6 @@ function CodingAppInner() {
         if (hitObstacle) {
           playSound('fail');
           speakHindi('रोबोट रुकावट से टकरा गया!');
-          alert('💥 रोबोट रुकावट से टकरा गया!');
           setIsRunning(false);
           return;
         }
@@ -241,7 +240,6 @@ function CodingAppInner() {
         setPlayerPos({ ...currentPos });
         playSound('turn');
       } else if (action.includes('collect') || action.includes('banana') || action.includes('target') || action.includes('kela')) {
-        // Collect banana if standing on a target cell
         const targetAtPos = targets.find((tg) => tg.x === currentPos.x && tg.y === currentPos.y);
         if (targetAtPos && !collected.some((c) => c.x === targetAtPos.x && c.y === targetAtPos.y)) {
           collected = [...collected, { x: targetAtPos.x, y: targetAtPos.y }];
@@ -253,7 +251,7 @@ function CodingAppInner() {
       await new Promise((res) => setTimeout(res, 450));
     }
 
-    // Auto-collect target if standing directly on it at end of run
+    // Auto-collect target if standing directly on it
     const finalTarget = targets.find((tg) => tg.x === currentPos.x && tg.y === currentPos.y);
     if (finalTarget && !collected.some((c) => c.x === finalTarget.x && c.y === finalTarget.y)) {
       collected = [...collected, { x: finalTarget.x, y: finalTarget.y }];
@@ -266,13 +264,14 @@ function CodingAppInner() {
     );
 
     if (allTargetsCollected && targets.length > 0) {
-      playSound('success');
+      playSound('fanfare');
       setIsLevelSuccess(true);
-      speakHindi('शाबाश! आपने केला उठा लिया और स्तर पूरा कर लिया!');
+      setTimeout(() => {
+        speakHindi(`शाबाश! आपने स्तर ${currentLevel.id} सफलता से पूरा कर लिया है!`);
+      }, 200);
     } else {
       playSound('fail');
       speakHindi('रोबोट केला नहीं उठा पाया, पुनः प्रयास करें।');
-      alert('रोबोट लक्ष्य तक नहीं पहुँचा। पुनः प्रयास करें!');
     }
     setIsRunning(false);
   };
@@ -303,10 +302,10 @@ function CodingAppInner() {
   const displayTitle = (currentLevel?.title || 'पहला कदम').replace(/^स्तर\s*\d+\s*:\s*/i, '');
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none relative">
       
       {/* Universal Navigation Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm px-4 py-2.5">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm px-4 py-2.5">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => switchTab('coding')}>
@@ -400,7 +399,7 @@ function CodingAppInner() {
             {/* Left Column: Visual Game Canvas */}
             <div className="w-full lg:w-1/3 flex flex-col gap-3">
               
-              {/* Level Selector Bar with Audio Button */}
+              {/* Level Selector Bar */}
               <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -444,23 +443,6 @@ function CodingAppInner() {
                     collectedTargets={collectedTargets}
                   />
                 )}
-
-                {/* Level Success Overlay */}
-                {isLevelSuccess && (
-                  <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 z-20">
-                    <div className="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-lg">
-                      🏆
-                    </div>
-                    <h3 className="text-xl font-black text-white mb-1">शाबाश! स्तर पार हुआ</h3>
-                    <p className="text-xs font-bold text-emerald-300 mb-4">रोबोट ने सफलतापूर्वक केला उठा लिया!</p>
-                    <button
-                      onClick={handleNextLevel}
-                      className="py-2.5 px-6 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer"
-                    >
-                      अगला स्तर (Next Level) ➔
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* Instruction / Hint Card with Audio Prompt */}
@@ -499,6 +481,66 @@ function CodingAppInner() {
         {activeTab === 'evs' && <HindiAnimalStudio />}
 
       </main>
+
+      {/* PROMINENT LEVEL COMPLETION REPORT CARD MODAL */}
+      {isLevelSuccess && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl border-4 border-emerald-400 p-6 md:p-8 max-w-md w-full text-center shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
+            
+            {/* Top Confetti Graphic */}
+            <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white rounded-3xl flex items-center justify-center text-4xl mx-auto mb-3 shadow-lg shadow-emerald-500/30">
+              🏆
+            </div>
+
+            <h2 className="text-2xl font-black text-slate-900 mb-1">
+              शाबाश! स्तर पार हुआ
+            </h2>
+            <p className="text-xs font-bold text-emerald-700 mb-4">
+              स्तर {currentLevel.id}: {displayTitle}
+            </p>
+
+            {/* 3-Star Rating */}
+            <div className="flex justify-center gap-2 mb-5">
+              <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce" />
+              <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce [animation-delay:150ms]" />
+              <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce [animation-delay:300ms]" />
+            </div>
+
+            {/* Report Stats Box */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-5 grid grid-cols-2 gap-3 text-left">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">अवधारणा (Concept)</span>
+                <span className="text-xs font-black text-slate-800">{currentLevel.concept || 'Sequencing'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">केला उठाया</span>
+                <span className="text-xs font-black text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> १००% सफल
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleReset}
+                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4" /> पुनः खेलें
+              </button>
+
+              <button
+                onClick={handleNextLevel}
+                className="flex-1 py-3 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                अगला स्तर खेलें <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
