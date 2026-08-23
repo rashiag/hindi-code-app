@@ -11,7 +11,7 @@ import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
 import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
 import { LEVELS, Level } from '@/lib/levels';
-import { Trophy, HelpCircle, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, HelpCircle, Volume2, RotateCcw } from 'lucide-react';
 
 type Direction = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
 
@@ -39,7 +39,20 @@ function CodingAppInner() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const playSound = (type: 'step' | 'turn' | 'success' | 'fail') => {
+  // Native Hindi Speech Engine
+  const speakHindi = (text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'hi-IN';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  };
+
+  // Sound effects
+  const playSound = (type: 'step' | 'turn' | 'collect' | 'success' | 'fail') => {
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -69,6 +82,16 @@ function CodingAppInner() {
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.06);
+      } else if (type === 'collect') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
       } else if (type === 'success') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(440, now);
@@ -99,27 +122,30 @@ function CodingAppInner() {
     if (tabParam) setActiveTab(tabParam);
   }, [tabParam]);
 
+  // Voice narration on level change
   useEffect(() => {
     if (currentLevel) {
       setPlayerPos(getInitialPos(currentLevel));
       setCollectedTargets([]);
       setIsRunning(false);
       setIsLevelSuccess(false);
-    }
-  }, [currentLevelIndex, currentLevel]);
 
-  // Turn logic
+      if (activeTab === 'coding') {
+        const textToRead = (currentLevel as any)?.voiceText || (currentLevel as any)?.instruction || (currentLevel as any)?.hint;
+        if (textToRead) {
+          const timer = setTimeout(() => speakHindi(textToRead), 300);
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+  }, [currentLevelIndex, currentLevel, activeTab]);
+
   const turn = (dir: Direction, turnTo: 'LEFT' | 'RIGHT'): Direction => {
     const dirs: Direction[] = ['NORTH', 'EAST', 'SOUTH', 'WEST'];
     const idx = dirs.indexOf(dir);
-    if (turnTo === 'LEFT') {
-      return dirs[(idx + 3) % 4];
-    } else {
-      return dirs[(idx + 1) % 4];
-    }
+    return turnTo === 'LEFT' ? dirs[(idx + 3) % 4] : dirs[(idx + 1) % 4];
   };
 
-  // Step forward logic
   const stepForward = (pos: { x: number; y: number; dir: Direction }, gridSize: number) => {
     let nextX = pos.x;
     let nextY = pos.y;
@@ -128,39 +154,64 @@ function CodingAppInner() {
     if (pos.dir === 'EAST') nextX += 1;
     if (pos.dir === 'WEST') nextX -= 1;
 
-    // Check bounds
     if (nextX < 0 || nextX >= gridSize || nextY < 0 || nextY >= gridSize) {
       return null;
     }
     return { x: nextX, y: nextY, dir: pos.dir };
   };
 
-  // Execute Blockly Actions Step-by-Step
+  // Flatten nested loops or repeat blocks if present
+  const expandActionPlan = (plan: any[]): string[] => {
+    const flat: string[] = [];
+    for (const item of plan) {
+      if (typeof item === 'string') {
+        flat.push(item);
+      } else if (item && typeof item === 'object') {
+        const actionType = item.type || item.action;
+        const count = item.count || item.repeatCount || 1;
+        const inner = item.children || item.blocks;
+        if (actionType === 'repeat' && Array.isArray(inner)) {
+          const innerExpanded = expandActionPlan(inner);
+          for (let r = 0; r < count; r++) {
+            flat.push(...innerExpanded);
+          }
+        } else if (actionType) {
+          flat.push(actionType);
+        }
+      }
+    }
+    return flat;
+  };
+
+  // Complete Code Execution Runner
   const handleRunCode = async (actionPlan: any[], totalBlocks: number) => {
     if (isRunning || isLevelSuccess) return;
     setIsRunning(true);
 
+    const flattenedActions = expandActionPlan(actionPlan);
     let currentPos = { ...playerPos };
-    let collected: { x: number; y: number }[] = [];
+    let collected: { x: number; y: number }[] = [...collectedTargets];
     const obstacles = currentLevel.obstacles || [];
     const targets = currentLevel.targets || [];
     const gridSize = currentLevel.gridSize || 5;
 
-    for (let i = 0; i < actionPlan.length; i++) {
-      const action = typeof actionPlan[i] === 'string' ? actionPlan[i] : actionPlan[i]?.type;
+    for (let i = 0; i < flattenedActions.length; i++) {
+      const action = flattenedActions[i];
 
-      if (action === 'move_forward') {
+      if (action === 'move_forward' || action === 'moveForward') {
         const next = stepForward(currentPos, gridSize);
         if (!next) {
           playSound('fail');
+          speakHindi('रोबोट ग्रिड से बाहर जा रहा है!');
           alert('⚠️ रोबोट ग्रिड से बाहर जा रहा है!');
           setIsRunning(false);
           return;
         }
 
-        const hitObstacle = obstacles.some(ob => ob.x === next.x && ob.y === next.y);
+        const hitObstacle = obstacles.some((ob) => ob.x === next.x && ob.y === next.y);
         if (hitObstacle) {
           playSound('fail');
+          speakHindi('रोबोट रुकावट से टकरा गया!');
           alert('💥 रोबोट रुकावट से टकरा गया!');
           setIsRunning(false);
           return;
@@ -170,36 +221,44 @@ function CodingAppInner() {
         setPlayerPos({ ...currentPos });
         playSound('step');
 
-        // Check if landed on target
-        const hitTarget = targets.find(tg => tg.x === next.x && tg.y === next.y);
-        if (hitTarget && !collected.some(c => c.x === hitTarget.x && c.y === hitTarget.y)) {
-          collected = [...collected, { x: hitTarget.x, y: hitTarget.y }];
+        // Auto collect if landing on target without requiring collect block
+        const targetAtPos = targets.find((tg) => tg.x === next.x && tg.y === next.y);
+        if (targetAtPos && !collected.some((c) => c.x === targetAtPos.x && c.y === targetAtPos.y)) {
+          collected = [...collected, { x: targetAtPos.x, y: targetAtPos.y }];
           setCollectedTargets([...collected]);
         }
-      } else if (action === 'turn_left') {
+      } else if (action === 'turn_left' || action === 'turnLeft') {
         currentPos.dir = turn(currentPos.dir, 'LEFT');
         setPlayerPos({ ...currentPos });
         playSound('turn');
-      } else if (action === 'turn_right') {
+      } else if (action === 'turn_right' || action === 'turnRight') {
         currentPos.dir = turn(currentPos.dir, 'RIGHT');
         setPlayerPos({ ...currentPos });
         playSound('turn');
+      } else if (action === 'collect_item' || action === 'collect_banana' || action === 'collectItem') {
+        const targetAtPos = targets.find((tg) => tg.x === currentPos.x && tg.y === currentPos.y);
+        if (targetAtPos && !collected.some((c) => c.x === targetAtPos.x && c.y === targetAtPos.y)) {
+          collected = [...collected, { x: targetAtPos.x, y: targetAtPos.y }];
+          setCollectedTargets([...collected]);
+          playSound('collect');
+        }
       }
 
-      // Delay between steps for visual animation
-      await new Promise(res => setTimeout(res, 450));
+      await new Promise((res) => setTimeout(res, 400));
     }
 
-    // Evaluate Goal Completion
-    const allTargetsCollected = targets.every(tg =>
-      collected.some(c => c.x === tg.x && c.y === tg.y)
+    // Check completion
+    const allTargetsCollected = targets.every((tg) =>
+      collected.some((c) => c.x === tg.x && c.y === tg.y)
     );
 
     if (allTargetsCollected && targets.length > 0) {
       playSound('success');
       setIsLevelSuccess(true);
+      speakHindi('शाबाश! आपने केला उठा लिया और स्तर पूरा कर लिया!');
     } else {
       playSound('fail');
+      speakHindi('रोबोट केला नहीं उठा पाया, पुनः प्रयास करें।');
       alert('रोबोट लक्ष्य तक नहीं पहुँचा। पुनः प्रयास करें!');
     }
     setIsRunning(false);
@@ -217,7 +276,7 @@ function CodingAppInner() {
   const handleNextLevel = () => {
     setIsLevelSuccess(false);
     if (currentLevelIndex + 1 < levelList.length) {
-      setCurrentLevelIndex(prev => prev + 1);
+      setCurrentLevelIndex((prev) => prev + 1);
     } else {
       setCurrentLevelIndex(0);
     }
@@ -228,10 +287,12 @@ function CodingAppInner() {
     router.push(`/?tab=${tabKey}`);
   };
 
+  const displayTitle = (currentLevel?.title || 'पहला कदम').replace(/^स्तर\s*\d+\s*:\s*/i, '');
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none">
       
-      {/* Top Universal App Header */}
+      {/* Universal Navigation Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm px-4 py-2.5">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           
@@ -249,7 +310,6 @@ function CodingAppInner() {
             </div>
           </div>
 
-          {/* Clean Sub-Tabs: Phonics, Coding, AI Arcade, EVS, Maths, Music, Science */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
             <button
               onClick={() => switchTab('coding')}
@@ -317,7 +377,7 @@ function CodingAppInner() {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Sandbox Area */}
       <main className="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
         
         {/* CODING LOGIC MAZE */}
@@ -327,23 +387,33 @@ function CodingAppInner() {
             {/* Left Column: Visual Game Canvas */}
             <div className="w-full lg:w-1/3 flex flex-col gap-3">
               
-              {/* Level Selector Bar */}
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-black text-slate-900 block">
-                    स्तर {currentLevel?.id ?? 1}: {currentLevel?.title ?? 'मेज़'}
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-700">
-                    {currentLevel?.concept || 'Sequencing'}
+              {/* Level Selector Bar with Fixed Single Prefix & Audio Button */}
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black text-slate-900">
+                      स्तर {currentLevel?.id ?? 1}: {displayTitle}
+                    </span>
+                    <button
+                      onClick={() => speakHindi((currentLevel as any)?.voiceText || (currentLevel as any)?.instruction || displayTitle)}
+                      className="p-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg transition cursor-pointer"
+                      title="आवाज़ सुनें"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    {currentLevel?.concept || 'Sequence'}
                   </span>
                 </div>
-                <div className="flex gap-1">
+
+                <div className="flex gap-1 overflow-x-auto py-1">
                   {levelList.map((lvl: Level, i: number) => (
                     <button
                       key={lvl.id}
                       onClick={() => setCurrentLevelIndex(i)}
-                      className={`w-7 h-7 rounded-lg font-black text-xs cursor-pointer ${
-                        currentLevelIndex === i ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      className={`w-7 h-7 rounded-lg font-black text-xs shrink-0 cursor-pointer ${
+                        currentLevelIndex === i ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
                       {lvl.id}
@@ -362,14 +432,14 @@ function CodingAppInner() {
                   />
                 )}
 
-                {/* Level Success Modal */}
+                {/* Level Success Overlay */}
                 {isLevelSuccess && (
-                  <div className="absolute inset-0 bg-slate-900/75 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 z-20">
+                  <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-in zoom-in-95 z-20">
                     <div className="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-lg">
                       🏆
                     </div>
-                    <h3 className="text-xl font-black text-white mb-1">शानदार! स्तर पार हुआ</h3>
-                    <p className="text-xs font-bold text-emerald-300 mb-4">रोबोट सही क्रम में लक्ष्य तक पहुँच गया!</p>
+                    <h3 className="text-xl font-black text-white mb-1">शाबाश! स्तर पार हुआ</h3>
+                    <p className="text-xs font-bold text-emerald-300 mb-4">रोबोट ने सफलतापूर्वक केला उठा लिया!</p>
                     <button
                       onClick={handleNextLevel}
                       className="py-2.5 px-6 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer"
@@ -380,10 +450,18 @@ function CodingAppInner() {
                 )}
               </div>
 
-              {/* Hint Box */}
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-950 flex items-center gap-2 shadow-sm">
-                <HelpCircle className="w-4 h-4 shrink-0 text-emerald-700" />
-                <span>💡 {(currentLevel as any)?.hint || (currentLevel as any)?.instruction || 'ब्लॉक जोड़ें!'}</span>
+              {/* Instruction / Hint Card with Audio Prompt */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-950 flex items-center justify-between gap-2 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 shrink-0 text-emerald-700" />
+                  <span>💡 {(currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!'}</span>
+                </div>
+                <button
+                  onClick={() => speakHindi((currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!')}
+                  className="p-1 text-emerald-800 hover:bg-emerald-200 rounded transition cursor-pointer shrink-0"
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
@@ -399,7 +477,7 @@ function CodingAppInner() {
           </div>
         )}
 
-        {/* OTHER VERTICAL HUBS */}
+        {/* OTHER MODULE TABS */}
         {(activeTab === 'english' || activeTab === 'phonics' || activeTab === 'syntax' || activeTab === 'vocab') && <EnglishLiteracyHub />}
         {(activeTab === 'ai' || activeTab === 'ml') && <AiArcadeStudio />}
         {activeTab === 'maths' && <HindiMathStudio />}
