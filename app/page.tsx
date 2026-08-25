@@ -42,7 +42,6 @@ function CodingAppInner() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Native Hindi Speech Engine
   const speakHindi = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
@@ -54,7 +53,6 @@ function CodingAppInner() {
     } catch (e) {}
   };
 
-  // Sound effects
   const playSound = (type: 'step' | 'turn' | 'collect' | 'success' | 'fail' | 'fanfare') => {
     try {
       if (!audioCtxRef.current) {
@@ -125,7 +123,6 @@ function CodingAppInner() {
     if (tabParam) setActiveTab(tabParam);
   }, [tabParam]);
 
-  // Voice narration on level change
   useEffect(() => {
     if (currentLevel) {
       setPlayerPos(getInitialPos(currentLevel));
@@ -155,7 +152,7 @@ function CodingAppInner() {
     if (pos.dir === 'NORTH') nextY -= 1;
     if (pos.dir === 'SOUTH') nextY += 1;
     if (pos.dir === 'EAST') nextX += 1;
-    if (pos.dir === 'WEST') nextX -= 1;
+    if (pos.dir === 'WEST') nextX += 1;
 
     if (nextX < 0 || nextX >= gridSize || nextY < 0 || nextY >= gridSize) {
       return null;
@@ -196,7 +193,6 @@ function CodingAppInner() {
     return res;
   };
 
-  // Run Blockly Code Step-by-Step
   const handleRunCode = async (actionPlan: any, totalBlocks: number) => {
     if (isRunning || isLevelSuccess) return;
     setIsRunning(true);
@@ -304,35 +300,37 @@ function CodingAppInner() {
   const displayTitle = (currentLevel?.title || 'पहला कदम').replace(/^स्तर\s*\d+\s*:\s*/i, '');
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none relative">
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none relative overflow-x-hidden">
       
-      {/* Universal Navigation Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm px-4 py-2.5">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      {/* Universal Responsive Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm px-3 py-2 md:px-4 md:py-2.5">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => switchTab('coding')}>
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center text-xl shadow-md text-white">
-              🚀
-            </div>
-            <div>
-              <h1 className="text-base md:text-lg font-black text-slate-900 leading-tight">
-                Young Researcher AI &amp; Code
-              </h1>
-              <p className="text-[11px] font-bold text-purple-700">
-                ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => switchTab('coding')}>
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-xl md:rounded-2xl flex items-center justify-center text-lg md:text-xl shadow-md text-white">
+                🚀
+              </div>
+              <div>
+                <h1 className="text-sm md:text-lg font-black text-slate-900 leading-tight">
+                  Young Researcher AI &amp; Code
+                </h1>
+                <p className="text-[10px] md:text-[11px] font-bold text-purple-700">
+                  ओपन-एक्सेस कंप्यूटर विज़न व कोडिंग लैब (NEP 2020)
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* All 9 Sandbox Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
+          {/* Smooth Horizontal Scrolling Tab Bar for Mobile & Desktop */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 w-full md:w-auto shrink-0 touch-pan-x">
             <button
               onClick={() => switchTab('coding')}
               className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
                 activeTab === 'coding' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🎮 मेज़ कोडिंग (Logic)
+              🎮 मेज़ कोडिंग
             </button>
 
             <button
@@ -341,7 +339,7 @@ function CodingAppInner() {
                 activeTab === 'geo' || activeTab === 'geography' ? 'bg-sky-600 text-white shadow' : 'bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200'
               }`}
             >
-              🗺️ भूगोल (Geography)
+              🗺️ भूगोल (Map)
             </button>
 
             <button
@@ -350,7 +348,7 @@ function CodingAppInner() {
                 activeTab === 'art' || activeTab === 'colors' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 hover:bg-pink-100 text-pink-900 border border-pink-200'
               }`}
             >
-              🎨 कला (Art &amp; Colors)
+              🎨 कला (Art)
             </button>
 
             <button
@@ -359,7 +357,7 @@ function CodingAppInner() {
                 activeTab === 'english' || activeTab === 'phonics' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🔤 English Lab
+              🔤 English
             </button>
 
             <button
@@ -368,7 +366,7 @@ function CodingAppInner() {
                 activeTab === 'ai' || activeTab === 'ml' ? 'bg-purple-600 text-white shadow' : 'bg-purple-100 hover:bg-purple-200 text-purple-900'
               }`}
             >
-              🤖 AI खेलघर (Arcade)
+              🤖 AI खेलघर
             </button>
 
             <button
@@ -377,7 +375,7 @@ function CodingAppInner() {
                 activeTab === 'maths' ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🔢 गणित (Maths)
+              🔢 गणित
             </button>
 
             <button
@@ -386,7 +384,7 @@ function CodingAppInner() {
                 activeTab === 'music' ? 'bg-orange-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🎹 संगीत (Music)
+              🎹 संगीत
             </button>
 
             <button
@@ -395,7 +393,7 @@ function CodingAppInner() {
                 activeTab === 'researcher' ? 'bg-violet-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🔬 विज्ञान (Science)
+              🔬 विज्ञान
             </button>
 
             <button
@@ -411,13 +409,15 @@ function CodingAppInner() {
       </header>
 
       {/* Main Sandbox Area */}
-      <main className="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-2 md:p-6 max-w-7xl mx-auto w-full">
         
-        {/* 1. CODING LOGIC MAZE */}
+        {/* 1. CODING LOGIC MAZE (FULLY RESPONSIVE STACK ON PHONES) */}
         {activeTab === 'coding' && (
-          <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)] min-h-[620px]">
-            <div className="w-full lg:w-1/3 flex flex-col gap-3">
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
+          <div className="flex flex-col lg:flex-row gap-3 md:gap-4 min-h-[auto] lg:h-[calc(100vh-140px)]">
+            
+            {/* Left/Top Panel: Game Grid & Level Selector */}
+            <div className="w-full lg:w-1/3 flex flex-col gap-2.5">
+              <div className="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-black text-slate-900">
@@ -436,7 +436,7 @@ function CodingAppInner() {
                   </span>
                 </div>
 
-                <div className="flex gap-1 overflow-x-auto py-1">
+                <div className="flex gap-1 overflow-x-auto no-scrollbar py-1">
                   {levelList.map((lvl: Level, i: number) => (
                     <button
                       key={lvl.id}
@@ -451,7 +451,8 @@ function CodingAppInner() {
                 </div>
               </div>
 
-              <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-center items-center relative overflow-hidden">
+              {/* Game Board Canvas */}
+              <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm p-2 md:p-4 flex flex-col justify-center items-center relative overflow-hidden aspect-square max-h-[340px] md:max-h-none">
                 {currentLevel && (
                   <GameCanvas
                     level={currentLevel}
@@ -461,10 +462,10 @@ function CodingAppInner() {
                 )}
               </div>
 
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-950 flex items-center justify-between gap-2 shadow-sm">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-2.5 text-xs font-bold text-emerald-950 flex items-center justify-between gap-2 shadow-sm">
                 <div className="flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 shrink-0 text-emerald-700" />
-                  <span>💡 {(currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!'}</span>
+                  <span className="text-[11px] leading-tight">💡 {(currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!'}</span>
                 </div>
                 <button
                   onClick={() => speakHindi((currentLevel as any)?.instruction || (currentLevel as any)?.hint || 'ब्लॉक जोड़कर कोड चलाएं!')}
@@ -475,7 +476,8 @@ function CodingAppInner() {
               </div>
             </div>
 
-            <div className="w-full lg:w-2/3 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            {/* Right/Bottom Panel: Blockly Drag & Drop Code Workspace */}
+            <div className="w-full lg:w-2/3 bg-white rounded-2xl md:rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[520px] lg:h-auto min-h-[480px]">
               <BlocklyWorkspace
                 onRunCode={handleRunCode}
                 onReset={handleReset}
