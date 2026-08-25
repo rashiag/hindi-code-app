@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, Trophy, Star, ArrowRight, RotateCcw, 
-  MapPin, Compass, Search, CheckCircle2, XCircle, Eye, Sparkles
+  MapPin, Compass, Search, CheckCircle2, XCircle, Eye
 } from 'lucide-react';
 
 interface StateData {
@@ -496,19 +496,89 @@ export function HindiGeoStudio() {
             )}
           </div>
 
-          {/* Authentic Topographic Map Container */}
-          <div className="w-full flex items-center justify-center relative p-3 bg-[#f8f5ea] rounded-2xl border-2 border-amber-300 shadow-inner overflow-hidden">
+          {/* Authentic Vector Map Canvas */}
+          <div className="w-full flex items-center justify-center relative p-3 bg-[#faf7ee] rounded-2xl border-2 border-amber-300 shadow-inner overflow-hidden">
             
-            <div className="relative w-full max-w-[420px] aspect-[4/5] select-none rounded-xl overflow-hidden shadow-md">
+            <div className="relative w-full max-w-[420px] aspect-[4/5] select-none rounded-xl overflow-hidden shadow-md bg-white">
               
-              {/* Genuine India Vector Map Graphic */}
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/India_states_and_union_territories_map.svg/800px-India_states_and_union_territories_map.svg.png"
-                alt="Real Map of India"
-                className="w-full h-full object-contain pointer-events-none"
-              />
+              {/* Standalone Vector Map of India */}
+              <svg viewBox="0 0 400 500" className="w-full h-full">
+                {/* Ocean Background */}
+                <rect width="400" height="500" fill="#e0f2fe" />
+                
+                {/* Geographic Outlines */}
+                <g stroke="#1e293b" strokeWidth="1.6" strokeLinejoin="round">
+                  {/* Ladakh, J&K */}
+                  <path d="M 120,40 C 140,15 185,20 195,50 C 190,85 155,95 130,95 C 110,85 105,55 120,40 Z" fill="#fb923c" />
+                  <text x="145" y="65" fontSize="10" fontWeight="900" fill="#7c2d12">LADAKH</text>
+                  <text x="125" y="80" fontSize="8" fontWeight="bold" fill="#7c2d12">J&amp;K</text>
+                  
+                  {/* Northern States */}
+                  <path d="M 130,95 C 160,95 180,105 185,125 C 170,145 135,145 120,130 C 115,110 120,95 130,95 Z" fill="#86efac" />
+                  <path d="M 105,120 L 130,120 L 125,145 L 100,140 Z" fill="#93c5fd" />
+                  <path d="M 145,115 L 180,120 L 175,145 L 140,140 Z" fill="#f472b6" />
+                  
+                  {/* Rajasthan */}
+                  <path d="M 115,130 C 145,135 145,175 135,210 C 95,235 60,205 50,175 C 65,140 95,130 115,130 Z" fill="#fdba74" />
+                  <text x="80" y="175" fontSize="11" fontWeight="900" fill="#7c2d12">RAJASTHAN</text>
+                  
+                  {/* Gujarat */}
+                  <path d="M 50,175 C 95,190 95,235 75,255 C 45,245 35,215 50,175 Z" fill="#d8b4fe" />
+                  <text x="50" y="215" fontSize="10" fontWeight="900" fill="#581c87">GUJARAT</text>
+                  
+                  {/* Uttar Pradesh & Bihar */}
+                  <path d="M 140,135 C 220,130 255,160 250,195 C 205,215 160,210 135,185 Z" fill="#fde047" />
+                  <text x="160" y="170" fontSize="11" fontWeight="900" fill="#713f12">UTTAR PRADESH</text>
+                  
+                  <path d="M 235,165 C 275,165 285,195 270,215 C 245,220 230,200 235,165 Z" fill="#c084fc" />
+                  <text x="240" y="195" fontSize="9" fontWeight="900" fill="#581c87">BIHAR</text>
+                  
+                  {/* Central India */}
+                  <path d="M 110,210 C 195,200 225,230 215,265 C 155,275 105,255 110,210 Z" fill="#7dd3fc" />
+                  <text x="135" y="240" fontSize="11" fontWeight="900" fill="#075985">MADHYA PRADESH</text>
+                  
+                  <path d="M 205,235 C 245,230 250,270 235,300 C 205,300 195,265 205,235 Z" fill="#f0abfc" />
+                  <path d="M 230,200 L 265,200 L 260,240 L 225,235 Z" fill="#fde047" />
+                  
+                  {/* East Bengal & Odisha */}
+                  <path d="M 260,195 C 285,200 285,255 265,270 C 250,250 250,215 260,195 Z" fill="#4ade80" />
+                  <path d="M 225,265 C 275,260 270,315 240,335 C 215,320 215,285 225,265 Z" fill="#f87171" />
+                  <text x="235" y="295" fontSize="10" fontWeight="900" fill="#7f1d1d">ODISHA</text>
+                  
+                  {/* Northeast */}
+                  <path d="M 290,145 C 365,135 385,175 365,215 C 315,220 295,195 290,145 Z" fill="#93c5fd" />
+                  <path d="M 320,130 C 375,120 385,150 365,165 Z" fill="#fb923c" />
+                  <text x="315" y="175" fontSize="10" fontWeight="900" fill="#1e3a8a">ASSAM &amp; NE</text>
+                  
+                  {/* Maharashtra */}
+                  <path d="M 95,245 C 175,245 185,295 170,340 C 115,350 85,310 95,245 Z" fill="#fde047" />
+                  <text x="105" y="295" fontSize="11" fontWeight="900" fill="#713f12">MAHARASHTRA</text>
+                  
+                  {/* South: Telangana & AP */}
+                  <path d="M 160,285 C 205,285 205,335 185,355 C 155,350 150,315 160,285 Z" fill="#fdba74" />
+                  <path d="M 160,335 C 210,335 205,405 170,430 C 150,400 150,360 160,335 Z" fill="#86efac" />
+                  <text x="175" y="375" fontSize="9" fontWeight="900" fill="#14532d">ANDHRA</text>
+                  
+                  {/* Karnataka, Kerala, Tamil Nadu */}
+                  <path d="M 105,335 C 165,335 165,395 140,430 C 115,420 100,380 105,335 Z" fill="#fca5a5" />
+                  <text x="110" y="380" fontSize="9" fontWeight="900" fill="#7f1d1d">KARNATAKA</text>
+                  
+                  <path d="M 115,415 C 130,415 130,470 120,475 C 110,465 110,435 115,415 Z" fill="#4ade80" />
+                  <path d="M 125,410 C 175,410 165,475 145,480 C 125,470 120,435 125,410 Z" fill="#f87171" />
+                  <text x="135" y="445" fontSize="9" fontWeight="900" fill="#7f1d1d">TAMIL NADU</text>
+                  
+                  {/* Islands */}
+                  <ellipse cx="60" cy="435" rx="8" ry="18" fill="#fdba74" />
+                  <ellipse cx="345" cy="410" rx="10" ry="32" fill="#fdba74" />
+                </g>
 
-              {/* Interactive State Hotspot Pins Placed on Real Map */}
+                {/* Ocean Names */}
+                <text x="25" y="320" fill="#0369a1" fontSize="9" fontWeight="900" opacity="0.8">ARABIAN SEA</text>
+                <text x="275" y="320" fill="#0369a1" fontSize="9" fontWeight="900" opacity="0.8">BAY OF BENGAL</text>
+                <text x="135" y="492" fill="#0369a1" fontSize="9" fontWeight="900" opacity="0.8">INDIAN OCEAN</text>
+              </svg>
+
+              {/* Clickable Hotspot Pins */}
               {INDIA_STATES_DATA.map((st) => {
                 const isSelected = selectedState.id === st.id;
                 const isQuizTarget = activeMode === 'quiz' && quizList[qIdx]?.id === st.id;
@@ -744,7 +814,7 @@ export function HindiGeoStudio() {
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 text-center relative shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">
-                भारत का राजनीतिक मानचित्र (Political Map of India)
+                भारत का राजनीतिक व भौगोलिक मानचित्र (Map of India)
               </h3>
               <button
                 onClick={() => setShowFullMapModal(false)}
@@ -754,12 +824,29 @@ export function HindiGeoStudio() {
               </button>
             </div>
             
-            <div className="max-h-[70vh] overflow-auto rounded-2xl border border-slate-200">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/India_states_and_union_territories_map.svg/800px-India_states_and_union_territories_map.svg.png"
-                alt="Political Map of India"
-                className="w-full object-contain"
-              />
+            <div className="max-h-[70vh] overflow-auto rounded-2xl border border-slate-200 p-2 bg-[#f8f5ea]">
+              <svg viewBox="0 0 400 500" className="w-full h-auto">
+                <rect width="400" height="500" fill="#e0f2fe" />
+                <g stroke="#1e293b" strokeWidth="1.5" strokeLinejoin="round">
+                  <path d="M 120,40 C 140,15 185,20 195,50 C 190,85 155,95 130,95 C 110,85 105,55 120,40 Z" fill="#fb923c" />
+                  <path d="M 130,95 C 160,95 180,105 185,125 C 170,145 135,145 120,130 C 115,110 120,95 130,95 Z" fill="#86efac" />
+                  <path d="M 115,130 C 145,135 145,175 135,210 C 95,235 60,205 50,175 C 65,140 95,130 115,130 Z" fill="#fdba74" />
+                  <path d="M 50,175 C 95,190 95,235 75,255 C 45,245 35,215 50,175 Z" fill="#d8b4fe" />
+                  <path d="M 140,135 C 220,130 255,160 250,195 C 205,215 160,210 135,185 Z" fill="#fde047" />
+                  <path d="M 235,165 C 275,165 285,195 270,215 C 245,220 230,200 235,165 Z" fill="#c084fc" />
+                  <path d="M 110,210 C 195,200 225,230 215,265 C 155,275 105,255 110,210 Z" fill="#7dd3fc" />
+                  <path d="M 205,235 C 245,230 250,270 235,300 C 205,300 195,265 205,235 Z" fill="#f0abfc" />
+                  <path d="M 260,195 C 285,200 285,255 265,270 C 250,250 250,215 260,195 Z" fill="#4ade80" />
+                  <path d="M 225,265 C 275,260 270,315 240,335 C 215,320 215,285 225,265 Z" fill="#f87171" />
+                  <path d="M 290,145 C 365,135 385,175 365,215 C 315,220 295,195 290,145 Z" fill="#93c5fd" />
+                  <path d="M 95,245 C 175,245 185,295 170,340 C 115,350 85,310 95,245 Z" fill="#fde047" />
+                  <path d="M 160,285 C 205,285 205,335 185,355 C 155,350 150,315 160,285 Z" fill="#fdba74" />
+                  <path d="M 160,335 C 210,335 205,405 170,430 C 150,400 150,360 160,335 Z" fill="#86efac" />
+                  <path d="M 105,335 C 165,335 165,395 140,430 C 115,420 100,380 105,335 Z" fill="#fca5a5" />
+                  <path d="M 115,415 C 130,415 130,470 120,475 C 110,465 110,435 115,415 Z" fill="#4ade80" />
+                  <path d="M 125,410 C 175,410 165,475 145,480 C 125,470 120,435 125,410 Z" fill="#f87171" />
+                </g>
+              </svg>
             </div>
           </div>
         </div>
