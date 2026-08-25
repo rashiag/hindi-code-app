@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Volume2, RotateCcw, CheckCircle2, XCircle, Trophy, Star, 
+  Volume2, RotateCcw, Trophy, Star, 
   ArrowRight, Download, Undo2, Eraser, Paintbrush, PaintBucket, RefreshCw
 } from 'lucide-react';
 
 interface ColorItem {
+  id: string;
   nameEn: string;
   nameHi: string;
   hex: string;
@@ -14,23 +15,24 @@ interface ColorItem {
 }
 
 const COLOR_DATABASE: ColorItem[] = [
-  { nameEn: 'Red', nameHi: 'लाल (Laal)', hex: '#EF4444', items: [{ name: 'Apple (सेब)', emoji: '🍎' }, { name: 'Tomato (टमाटर)', emoji: '🍅' }, { name: 'Strawberry (स्ट्रॉबेरी)', emoji: '🍓' }] },
-  { nameEn: 'Yellow', nameHi: 'पीला (Peela)', hex: '#FACC15', items: [{ name: 'Banana (केला)', emoji: '🍌' }, { name: 'Sun (सूरज)', emoji: '☀️' }, { name: 'Sunflower (सूरजमुखी)', emoji: '🌻' }] },
-  { nameEn: 'Blue', nameHi: 'नीला (Neela)', hex: '#3B82F6', items: [{ name: 'Sky (आसमान)', emoji: '🌌' }, { name: 'Ocean (समुद्र)', emoji: '🌊' }, { name: 'Blueberry (ब्लूबेरी)', emoji: '🫐' }] },
-  { nameEn: 'Green', nameHi: 'हरा (Hara)', hex: '#22C55E', items: [{ name: 'Leaf (पत्ता)', emoji: '🍃' }, { name: 'Frog (मेंढक)', emoji: '🐸' }, { name: 'Broccoli (ब्रोकली)', emoji: '🥦' }] },
-  { nameEn: 'Orange', nameHi: 'नारंगी (Narangi)', hex: '#F97316', items: [{ name: 'Orange (संतरा)', emoji: '🍊' }, { name: 'Carrot (गाजर)', emoji: '🥕' }, { name: 'Pumpkin (कद्दू)', emoji: '🎃' }] },
-  { nameEn: 'Purple', nameHi: 'बैंगनी (Baingani)', hex: '#A855F7', items: [{ name: 'Brinjal (बैंगन)', emoji: '🍆' }, { name: 'Grapes (अंगूर)', emoji: '🍇' }] },
-  { nameEn: 'Pink', nameHi: 'गुलाबी (Gulaabi)', hex: '#EC4899', items: [{ name: 'Lotus (कमल)', emoji: '🪷' }, { name: 'Flamingo (राजहंस)', emoji: '🦩' }] },
-  { nameEn: 'Brown', nameHi: 'भूरा (Bhoora)', hex: '#8B5CF6', items: [{ name: 'Coconut (नारियल)', emoji: '🥥' }, { name: 'Wood (लकड़ी)', emoji: '🪵' }, { name: 'Chocolate (चॉकलेट)', emoji: '🍫' }] },
-  { nameEn: 'Black', nameHi: 'काला (Kaala)', hex: '#1E293B', items: [{ name: 'Crow (कौआ)', emoji: '🐦‍⬛' }, { name: 'Coal (कोयला)', emoji: '⚫' }] },
-  { nameEn: 'White', nameHi: 'सफेद (Safed)', hex: '#F8FAFC', items: [{ name: 'Milk (दूध)', emoji: '🥛' }, { name: 'Snow (बर्फ़)', emoji: '❄️' }, { name: 'Egg (अंडा)', emoji: '🥚' }] }
+  { id: 'red', nameEn: 'Red', nameHi: 'लाल', hex: '#EF4444', items: [{ name: 'Apple (सेब)', emoji: '🍎' }, { name: 'Tomato (टमाटर)', emoji: '🍅' }, { name: 'Strawberry (स्ट्रॉबेरी)', emoji: '🍓' }] },
+  { id: 'yellow', nameEn: 'Yellow', nameHi: 'पीला', hex: '#FACC15', items: [{ name: 'Banana (केला)', emoji: '🍌' }, { name: 'Sun (सूरज)', emoji: '☀️' }, { name: 'Sunflower (सूरजमुखी)', emoji: '🌻' }] },
+  { id: 'blue', nameEn: 'Blue', nameHi: 'नीला', hex: '#3B82F6', items: [{ name: 'Sky (आसमान)', emoji: '🌌' }, { name: 'Ocean (समुद्र)', emoji: '🌊' }, { name: 'Blueberry (ब्लूबेरी)', emoji: '🫐' }] },
+  { id: 'green', nameEn: 'Green', nameHi: 'हरा', hex: '#22C55E', items: [{ name: 'Leaf (पत्ता)', emoji: '🍃' }, { name: 'Frog (मेंढक)', emoji: '🐸' }, { name: 'Broccoli (ब्रोकली)', emoji: '🥦' }] },
+  { id: 'orange', nameEn: 'Orange', nameHi: 'नारंगी', hex: '#F97316', items: [{ name: 'Orange (संतरा)', emoji: '🍊' }, { name: 'Carrot (गाजर)', emoji: '🥕' }, { name: 'Pumpkin (कद्दू)', emoji: '🎃' }] },
+  { id: 'purple', nameEn: 'Purple', nameHi: 'बैंगनी', hex: '#9333EA', items: [{ name: 'Brinjal (बैंगन)', emoji: '🍆' }, { name: 'Grapes (अंगूर)', emoji: '🍇' }] },
+  { id: 'pink', nameEn: 'Pink', nameHi: 'गुलाबी', hex: '#EC4899', items: [{ name: 'Lotus (कमल)', emoji: '🪷' }, { name: 'Flamingo (राजहंस)', emoji: '🦩' }] },
+  { id: 'brown', nameEn: 'Brown', nameHi: 'भूरा', hex: '#854D0E', items: [{ name: 'Coconut (नारियल)', emoji: '🥥' }, { name: 'Wood (लकड़ी)', emoji: '🪵' }, { name: 'Chocolate (चॉकलेट)', emoji: '🍫' }] },
+  { id: 'black', nameEn: 'Black', nameHi: 'काला', hex: '#1E293B', items: [{ name: 'Crow (कौआ)', emoji: '🐦‍⬛' }, { name: 'Coal (कोयला)', emoji: '⚫' }] },
+  { id: 'white', nameEn: 'White', nameHi: 'सफेद', hex: '#FFFFFF', items: [{ name: 'Milk (दूध)', emoji: '🥛' }, { name: 'Snow (बर्फ़)', emoji: '❄️' }, { name: 'Egg (अंडा)', emoji: '🥚' }] }
 ];
 
 const PRESET_OUTLINES = [
   {
     id: 'apple',
-    title: 'रसीला सेब (Juicy Apple)',
+    title: 'रसीला सेब (Apple)',
     paths: [
+      { id: 'bg-apple', isBg: true, label: 'पृष्ठभूमि (Background)' },
       { id: 'leaf', d: 'M 190 70 C 230 40, 260 60, 240 90 C 210 100, 190 70, 190 70 Z', label: 'पत्ता (Leaf)' },
       { id: 'stem', d: 'M 195 75 Q 190 120 200 130', strokeOnly: true },
       { id: 'body', d: 'M 200 130 C 130 90, 80 160, 90 240 C 100 320, 160 350, 200 330 C 240 350, 300 320, 310 240 C 320 160, 270 90, 200 130 Z', label: 'सेब (Apple Body)' }
@@ -40,6 +42,7 @@ const PRESET_OUTLINES = [
     id: 'butterfly',
     title: 'तितली (Butterfly)',
     paths: [
+      { id: 'bg-butterfly', isBg: true, label: 'पृष्ठभूमि (Background)' },
       { id: 'left-wing-top', d: 'M 200 170 C 140 100, 70 120, 80 190 C 90 240, 170 230, 200 210 Z', label: 'बायां पंख ऊपर' },
       { id: 'left-wing-bottom', d: 'M 200 210 C 130 230, 90 310, 130 330 C 170 340, 190 280, 200 250 Z', label: 'बायां पंख नीचे' },
       { id: 'right-wing-top', d: 'M 200 170 C 260 100, 330 120, 320 190 C 310 240, 230 230, 200 210 Z', label: 'दायां पंख ऊपर' },
@@ -49,8 +52,9 @@ const PRESET_OUTLINES = [
   },
   {
     id: 'house',
-    title: 'सुंदर घर (Sweet Home)',
+    title: 'सुंदर घर (House)',
     paths: [
+      { id: 'bg-house', isBg: true, label: 'पृष्ठभूमि (Background)' },
       { id: 'roof', d: 'M 80 180 L 200 80 L 320 180 Z', label: 'छत (Roof)' },
       { id: 'walls', d: 'M 100 180 L 300 180 L 300 320 L 100 320 Z', label: 'दीवार (Walls)' },
       { id: 'door', d: 'M 170 240 L 230 240 L 230 320 L 170 320 Z', label: 'दरवाज़ा (Door)' },
@@ -59,8 +63,9 @@ const PRESET_OUTLINES = [
   },
   {
     id: 'fish',
-    title: 'जलपरी मछली (Fish)',
+    title: 'मछली (Fish)',
     paths: [
+      { id: 'bg-fish', isBg: true, label: 'पृष्ठभूमि (Background)' },
       { id: 'body', d: 'M 100 200 C 140 120, 270 120, 300 200 C 270 280, 140 280, 100 200 Z', label: 'मछली का शरीर' },
       { id: 'tail', d: 'M 295 200 L 350 140 L 330 200 L 350 260 Z', label: 'पूँछ (Tail)' },
       { id: 'fin', d: 'M 190 150 C 210 110, 230 110, 240 150 Z', label: 'फिन (Fin)' }
@@ -71,13 +76,23 @@ const PRESET_OUTLINES = [
 export function HindiArtStudio() {
   const [subTab, setSubTab] = useState<'quiz' | 'paint' | 'coloring'>('quiz');
 
-  // Audio helper with instant cancellation
+  // Audio helper with guaranteed flush & cancellation
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopAllAudio = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (speechTimeoutRef.current) {
+      clearTimeout(speechTimeoutRef.current);
+      speechTimeoutRef.current = null;
+    }
+  };
+
   const playBilingualSpeech = (hindiText: string, englishText: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel();
-      if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+      stopAllAudio();
 
       const hiUtterance = new SpeechSynthesisUtterance(hindiText);
       hiUtterance.lang = 'hi-IN';
@@ -89,7 +104,7 @@ export function HindiArtStudio() {
           enUtterance.lang = 'en-US';
           enUtterance.rate = 0.85;
           window.speechSynthesis.speak(enUtterance);
-        }, 500); // Audible gap
+        }, 550);
       };
 
       window.speechSynthesis.speak(hiUtterance);
@@ -97,7 +112,7 @@ export function HindiArtStudio() {
   };
 
   // -------------------------------------------------------------
-  // ACTIVITY 1: COLOR QUIZ
+  // ACTIVITY 1: COLOR IDENTIFICATION QUIZ
   // -------------------------------------------------------------
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -106,13 +121,13 @@ export function HindiArtStudio() {
   const [quizFinished, setQuizFinished] = useState(false);
 
   const initQuiz = () => {
+    stopAllAudio();
     const shuffledColors = [...COLOR_DATABASE].sort(() => 0.5 - Math.random());
     const selected5 = shuffledColors.slice(0, 5);
 
     const questions = selected5.map((correct) => {
       const randomItem = correct.items[Math.floor(Math.random() * correct.items.length)];
-      
-      const otherColors = COLOR_DATABASE.filter((c) => c.nameEn !== correct.nameEn)
+      const otherColors = COLOR_DATABASE.filter((c) => c.id !== correct.id)
         .sort(() => 0.5 - Math.random())
         .slice(0, 2);
 
@@ -133,23 +148,27 @@ export function HindiArtStudio() {
 
   useEffect(() => {
     initQuiz();
+    return () => stopAllAudio();
   }, []);
 
   useEffect(() => {
     if (subTab === 'quiz' && quizQuestions.length > 0 && !quizFinished) {
       const q = quizQuestions[qIndex];
+      const cleanItemNameHi = q.item.name.includes('(') ? q.item.name.split('(')[1].replace(')', '') : q.item.name;
+      const cleanItemNameEn = q.item.name.includes('(') ? q.item.name.split('(')[0].trim() : q.item.name;
+
       playBilingualSpeech(
-        `यह क्या है? ${q.item.name}. इसका सही रंग चुनो।`,
-        `What is the natural color of ${q.item.name}?`
+        `यह क्या है? ${cleanItemNameHi}। इसका सही रंग चुनो।`,
+        `What is the color of ${cleanItemNameEn}?`
       );
     }
   }, [qIndex, subTab, quizQuestions, quizFinished]);
 
   const handleSelectOption = (opt: ColorItem) => {
     if (selectedOption !== null) return;
-    setSelectedOption(opt.nameEn);
+    setSelectedOption(opt.id);
 
-    const isCorrect = opt.nameEn === quizQuestions[qIndex].correctColor.nameEn;
+    const isCorrect = opt.id === quizQuestions[qIndex].correctColor.id;
     if (isCorrect) {
       setScore((prev) => prev + 1);
       playBilingualSpeech(`शाबाश! सही उत्तर है ${opt.nameHi}`, `Correct! It is ${opt.nameEn}`);
@@ -162,23 +181,21 @@ export function HindiArtStudio() {
   };
 
   const handleNextQuestion = () => {
-    window.speechSynthesis.cancel();
-    if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
-
+    stopAllAudio();
     if (qIndex + 1 < quizQuestions.length) {
       setQIndex((prev) => prev + 1);
       setSelectedOption(null);
     } else {
       setQuizFinished(true);
       playBilingualSpeech(
-        `बधाई हो! आपने 5 में से ${score + (selectedOption === quizQuestions[qIndex].correctColor.nameEn ? 1 : 0)} सही उत्तर दिए!`,
-        `Great job! You scored ${score + (selectedOption === quizQuestions[qIndex].correctColor.nameEn ? 1 : 0)} out of 5!`
+        `बधाई हो! आपने 5 में से ${score + (selectedOption === quizQuestions[qIndex].correctColor.id ? 1 : 0)} सही उत्तर दिए!`,
+        `Great job! You finished the quiz!`
       );
     }
   };
 
   // -------------------------------------------------------------
-  // ACTIVITY 2: KIDS MS PAINT CANVAS
+  // ACTIVITY 2: KIDS MS PAINT CANVAS (WITH 4-WAY FLOOD FILL)
   // -------------------------------------------------------------
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [paintColor, setPaintColor] = useState('#EF4444');
@@ -239,25 +256,117 @@ export function HindiArtStudio() {
     }
   }, [subTab]);
 
-  const startDrawing = (e: any) => {
+  // Parse Hex to RGBA
+  const hexToRgba = (hex: string) => {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    const num = parseInt(c, 16);
+    return [(num >> 16) & 255, (num >> 8) & 255, num & 255, 255];
+  };
+
+  // True 4-Way BFS Flood Fill for Paint Bucket
+  const floodFill = (startX: number, startY: number, fillHex: string) => {
     const cvs = canvasRef.current;
     if (!cvs) return;
     const ctx = cvs.getContext('2d');
     if (!ctx) return;
 
     saveCanvasState();
-    isDrawingRef.current = true;
-    const rect = cvs.getBoundingClientRect();
-    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
-    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    const imgData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+    const data = imgData.data;
+    const width = cvs.width;
+    const height = cvs.height;
 
-    if (tool === 'bucket') {
-      ctx.fillStyle = paintColor;
-      ctx.fillRect(0, 0, cvs.width, cvs.height);
-      isDrawingRef.current = false;
+    const fillColor = hexToRgba(fillHex);
+    const startIndex = (startY * width + startX) * 4;
+    const targetR = data[startIndex];
+    const targetG = data[startIndex + 1];
+    const targetB = data[startIndex + 2];
+    const targetA = data[startIndex + 3];
+
+    // Already the same color
+    if (
+      Math.abs(targetR - fillColor[0]) < 10 &&
+      Math.abs(targetG - fillColor[1]) < 10 &&
+      Math.abs(targetB - fillColor[2]) < 10 &&
+      Math.abs(targetA - fillColor[3]) < 10
+    ) {
       return;
     }
 
+    const colorMatch = (idx: number) => {
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      const a = data[idx + 3];
+      return (
+        Math.abs(r - targetR) <= 32 &&
+        Math.abs(g - targetG) <= 32 &&
+        Math.abs(b - targetB) <= 32 &&
+        Math.abs(a - targetA) <= 32
+      );
+    };
+
+    const queue: [number, number][] = [[startX, startY]];
+    const visited = new Uint8Array(width * height);
+    visited[startY * width + startX] = 1;
+
+    while (queue.length > 0) {
+      const [x, y] = queue.pop()!;
+      const idx = (y * width + x) * 4;
+
+      data[idx] = fillColor[0];
+      data[idx + 1] = fillColor[1];
+      data[idx + 2] = fillColor[2];
+      data[idx + 3] = 255;
+
+      const neighbors: [number, number][] = [
+        [x + 1, y],
+        [x - 1, y],
+        [x, y + 1],
+        [x, y - 1]
+      ];
+
+      for (const [nx, ny] of neighbors) {
+        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+          const vIdx = ny * width + nx;
+          if (!visited[vIdx]) {
+            visited[vIdx] = 1;
+            const nIdx = (ny * width + nx) * 4;
+            if (colorMatch(nIdx)) {
+              queue.push([nx, ny]);
+            }
+          }
+        }
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+  };
+
+  const handleCanvasInteractionStart = (e: any) => {
+    const cvs = canvasRef.current;
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    if (!ctx) return;
+
+    const rect = cvs.getBoundingClientRect();
+    const clientX = e.clientX || e.touches?.[0]?.clientX;
+    const clientY = e.clientY || e.touches?.[0]?.clientY;
+    
+    // Scale coordinates accurately
+    const scaleX = cvs.width / rect.width;
+    const scaleY = cvs.height / rect.height;
+    const x = Math.floor((clientX - rect.left) * scaleX);
+    const y = Math.floor((clientY - rect.top) * scaleY);
+
+    if (tool === 'bucket') {
+      floodFill(x, y, paintColor);
+      return;
+    }
+
+    saveCanvasState();
+    isDrawingRef.current = true;
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : paintColor;
@@ -267,15 +376,19 @@ export function HindiArtStudio() {
   };
 
   const draw = (e: any) => {
-    if (!isDrawingRef.current) return;
+    if (!isDrawingRef.current || tool === 'bucket') return;
     const cvs = canvasRef.current;
     if (!cvs) return;
     const ctx = cvs.getContext('2d');
     if (!ctx) return;
 
     const rect = cvs.getBoundingClientRect();
-    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
-    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    const clientX = e.clientX || e.touches?.[0]?.clientX;
+    const clientY = e.clientY || e.touches?.[0]?.clientY;
+    const scaleX = cvs.width / rect.width;
+    const scaleY = cvs.height / rect.height;
+    const x = Math.floor((clientX - rect.left) * scaleX);
+    const y = Math.floor((clientY - rect.top) * scaleY);
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -339,7 +452,7 @@ export function HindiArtStudio() {
 
         <div className="flex gap-1.5 flex-wrap">
           <button
-            onClick={() => setSubTab('quiz')}
+            onClick={() => { stopAllAudio(); setSubTab('quiz'); }}
             className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
               subTab === 'quiz' ? 'bg-pink-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
@@ -347,7 +460,7 @@ export function HindiArtStudio() {
             🎯 1. रंग पहचानो (Quiz)
           </button>
           <button
-            onClick={() => setSubTab('paint')}
+            onClick={() => { stopAllAudio(); setSubTab('paint'); }}
             className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
               subTab === 'paint' ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
@@ -355,7 +468,7 @@ export function HindiArtStudio() {
             🖌️ 2. मेरा कैनवास (MS Paint)
           </button>
           <button
-            onClick={() => setSubTab('coloring')}
+            onClick={() => { stopAllAudio(); setSubTab('coloring'); }}
             className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
               subTab === 'coloring' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
@@ -378,10 +491,15 @@ export function HindiArtStudio() {
                   प्रश्न {qIndex + 1} / 5
                 </span>
                 <button
-                  onClick={() => playBilingualSpeech(
-                    `यह ${quizQuestions[qIndex].item.name} है। इसका सही रंग क्या है?`,
-                    `What is the color of ${quizQuestions[qIndex].item.name}?`
-                  )}
+                  onClick={() => {
+                    const q = quizQuestions[qIndex];
+                    const cleanItemNameHi = q.item.name.includes('(') ? q.item.name.split('(')[1].replace(')', '') : q.item.name;
+                    const cleanItemNameEn = q.item.name.includes('(') ? q.item.name.split('(')[0].trim() : q.item.name;
+                    playBilingualSpeech(
+                      `यह ${cleanItemNameHi} है। इसका सही रंग क्या है?`,
+                      `What is the color of ${cleanItemNameEn}?`
+                    );
+                  }}
                   className="p-2 bg-pink-50 text-pink-700 hover:bg-pink-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                 >
                   <Volume2 className="w-4 h-4" /> आवाज़ सुनें
@@ -397,15 +515,15 @@ export function HindiArtStudio() {
                   {quizQuestions[qIndex].item.name}
                 </h3>
                 <p className="text-xs font-bold text-slate-500">
-                  इस वस्तु का स्वाभाविक रंग क्या होता है? (Choose natural color)
+                  इस वस्तु का स्वाभाविक रंग क्या होता है?
                 </p>
               </div>
 
               {/* 3 Color Options */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto my-6">
                 {quizQuestions[qIndex].options.map((opt: ColorItem) => {
-                  const isChosen = selectedOption === opt.nameEn;
-                  const isTarget = opt.nameEn === quizQuestions[qIndex].correctColor.nameEn;
+                  const isChosen = selectedOption === opt.id;
+                  const isTarget = opt.id === quizQuestions[qIndex].correctColor.id;
 
                   let cardStyle = 'bg-white border-2 border-slate-200 hover:border-pink-400 hover:shadow-md';
                   if (selectedOption !== null) {
@@ -416,7 +534,7 @@ export function HindiArtStudio() {
 
                   return (
                     <button
-                      key={opt.nameEn}
+                      key={opt.id}
                       onClick={() => handleSelectOption(opt)}
                       disabled={selectedOption !== null}
                       className={`p-4 rounded-2xl transition-all cursor-pointer flex flex-col items-center gap-2 text-center ${cardStyle}`}
@@ -552,7 +670,7 @@ export function HindiArtStudio() {
             <span className="text-xs font-black text-slate-600 shrink-0">रंग:</span>
             {COLOR_DATABASE.map((c) => (
               <button
-                key={c.nameEn}
+                key={c.id}
                 onClick={() => {
                   setPaintColor(c.hex);
                   if (tool === 'eraser') setTool('brush');
@@ -573,11 +691,11 @@ export function HindiArtStudio() {
               ref={canvasRef}
               width={750}
               height={450}
-              onMouseDown={startDrawing}
+              onMouseDown={handleCanvasInteractionStart}
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
+              onTouchStart={handleCanvasInteractionStart}
               onTouchMove={draw}
               onTouchEnd={stopDrawing}
               className="bg-white rounded-xl shadow cursor-crosshair max-w-full touch-none"
@@ -637,7 +755,7 @@ export function HindiArtStudio() {
             <span className="text-xs font-black text-slate-600 shrink-0">रंग चुनें और भाग पर टैप करें:</span>
             {COLOR_DATABASE.map((c) => (
               <button
-                key={c.nameEn}
+                key={c.id}
                 onClick={() => {
                   setSelectedBookColor(c.hex);
                   playBilingualSpeech(c.nameHi, c.nameEn);
@@ -651,14 +769,25 @@ export function HindiArtStudio() {
             ))}
           </div>
 
-          {/* SVG Coloring Canvas */}
+          {/* SVG Coloring Canvas with Background Area */}
           <div className="w-full flex justify-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
             <svg
               id="coloring-svg-canvas"
               viewBox="0 0 400 400"
-              className="w-full max-w-[420px] aspect-square bg-white rounded-2xl shadow border border-slate-200"
+              className="w-full max-w-[420px] aspect-square rounded-2xl shadow border border-slate-200 select-none"
             >
+              {/* Clickable Background Rect */}
+              <rect
+                width="400"
+                height="400"
+                fill={colorBookFills[`bg-${PRESET_OUTLINES[selectedOutlineIdx].id}`] || '#FFFFFF'}
+                onClick={() => handleFillSegment(`bg-${PRESET_OUTLINES[selectedOutlineIdx].id}`)}
+                className="cursor-pointer"
+              />
+
+              {/* Segmented Shapes */}
               {PRESET_OUTLINES[selectedOutlineIdx].paths.map((p) => {
+                if (p.isBg) return null;
                 const fillColor = colorBookFills[p.id] || '#FFFFFF';
                 return (
                   <path
@@ -678,7 +807,7 @@ export function HindiArtStudio() {
           </div>
 
           <div className="text-center text-xs font-bold text-slate-500">
-            💡 किसी भी रंग को चुनें और चित्र के जिस भाग में भरना हो उस पर टैप करें!
+            💡 किसी भी रंग को चुनें और चित्र के भाग (या पृष्ठभूमि) पर टैप करें!
           </div>
 
         </div>
