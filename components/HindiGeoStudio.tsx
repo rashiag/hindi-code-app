@@ -6,6 +6,8 @@ import {
   MapPin, Compass, Search, CheckCircle2, XCircle, Eye, Maximize2
 } from 'lucide-react';
 
+const REAL_MAP_URL = 'https://youngresearcher.in/wp-content/uploads/2026/08/Screenshot-2026-08-25-091719.png';
+
 interface StateData {
   id: string;
   nameEn: string;
@@ -667,7 +669,7 @@ export function HindiGeoStudio() {
                   </div>
                 </div>
 
-                {/* EMBEDDED REAL ILLUSTRATED REFERENCE MAP IMAGE */}
+                {/* EMBEDDED WORDPRESS MEDIA REAL ILLUSTRATED REFERENCE MAP IMAGE */}
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col items-center">
                   <div className="w-full flex items-center justify-between mb-1.5">
                     <span className="text-[11px] font-black text-slate-700 flex items-center gap-1">
@@ -687,7 +689,7 @@ export function HindiGeoStudio() {
                     className="w-full h-48 bg-[#fdfaf2] rounded-xl border border-amber-300 overflow-hidden cursor-pointer relative shadow-sm group flex items-center justify-center p-1"
                   >
                     <img
-                      src="/india-reference-map.jpg"
+                      src={REAL_MAP_URL}
                       alt="Illustrated Reference Map of India"
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200 rounded-lg"
                     />
@@ -798,7 +800,7 @@ export function HindiGeoStudio() {
 
       </div>
 
-      {/* FULL MAP MODAL POPUP (DISPLAYS THE REAL ILLUSTRATED MAP) */}
+      {/* FULL MAP MODAL POPUP */}
       {showFullMapModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-5 text-center relative shadow-2xl animate-in zoom-in-95">
@@ -816,7 +818,7 @@ export function HindiGeoStudio() {
             
             <div className="max-h-[75vh] overflow-auto rounded-2xl border border-slate-200 p-2 bg-[#fdfaf2] flex items-center justify-center">
               <img
-                src="/india-reference-map.jpg"
+                src={REAL_MAP_URL}
                 alt="Full Illustrated Political Map of India"
                 className="max-h-[70vh] w-auto object-contain rounded-xl shadow-md"
               />
