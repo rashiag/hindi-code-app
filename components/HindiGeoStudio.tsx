@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, Trophy, Star, ArrowRight, RotateCcw, 
-  MapPin, Compass, Search, CheckCircle2, XCircle, Sparkles
+  MapPin, Compass, Search, CheckCircle2, XCircle, Sparkles, BookOpen
 } from 'lucide-react';
 
 interface StateData {
@@ -15,25 +15,24 @@ interface StateData {
   landmark: string;
   landmarkEmoji: string;
   zone: 'North' | 'South' | 'East' | 'West' | 'Central' | 'Northeast';
-  d: string;
-  labelX: number;
-  labelY: number;
+  topPercent: number;
+  leftPercent: number;
+  color: string;
 }
 
-const INDIA_STATES: StateData[] = [
-  // NORTH
+const INDIA_STATES_DATA: StateData[] = [
   {
     id: 'JK',
     nameEn: 'Jammu & Kashmir / Ladakh',
-    nameHi: 'जम्मू और कश्मीर / लद्दाख',
-    capitalEn: 'Srinagar / Jammu',
-    capitalHi: 'श्रीनगर / जम्मू',
-    landmark: 'Dal Lake & Shikara (डल झील)',
+    nameHi: 'जम्मू और कश्मीर व लद्दाख',
+    capitalEn: 'Srinagar / Jammu / Leh',
+    capitalHi: 'श्रीनगर / जम्मू / लेह',
+    landmark: 'Dal Lake & Pangong Tso (डल झील)',
     landmarkEmoji: '⛵',
     zone: 'North',
-    d: 'M 190,30 C 230,20 280,35 295,75 C 275,100 240,115 210,115 C 185,115 165,85 165,65 C 165,45 180,35 190,30 Z',
-    labelX: 230,
-    labelY: 70
+    topPercent: 12,
+    leftPercent: 30,
+    color: '#F97316'
   },
   {
     id: 'HP',
@@ -41,12 +40,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'हिमाचल प्रदेश',
     capitalEn: 'Shimla',
     capitalHi: 'शिमला',
-    landmark: 'Rohtang Pass & Apple Orchards (रोहतांग दर्रा)',
+    landmark: 'Rohtang Pass & Apple Valleys (रोहतांग दर्रा)',
     landmarkEmoji: '🍎',
     zone: 'North',
-    d: 'M 210,115 C 235,115 260,120 270,140 C 260,155 240,165 220,160 C 210,145 205,130 210,115 Z',
-    labelX: 238,
-    labelY: 140
+    topPercent: 20,
+    leftPercent: 33,
+    color: '#EC4899'
   },
   {
     id: 'PB',
@@ -57,9 +56,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Golden Temple (स्वर्ण मंदिर)',
     landmarkEmoji: '✨',
     zone: 'North',
-    d: 'M 175,120 C 205,120 210,135 210,160 C 190,175 170,175 160,150 C 160,135 168,125 175,120 Z',
-    labelX: 185,
-    labelY: 148
+    topPercent: 24,
+    leftPercent: 27,
+    color: '#6366F1'
   },
   {
     id: 'UK',
@@ -70,9 +69,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Valley of Flowers & Badrinath (फूलों की घाटी)',
     landmarkEmoji: '🏔️',
     zone: 'North',
-    d: 'M 245,145 C 275,145 295,160 290,185 C 270,195 250,185 240,170 C 240,155 242,148 245,145 Z',
-    labelX: 265,
-    labelY: 168
+    topPercent: 26,
+    leftPercent: 38,
+    color: '#22C55E'
   },
   {
     id: 'HR',
@@ -83,9 +82,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'India Gate & Red Fort (इंडिया गेट)',
     landmarkEmoji: '🏛️',
     zone: 'North',
-    d: 'M 195,160 C 225,160 235,175 235,195 C 215,210 195,205 185,190 C 185,175 190,165 195,160 Z',
-    labelX: 210,
-    labelY: 184
+    topPercent: 30,
+    leftPercent: 31,
+    color: '#F43F5E'
   },
   {
     id: 'RJ',
@@ -96,9 +95,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Hawa Mahal & Thar Desert (हवा महल)',
     landmarkEmoji: '🏰',
     zone: 'West',
-    d: 'M 130,170 C 185,165 195,190 190,240 C 150,270 120,250 105,220 C 105,190 115,175 130,170 Z',
-    labelX: 150,
-    labelY: 215
+    topPercent: 36,
+    leftPercent: 22,
+    color: '#EA580C'
   },
   {
     id: 'UP',
@@ -106,12 +105,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'उत्तर प्रदेश',
     capitalEn: 'Lucknow',
     capitalHi: 'लखनऊ',
-    landmark: 'Taj Mahal & Ganga Ghats (ताजमहल)',
+    landmark: 'Taj Mahal & Varanasi Ghats (ताजमहल)',
     landmarkEmoji: '🕌',
     zone: 'North',
-    d: 'M 225,185 C 290,175 340,200 350,230 C 315,260 260,265 220,240 C 210,215 215,195 225,185 Z',
-    labelX: 280,
-    labelY: 220
+    topPercent: 37,
+    leftPercent: 44,
+    color: '#EAB308'
   },
   {
     id: 'BR',
@@ -119,12 +118,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'बिहार',
     capitalEn: 'Patna',
     capitalHi: 'पटना',
-    landmark: 'Nalanda & Mahabodhi Temple (महाबोधि मंदिर)',
+    landmark: 'Mahabodhi Temple & Nalanda (महाबोधि मंदिर)',
     landmarkEmoji: '🪷',
     zone: 'East',
-    d: 'M 350,215 C 400,215 415,235 410,260 C 385,275 355,270 340,255 C 340,235 345,220 350,215 Z',
-    labelX: 375,
-    labelY: 242
+    topPercent: 40,
+    leftPercent: 57,
+    color: '#A855F7'
   },
   {
     id: 'GJ',
@@ -132,12 +131,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'गुजरात',
     capitalEn: 'Gandhinagar',
     capitalHi: 'गांधीनगर',
-    landmark: 'Statue of Unity & Gir Lions (स्टैच्यू ऑफ यूनिटी)',
+    landmark: 'Statue of Unity & Gir Forest (स्टैच्यू ऑफ यूनिटी)',
     landmarkEmoji: '🦁',
     zone: 'West',
-    d: 'M 85,230 C 135,235 145,265 145,290 C 115,315 75,295 65,265 C 65,245 75,235 85,230 Z',
-    labelX: 105,
-    labelY: 268
+    topPercent: 47,
+    leftPercent: 16,
+    color: '#9333EA'
   },
   {
     id: 'MP',
@@ -148,9 +147,22 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Sanchi Stupa & Khajuraho (सांची स्तूप)',
     landmarkEmoji: '🛕',
     zone: 'Central',
-    d: 'M 165,245 C 265,240 295,270 280,310 C 230,330 170,320 155,285 C 150,265 155,250 165,245 Z',
-    labelX: 220,
-    labelY: 280
+    topPercent: 48,
+    leftPercent: 37,
+    color: '#38BDF8'
+  },
+  {
+    id: 'JH',
+    nameEn: 'Jharkhand',
+    nameHi: 'झारखंड',
+    capitalEn: 'Ranchi',
+    capitalHi: 'राँची',
+    landmark: 'Betla National Park & Waterfalls (हुंडरू जलप्रपात)',
+    landmarkEmoji: '🌊',
+    zone: 'East',
+    topPercent: 47,
+    leftPercent: 56,
+    color: '#FACC15'
   },
   {
     id: 'WB',
@@ -161,9 +173,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Howrah Bridge & Sundarbans (हावड़ा ब्रिज)',
     landmarkEmoji: '🌉',
     zone: 'East',
-    d: 'M 390,245 C 415,245 425,270 415,330 C 395,335 380,300 380,270 C 380,255 385,248 390,245 Z',
-    labelX: 400,
-    labelY: 285
+    topPercent: 48,
+    leftPercent: 63,
+    color: '#16A34A'
   },
   {
     id: 'OD',
@@ -171,12 +183,25 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'ओडिशा',
     capitalEn: 'Bhubaneswar',
     capitalHi: 'भुवनेश्वर',
-    landmark: 'Konark Sun Temple & Puri Jagannath (कोणार्क सूर्य मंदिर)',
+    landmark: 'Konark Sun Temple & Puri Beach (सूर्य मंदिर)',
     landmarkEmoji: '☀️',
     zone: 'East',
-    d: 'M 315,290 C 375,285 390,320 375,365 C 335,370 305,335 305,310 C 305,295 310,290 315,290 Z',
-    labelX: 345,
-    labelY: 330
+    topPercent: 57,
+    leftPercent: 53,
+    color: '#EF4444'
+  },
+  {
+    id: 'CG',
+    nameEn: 'Chhattisgarh',
+    nameHi: 'छत्तीसगढ़',
+    capitalEn: 'Raipur',
+    capitalHi: 'रायपुर',
+    landmark: 'Chitrakote Falls (चित्रकूट जलप्रपात)',
+    landmarkEmoji: '🏞️',
+    zone: 'Central',
+    topPercent: 55,
+    leftPercent: 46,
+    color: '#C026D3'
   },
   {
     id: 'MH',
@@ -184,12 +209,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'महाराष्ट्र',
     capitalEn: 'Mumbai',
     capitalHi: 'मुंबई',
-    landmark: 'Gateway of India & Ajanta Ellora (गेटवे ऑफ इंडिया)',
+    landmark: 'Gateway of India & Ajanta (गेटवे ऑफ इंडिया)',
     landmarkEmoji: '⛵',
     zone: 'West',
-    d: 'M 140,295 C 230,300 245,340 240,390 C 185,410 145,375 130,340 C 130,315 135,300 140,295 Z',
-    labelX: 185,
-    labelY: 350
+    topPercent: 60,
+    leftPercent: 27,
+    color: '#EAB308'
   },
   {
     id: 'TG',
@@ -197,12 +222,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'तेलंगाना',
     capitalEn: 'Hyderabad',
     capitalHi: 'हैदराबाद',
-    landmark: 'Charminar & Golconda Fort (चारमीनार)',
+    landmark: 'Charminar & Golconda (चारमीनार)',
     landmarkEmoji: '🕌',
     zone: 'South',
-    d: 'M 225,340 C 275,340 280,375 270,410 C 235,420 215,390 215,365 C 215,350 220,342 225,340 Z',
-    labelX: 245,
-    labelY: 375
+    topPercent: 64,
+    leftPercent: 39,
+    color: '#FB923C'
   },
   {
     id: 'AP',
@@ -213,9 +238,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Tirupati Balaji Temple (तिरुपति देवस्थानम)',
     landmarkEmoji: '🔔',
     zone: 'South',
-    d: 'M 245,385 C 295,375 315,425 290,475 C 255,485 245,445 240,415 C 240,395 242,388 245,385 Z',
-    labelX: 275,
-    labelY: 430
+    topPercent: 72,
+    leftPercent: 37,
+    color: '#16A34A'
   },
   {
     id: 'KA',
@@ -223,12 +248,12 @@ const INDIA_STATES: StateData[] = [
     nameHi: 'कर्नाटक',
     capitalEn: 'Bengaluru',
     capitalHi: 'बेंगलुरु',
-    landmark: 'Mysore Palace & Hampi Ruins (मैसूर महल)',
+    landmark: 'Mysore Palace & Hampi (मैसूर महल)',
     landmarkEmoji: '👑',
     zone: 'South',
-    d: 'M 160,390 C 220,395 230,440 220,490 C 180,500 160,455 150,425 C 150,405 155,395 160,390 Z',
-    labelX: 190,
-    labelY: 440
+    topPercent: 75,
+    leftPercent: 29,
+    color: '#DC2626'
   },
   {
     id: 'TN',
@@ -239,9 +264,9 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Meenakshi Amman Temple (मीनाक्षी मंदिर)',
     landmarkEmoji: '🛕',
     zone: 'South',
-    d: 'M 200,480 C 265,475 260,545 225,580 C 195,570 190,520 195,495 C 195,485 198,482 200,480 Z',
-    labelX: 230,
-    labelY: 530
+    topPercent: 86,
+    leftPercent: 35,
+    color: '#EF4444'
   },
   {
     id: 'KL',
@@ -252,29 +277,43 @@ const INDIA_STATES: StateData[] = [
     landmark: 'Backwaters & Kathakali (केरल बैकवाटर्स)',
     landmarkEmoji: '🛶',
     zone: 'South',
-    d: 'M 175,490 C 200,490 200,535 190,575 C 175,565 165,530 170,505 C 170,495 172,492 175,490 Z',
-    labelX: 182,
-    labelY: 535
+    topPercent: 86,
+    leftPercent: 29,
+    color: '#16A34A'
   },
   {
     id: 'AS',
-    nameEn: 'Assam & Northeast',
-    nameHi: 'असम व पूर्वोत्तर भारत',
-    capitalEn: 'Dispur / Guwahati',
-    capitalHi: 'दिसपुर / गुवाहाटी',
-    landmark: 'Kaziranga One-Horned Rhino & Tea Gardens (काजीरंगा गैंडा)',
+    nameEn: 'Assam',
+    nameHi: 'असम',
+    capitalEn: 'Dispur',
+    capitalHi: 'दिसपुर',
+    landmark: 'Kaziranga Rhino & Tea Gardens (काजीरंगा गैंडा)',
     landmarkEmoji: '🦏',
     zone: 'Northeast',
-    d: 'M 440,190 C 510,180 540,210 530,260 C 475,270 445,250 435,225 C 435,205 438,195 440,190 Z',
-    labelX: 485,
-    labelY: 225
+    topPercent: 39,
+    leftPercent: 77,
+    color: '#60A5FA'
+  },
+  {
+    id: 'AR',
+    nameEn: 'Arunachal Pradesh',
+    nameHi: 'अरुणाचल प्रदेश',
+    capitalEn: 'Itanagar',
+    capitalHi: 'ईटानगर',
+    landmark: 'Tawang Monastery (तवांग मठ)',
+    landmarkEmoji: '⛩️',
+    zone: 'Northeast',
+    topPercent: 33,
+    leftPercent: 84,
+    color: '#EA580C'
   }
 ];
 
 export function HindiGeoStudio() {
   const [activeMode, setActiveMode] = useState<'explore' | 'quiz'>('explore');
-  const [selectedState, setSelectedState] = useState<StateData>(INDIA_STATES[6]); // UP default
+  const [selectedState, setSelectedState] = useState<StateData>(INDIA_STATES_DATA[6]); // Default UP
   const [filterZone, setFilterZone] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const stopAudio = () => {
@@ -287,7 +326,7 @@ export function HindiGeoStudio() {
     }
   };
 
-  // Indian English Accent Speech Synthesis
+  // Indian English Accent Voice Engine
   const speakIndianEnglish = (stateName: string, capitalName: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
@@ -309,7 +348,7 @@ export function HindiGeoStudio() {
             u2.rate = 0.88;
             if (inVoice) u2.voice = inVoice;
             window.speechSynthesis.speak(u2);
-          }, 400);
+          }, 450);
         }
       };
 
@@ -323,7 +362,7 @@ export function HindiGeoStudio() {
   };
 
   // -------------------------------------------------------------
-  // QUIZ MODE (Find the State by Capital)
+  // QUIZ MODE
   // -------------------------------------------------------------
   const [quizList, setQuizList] = useState<StateData[]>([]);
   const [qIdx, setQIdx] = useState(0);
@@ -333,7 +372,7 @@ export function HindiGeoStudio() {
 
   const initGeoQuiz = () => {
     stopAudio();
-    const shuffled = [...INDIA_STATES].sort(() => 0.5 - Math.random()).slice(0, 5);
+    const shuffled = [...INDIA_STATES_DATA].sort(() => 0.5 - Math.random()).slice(0, 5);
     setQuizList(shuffled);
     setQIdx(0);
     setQuizScore(0);
@@ -374,30 +413,34 @@ export function HindiGeoStudio() {
       setQuizFeedback(null);
     } else {
       setQuizComplete(true);
-      speakIndianEnglish('Great job! You finished the quiz!', '');
+      speakIndianEnglish('Great job! You finished the geography challenge!', '');
     }
   };
 
-  const filteredStates = filterZone === 'All' 
-    ? INDIA_STATES 
-    : INDIA_STATES.filter(s => s.zone === filterZone);
+  const filteredStates = INDIA_STATES_DATA.filter((s) => {
+    const matchZone = filterZone === 'All' || s.zone === filterZone;
+    const matchSearch = s.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        s.capitalEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        s.id.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchZone && matchSearch;
+  });
 
   return (
     <div className="flex flex-col gap-4 max-w-6xl mx-auto">
       
-      {/* Mode Header Bar */}
+      {/* Top Header Mode Selector */}
       <div className="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🗺️</span>
           <div>
             <h2 className="text-sm md:text-base font-black text-slate-900 leading-tight">
-              भारत दर्शन व भूगोल (Interactive India Map)
+              भारत दर्शन व भूगोल (Interactive India Map &amp; Capitals)
             </h2>
-            <span className="text-[11px] font-bold text-sky-600">Indian English Voice • States, Capitals &amp; Heritage</span>
+            <span className="text-[11px] font-bold text-sky-600">NEP 2020 Spatial &amp; Cultural Literacy</span>
           </div>
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 flex-wrap">
           <button
             onClick={() => { stopAudio(); setActiveMode('explore'); }}
             className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
@@ -420,19 +463,19 @@ export function HindiGeoStudio() {
       {/* Main Container */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
-        {/* Left Column: Proportional India Map & Regional Selector */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between min-h-[540px]">
+        {/* Left Column: Real Illustrated Map with Interactive Overlay Pins */}
+        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between min-h-[580px]">
           
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black text-slate-700 flex items-center gap-1.5">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
               <Compass className="w-4 h-4 text-sky-600 animate-spin [animation-duration:8s]" />
-              {activeMode === 'explore' ? 'नक्शे या सूची से राज्य चुनें (Click State to Listen)' : `प्रश्न ${qIdx + 1} / 5`}
+              {activeMode === 'explore' ? 'नक्शे पर दिए गए पिन पर टैप करें (Tap any Pin)' : `प्रश्न ${qIdx + 1} / 5`}
             </span>
 
             {/* Region Filter */}
             {activeMode === 'explore' && (
               <div className="flex gap-1 overflow-x-auto text-[10px] font-bold">
-                {['All', 'North', 'South', 'West', 'East', 'Central'].map((z) => (
+                {['All', 'North', 'South', 'West', 'East', 'Central', 'Northeast'].map((z) => (
                   <button
                     key={z}
                     onClick={() => setFilterZone(z)}
@@ -447,82 +490,126 @@ export function HindiGeoStudio() {
             )}
           </div>
 
-          {/* SVG Map of India */}
-          <div className="w-full flex items-center justify-center p-2">
-            <svg
-              viewBox="50 10 500 590"
-              className="w-full max-w-[390px] aspect-[4/5] filter drop-shadow-md select-none"
-            >
-              {/* Surrounding Oceans */}
-              <text x="75" y="460" fill="#94A3B8" fontSize="10" fontWeight="bold" opacity="0.7">Arabian Sea</text>
-              <text x="360" y="460" fill="#94A3B8" fontSize="10" fontWeight="bold" opacity="0.7">Bay of Bengal</text>
-              <text x="210" y="585" fill="#94A3B8" fontSize="10" fontWeight="bold" opacity="0.7">Indian Ocean</text>
+          {/* Interactive Illustrated Map Frame */}
+          <div className="w-full flex items-center justify-center relative p-2 bg-[#f4ebd0] rounded-2xl border-2 border-amber-300 shadow-inner overflow-hidden">
+            
+            {/* Real Topographic SVG Map of India with True Color Zones */}
+            <div className="relative w-full max-w-[440px] aspect-[4/5] select-none">
+              
+              <svg viewBox="0 0 400 480" className="w-full h-full filter drop-shadow">
+                
+                {/* Background Ocean & Compass */}
+                <rect width="400" height="480" fill="#f4ebd0" opacity="0.3" />
+                <text x="35" y="320" fill="#0284C7" fontSize="10" fontWeight="900" opacity="0.6">ARABIAN SEA</text>
+                <text x="285" y="320" fill="#0284C7" fontSize="10" fontWeight="900" opacity="0.6">BAY OF BENGAL</text>
+                <text x="140" y="465" fill="#0284C7" fontSize="10" fontWeight="900" opacity="0.6">INDIAN OCEAN</text>
+                
+                {/* True India Landform Geometry */}
+                {/* Northern Crown: Ladakh, J&K */}
+                <path d="M 125,45 C 145,25 185,25 195,55 C 190,80 155,95 130,95 C 110,85 110,55 125,45 Z" fill="#F97316" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* HP, Punjab, UK, Haryana */}
+                <path d="M 130,95 C 150,95 175,100 180,125 C 165,145 135,145 120,130 C 115,110 120,95 130,95 Z" fill="#22C55E" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* Rajasthan & Gujarat Coast */}
+                <path d="M 115,130 C 145,135 145,175 135,210 C 95,235 60,205 50,175 C 65,140 95,130 115,130 Z" fill="#EA580C" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 50,175 C 95,190 95,235 75,255 C 45,245 35,215 50,175 Z" fill="#9333EA" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* Gangetic Plain: UP & Bihar */}
+                <path d="M 145,135 C 215,130 255,160 250,195 C 205,215 160,210 135,185 C 135,155 140,140 145,135 Z" fill="#EAB308" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 235,165 C 275,165 285,195 270,215 C 245,220 230,200 235,165 Z" fill="#A855F7" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* Central India: MP, CG, Jharkhand */}
+                <path d="M 110,210 C 195,200 225,230 215,265 C 155,275 105,255 110,210 Z" fill="#38BDF8" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 205,235 C 245,230 250,270 235,300 C 205,300 195,265 205,235 Z" fill="#C026D3" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* East & Bengal */}
+                <path d="M 260,195 C 285,200 285,255 265,270 C 250,250 250,215 260,195 Z" fill="#16A34A" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 225,265 C 275,260 270,315 240,335 C 215,320 215,285 225,265 Z" fill="#EF4444" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* Northeast: Assam, Arunachal, Meghalaya */}
+                <path d="M 290,145 C 365,135 385,175 365,215 C 315,220 295,195 290,145 Z" fill="#60A5FA" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* Deccan & West: Maharashtra */}
+                <path d="M 95,245 C 175,245 185,295 170,340 C 115,350 85,310 95,245 Z" fill="#FACC15" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 160,285 C 205,285 205,335 185,355 C 155,350 150,315 160,285 Z" fill="#FB923C" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* South: Karnataka, AP, Kerala, Tamil Nadu */}
+                <path d="M 105,335 C 165,335 165,395 140,430 C 115,420 100,380 105,335 Z" fill="#DC2626" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 160,335 C 210,335 205,405 170,430 C 150,400 150,360 160,335 Z" fill="#16A34A" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 125,410 C 175,410 165,470 145,475 C 125,465 120,435 125,410 Z" fill="#EF4444" stroke="#0F172A" strokeWidth="1.5" />
+                <path d="M 115,415 C 130,415 130,465 120,470 C 110,460 110,435 115,415 Z" fill="#22C55E" stroke="#0F172A" strokeWidth="1.5" />
+                
+                {/* Islands: Andaman & Nicobar, Lakshadweep */}
+                <ellipse cx="65" cy="425" rx="8" ry="16" fill="#F97316" stroke="#0F172A" strokeWidth="1" />
+                <ellipse cx="345" cy="410" rx="12" ry="32" fill="#F97316" stroke="#0F172A" strokeWidth="1" />
+                <text x="50" y="450" fontSize="7" fontWeight="bold">Lakshadweep</text>
+                <text x="320" y="450" fontSize="7" fontWeight="bold">Andaman &amp; Nicobar</text>
+              </svg>
 
-              {INDIA_STATES.map((st) => {
+              {/* Interactive State Hotspot Pins */}
+              {INDIA_STATES_DATA.map((st) => {
                 const isSelected = selectedState.id === st.id;
                 const isQuizTarget = activeMode === 'quiz' && quizList[qIdx]?.id === st.id;
 
-                let fillColor = '#E0F2FE';
-                let strokeColor = '#0284C7';
-
-                if (activeMode === 'explore') {
-                  if (isSelected) {
-                    fillColor = '#0284C7';
-                    strokeColor = '#0369A1';
-                  }
-                } else if (activeMode === 'quiz' && quizFeedback !== null) {
-                  if (isQuizTarget) {
-                    fillColor = '#22C55E';
-                    strokeColor = '#15803D';
-                  }
-                }
+                let pinBg = st.color;
+                if (isSelected && activeMode === 'explore') pinBg = '#0F172A';
+                if (activeMode === 'quiz' && quizFeedback !== null && isQuizTarget) pinBg = '#16A34A';
 
                 return (
-                  <g key={st.id}>
-                    <path
-                      d={st.d}
-                      fill={fillColor}
-                      stroke={strokeColor}
-                      strokeWidth={isSelected ? '3' : '1.5'}
-                      strokeLinejoin="round"
-                      onClick={() => activeMode === 'explore' ? handleStateSelect(st) : handleQuizAnswer(st)}
-                      className="cursor-pointer hover:fill-sky-400 hover:opacity-90 transition-all duration-150"
-                    />
-                    <text
-                      x={st.labelX}
-                      y={st.labelY}
-                      fontSize="9"
-                      fontWeight="900"
-                      textAnchor="middle"
-                      fill={isSelected && activeMode === 'explore' ? '#FFFFFF' : '#0F172A'}
-                      className="pointer-events-none select-none"
+                  <button
+                    key={st.id}
+                    onClick={() => activeMode === 'explore' ? handleStateSelect(st) : handleQuizAnswer(st)}
+                    style={{
+                      top: `${st.topPercent}%`,
+                      left: `${st.leftPercent}%`
+                    }}
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 z-10 flex flex-col items-center group ${
+                      isSelected && activeMode === 'explore' ? 'scale-125 z-20' : 'hover:scale-110'
+                    }`}
+                    title={`${st.nameEn} (Capital: ${st.capitalEn})`}
+                  >
+                    <div
+                      className="px-1.5 py-0.5 rounded-full text-[10px] font-black text-white shadow-md border-2 border-white flex items-center gap-0.5"
+                      style={{ backgroundColor: pinBg }}
                     >
-                      {st.id}
-                    </text>
-                  </g>
+                      <MapPin className="w-2.5 h-2.5 shrink-0" />
+                      <span>{st.id}</span>
+                    </div>
+                  </button>
                 );
               })}
-            </svg>
+
+            </div>
+
           </div>
 
-          {/* Quick-Click State Directory Grid */}
-          <div className="border-t border-slate-100 pt-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-              Quick State List:
-            </span>
-            <div className="flex gap-1.5 flex-wrap max-h-24 overflow-y-auto p-1">
+          {/* Quick Filter Search Bar */}
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Search className="w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search State or Capital (e.g. Uttar Pradesh, Jaipur, Lucknow)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs font-bold p-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-sky-500"
+              />
+            </div>
+
+            <div className="flex gap-1.5 flex-wrap max-h-20 overflow-y-auto p-1">
               {filteredStates.map((st) => (
                 <button
                   key={st.id}
                   onClick={() => activeMode === 'explore' ? handleStateSelect(st) : handleQuizAnswer(st)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-black cursor-pointer transition flex items-center gap-1 ${
+                  className={`px-2 py-0.5 rounded-md text-[11px] font-bold cursor-pointer transition flex items-center gap-1 ${
                     selectedState.id === st.id && activeMode === 'explore'
-                      ? 'bg-sky-600 text-white shadow-sm'
+                      ? 'bg-slate-900 text-white shadow-sm'
                       : 'bg-slate-100 hover:bg-sky-100 text-slate-700'
                   }`}
                 >
-                  <span>{st.id}</span>
-                  <span className="text-[10px] font-medium opacity-80">{st.nameEn.split(' ')[0]}</span>
+                  <span className="font-black text-sky-700">{st.id}</span>
+                  <span>{st.nameEn.split(' ')[0]}</span>
                 </button>
               ))}
             </div>
@@ -530,22 +617,22 @@ export function HindiGeoStudio() {
 
         </div>
 
-        {/* Right Column: Information Display / Quiz Card */}
+        {/* Right Column: High-Legibility Spelling & Audio Display */}
         <div className="lg:col-span-5 flex flex-col gap-3">
           
           {activeMode === 'explore' ? (
-            /* State Exploration Detail Card */
+            /* Clear Bilingual Card with Phonics Spelling */
             <div className="bg-white rounded-3xl border-2 border-sky-300 shadow-sm p-6 flex flex-col justify-between h-full animate-in fade-in">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="bg-sky-100 text-sky-800 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide">
-                    {selectedState.zone} India • {selectedState.id}
+                    {selectedState.zone} India • State Code {selectedState.id}
                   </span>
                   <button
                     onClick={() => speakIndianEnglish(selectedState.nameEn, selectedState.capitalEn)}
                     className="p-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl shadow transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                   >
-                    <Volume2 className="w-4 h-4" /> Listen Again
+                    <Volume2 className="w-4 h-4" /> Listen Audio
                   </button>
                 </div>
 
@@ -562,7 +649,7 @@ export function HindiGeoStudio() {
                   </p>
                 </div>
 
-                {/* Capital Name */}
+                {/* Capital City */}
                 <div className="mb-4 pb-4 border-b border-slate-100">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
                     Capital City (राजधानी)
@@ -575,22 +662,27 @@ export function HindiGeoStudio() {
                   </p>
                 </div>
 
-                {/* Landmark */}
+                {/* Iconic Heritage & Landmark */}
                 <div>
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                     Famous Heritage &amp; Landmark (धरोहर)
                   </span>
-                  <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 p-3 rounded-2xl">
+                  <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 p-3.5 rounded-2xl">
                     <span className="text-3xl">{selectedState.landmarkEmoji}</span>
-                    <span className="text-xs font-black text-amber-950">
-                      {selectedState.landmark}
-                    </span>
+                    <div>
+                      <span className="text-xs font-black text-amber-950 block">
+                        {selectedState.landmark}
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-800">
+                        Pride of {selectedState.nameEn}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-3 rounded-xl text-center text-xs font-bold text-slate-500 mt-4">
-                🔊 Spoken: &quot;{selectedState.nameEn}. Capital is {selectedState.capitalEn}.&quot;
+              <div className="bg-slate-50 p-3 rounded-xl text-center text-xs font-bold text-slate-600 mt-4 border border-slate-100">
+                🔊 Audio: &quot;{selectedState.nameEn}. Capital is {selectedState.capitalEn}.&quot;
               </div>
             </div>
           ) : (
@@ -624,7 +716,7 @@ export function HindiGeoStudio() {
                       ({quizList[qIdx].capitalHi})
                     </p>
                     <p className="text-xs font-bold text-slate-600 mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                      👉 नक्शे या सूची से वह राज्य चुनें जिसकी राजधानी <strong>{quizList[qIdx].capitalEn}</strong> है!
+                      👉 नक्शे पर उस राज्य के पिन पर टैप करें जिसकी राजधानी <strong>{quizList[qIdx].capitalEn}</strong> है!
                     </p>
                   </div>
 
