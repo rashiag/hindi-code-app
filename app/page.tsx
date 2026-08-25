@@ -11,6 +11,7 @@ import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
 import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
 import { HindiArtStudio } from '@/components/HindiArtStudio';
+import { HindiGeoStudio } from '@/components/HindiGeoStudio';
 import { LEVELS, Level } from '@/lib/levels';
 import { Trophy, HelpCircle, Volume2, RotateCcw, Star, ArrowRight, CheckCircle2 } from 'lucide-react';
 
