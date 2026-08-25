@@ -10,6 +10,7 @@ import { HindiMusicStudio } from '@/components/HindiMusicStudio';
 import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
 import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
+import { HindiArtStudio } from '@/components/HindiArtStudio';
 import { LEVELS, Level } from '@/lib/levels';
 import { Trophy, HelpCircle, Volume2, RotateCcw, Star, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
