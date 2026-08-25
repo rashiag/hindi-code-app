@@ -12,7 +12,7 @@ import { JuniorResearcherStudio } from '@/components/JuniorResearcherStudio';
 import { HindiMathStudio } from '@/components/HindiMathStudio';
 import { HindiArtStudio } from '@/components/HindiArtStudio';
 import { LEVELS, Level } from '@/lib/levels';
-import { Trophy, HelpCircle, Volume2, RotateCcw, Star, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Trophy, HelpCircle, Volume2, RotateCcw, Star, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 type Direction = 'NORTH' | 'EAST' | 'SOUTH' | 'WEST';
 
@@ -217,6 +217,7 @@ function CodingAppInner() {
         if (!next) {
           playSound('fail');
           speakHindi('रोबोट ग्रिड से बाहर जा रहा है!');
+          alert('⚠️ रोबोट ग्रिड से बाहर जा रहा है!');
           setIsRunning(false);
           return;
         }
@@ -225,6 +226,7 @@ function CodingAppInner() {
         if (hitObstacle) {
           playSound('fail');
           speakHindi('रोबोट रुकावट से टकरा गया!');
+          alert('💥 रोबोट रुकावट से टकरा गया!');
           setIsRunning(false);
           return;
         }
@@ -252,14 +254,12 @@ function CodingAppInner() {
       await new Promise((res) => setTimeout(res, 450));
     }
 
-    // Auto-collect target if standing directly on it
     const finalTarget = targets.find((tg) => tg.x === currentPos.x && tg.y === currentPos.y);
     if (finalTarget && !collected.some((c) => c.x === finalTarget.x && c.y === finalTarget.y)) {
       collected = [...collected, { x: finalTarget.x, y: finalTarget.y }];
       setCollectedTargets([...collected]);
     }
 
-    // Check completion
     const allTargetsCollected = targets.every((tg) =>
       collected.some((c) => c.x === tg.x && c.y === tg.y)
     );
@@ -323,6 +323,7 @@ function CodingAppInner() {
             </div>
           </div>
 
+          {/* All 8 Sandbox Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
             <button
               onClick={() => switchTab('coding')}
@@ -331,6 +332,15 @@ function CodingAppInner() {
               }`}
             >
               🎮 मेज़ कोडिंग (Logic)
+            </button>
+
+            <button
+              onClick={() => switchTab('art')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'art' || activeTab === 'colors' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 hover:bg-pink-100 text-pink-900 border border-pink-200'
+              }`}
+            >
+              🎨 कला (Art &amp; Colors)
             </button>
 
             <button
@@ -393,14 +403,10 @@ function CodingAppInner() {
       {/* Main Sandbox Area */}
       <main className="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
         
-        {/* CODING LOGIC MAZE */}
+        {/* 1. CODING LOGIC MAZE */}
         {activeTab === 'coding' && (
           <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)] min-h-[620px]">
-            
-            {/* Left Column: Visual Game Canvas */}
             <div className="w-full lg:w-1/3 flex flex-col gap-3">
-              
-              {/* Level Selector Bar */}
               <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -435,7 +441,6 @@ function CodingAppInner() {
                 </div>
               </div>
 
-              {/* Game Viewport Canvas */}
               <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-center items-center relative overflow-hidden">
                 {currentLevel && (
                   <GameCanvas
@@ -446,7 +451,6 @@ function CodingAppInner() {
                 )}
               </div>
 
-              {/* Instruction / Hint Card with Audio Prompt */}
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-xs font-bold text-emerald-950 flex items-center justify-between gap-2 shadow-sm">
                 <div className="flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 shrink-0 text-emerald-700" />
@@ -461,7 +465,6 @@ function CodingAppInner() {
               </div>
             </div>
 
-            {/* Right Column: Blockly Workspace */}
             <div className="w-full lg:w-2/3 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
               <BlocklyWorkspace
                 onRunCode={handleRunCode}
@@ -473,7 +476,10 @@ function CodingAppInner() {
           </div>
         )}
 
-        {/* OTHER MODULE TABS */}
+        {/* 2. ART & COLOR STUDIO */}
+        {(activeTab === 'art' || activeTab === 'colors') && <HindiArtStudio />}
+
+        {/* 3. OTHER MODULES */}
         {(activeTab === 'english' || activeTab === 'phonics' || activeTab === 'syntax' || activeTab === 'vocab') && <EnglishLiteracyHub />}
         {(activeTab === 'ai' || activeTab === 'ml') && <AiArcadeStudio />}
         {activeTab === 'maths' && <HindiMathStudio />}
@@ -483,12 +489,11 @@ function CodingAppInner() {
 
       </main>
 
-      {/* PROMINENT LEVEL COMPLETION REPORT CARD MODAL */}
+      {/* LEVEL COMPLETION REPORT CARD MODAL */}
       {isLevelSuccess && (
         <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl border-4 border-emerald-400 p-6 md:p-8 max-w-md w-full text-center shadow-2xl animate-in zoom-in-95 relative overflow-hidden">
             
-            {/* Top Confetti Graphic */}
             <div className="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white rounded-3xl flex items-center justify-center text-4xl mx-auto mb-3 shadow-lg shadow-emerald-500/30">
               🏆
             </div>
@@ -500,14 +505,12 @@ function CodingAppInner() {
               स्तर {currentLevel.id}: {displayTitle}
             </p>
 
-            {/* 3-Star Rating */}
             <div className="flex justify-center gap-2 mb-5">
               <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce" />
               <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce [animation-delay:150ms]" />
               <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce [animation-delay:300ms]" />
             </div>
 
-            {/* Report Stats Box */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-5 grid grid-cols-2 gap-3 text-left">
               <div>
                 <span className="text-[11px] font-bold text-slate-500 block">अवधारणा (Concept)</span>
@@ -521,7 +524,6 @@ function CodingAppInner() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleReset}
