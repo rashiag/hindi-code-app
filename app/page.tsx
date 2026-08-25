@@ -324,7 +324,7 @@ function CodingAppInner() {
             </div>
           </div>
 
-          {/* All 8 Sandbox Tabs */}
+          {/* All 9 Sandbox Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
             <button
               onClick={() => switchTab('coding')}
@@ -333,6 +333,15 @@ function CodingAppInner() {
               }`}
             >
               🎮 मेज़ कोडिंग (Logic)
+            </button>
+
+            <button
+              onClick={() => switchTab('geo')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'geo' || activeTab === 'geography' ? 'bg-sky-600 text-white shadow' : 'bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200'
+              }`}
+            >
+              🗺️ भूगोल (Geography)
             </button>
 
             <button
@@ -477,10 +486,13 @@ function CodingAppInner() {
           </div>
         )}
 
-        {/* 2. ART & COLOR STUDIO */}
+        {/* 2. GEOGRAPHY & INDIA MAP */}
+        {(activeTab === 'geo' || activeTab === 'geography') && <HindiGeoStudio />}
+
+        {/* 3. ART & COLORS STUDIO */}
         {(activeTab === 'art' || activeTab === 'colors') && <HindiArtStudio />}
 
-        {/* 3. OTHER MODULES */}
+        {/* 4. OTHER MODULES */}
         {(activeTab === 'english' || activeTab === 'phonics' || activeTab === 'syntax' || activeTab === 'vocab') && <EnglishLiteracyHub />}
         {(activeTab === 'ai' || activeTab === 'ml') && <AiArcadeStudio />}
         {activeTab === 'maths' && <HindiMathStudio />}
