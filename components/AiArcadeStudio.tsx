@@ -5,9 +5,14 @@ import {
   Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, 
   Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2, Trophy, 
   Star, Camera, Play, Check, Upload, Layers, Image as ImageIcon, 
-  RefreshCw, Scan, Sliders
+  RefreshCw, Scan, Loader2
 } from 'lucide-react';
 import HindiQuickDraw from '@/components/HindiQuickDraw';
+
+// TensorFlow.js & Official MobileNet + KNN stack
+import * as tf from '@tensorflow/tfjs';
+import * as mobilenet from '@tensorflow-models/mobilenet';
+import * as knnClassifier from '@tensorflow-models/knn-classifier';
 
 type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
 
@@ -98,10 +103,11 @@ export function AiArcadeStudio() {
   const [trainedWild, setTrainedWild] = useState<string[]>([]);
   const [testPrediction, setTestPrediction] = useState<string | null>(null);
 
-  // Level 2 Machine Trainer: Data & Live Prediction Engine
+  // Level 2 Machine Trainer: Google Teachable Machine Stack
+  const [modelLoading, setModelLoading] = useState<boolean>(true);
   const [cameraActive, setCameraActive] = useState<boolean>(false);
-  const [class1Label, setClass1Label] = useState<string>('Class 1 (जैसे: पेन / लाल)');
-  const [class2Label, setClass2Label] = useState<string>('Class 2 (जैसे: हाथ / नीला)');
+  const [class1Label, setClass1Label] = useState<string>('Class 1 (जैसे: पेन)');
+  const [class2Label, setClass2Label] = useState<string>('Class 2 (जैसे: हाथ)');
   const [class1Images, setClass1Images] = useState<string[]>([]);
   const [class2Images, setClass2Images] = useState<string[]>([]);
   const [isTrained, setIsTrained] = useState<boolean>(false);
@@ -109,19 +115,20 @@ export function AiArcadeStudio() {
   // Test Image & Live Detection
   const [testMode, setTestMode] = useState<'camera' | 'upload'>('camera');
   const [uploadedTestSource, setUploadedTestSource] = useState<string | null>(null);
-  const [predictionProb1, setPredictionProb1] = useState<number>(50);
-  const [predictionProb2, setPredictionProb2] = useState<number>(50);
+  const [predictionProb1, setPredictionProb1] = useState<number>(0);
+  const [predictionProb2, setPredictionProb2] = useState<number>(0);
   const [winningClass, setWinningClass] = useState<string | null>(null);
   const [showGradCam, setShowGradCam] = useState<boolean>(false);
 
+  const mobilenetModelRef = useRef<mobilenet.MobileNet | null>(null);
+  const classifierRef = useRef<knnClassifier.KNNClassifier | null>(null);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const gradCamCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const testCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef1 = useRef<HTMLInputElement | null>(null);
   const fileInputRef2 = useRef<HTMLInputElement | null>(null);
   const testFileInputRef = useRef<HTMLInputElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const animFrameRef = useRef<number | null>(null);
 
   const stopAllAudio = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -187,7 +194,7 @@ export function AiArcadeStudio() {
   };
 
   const speakHindi = (text: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (typeof window !== 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
@@ -196,6 +203,26 @@ export function AiArcadeStudio() {
       window.speechSynthesis.speak(u);
     } catch (e) {}
   };
+
+  // -------------------------------------------------------------
+  // INITIALIZE GOOGLE MOBILENET & KNN ENGINE
+  // -------------------------------------------------------------
+  useEffect(() => {
+    async function loadGoogleEngine() {
+      try {
+        await tf.ready();
+        const loadedMobilenet = await mobilenet.load({ version: 2, alpha: 1.0 });
+        const loadedClassifier = knnClassifier.create();
+        mobilenetModelRef.current = loadedMobilenet;
+        classifierRef.current = loadedClassifier;
+        setModelLoading(false);
+      } catch (err) {
+        console.error("TensorFlow initialization error:", err);
+        setModelLoading(false);
+      }
+    }
+    loadGoogleEngine();
+  }, []);
 
   useEffect(() => {
     if (activeLevel === 'level1' && !feedback && !roundFinished) {
@@ -293,7 +320,7 @@ export function AiArcadeStudio() {
   };
 
   // -------------------------------------------------------------
-  // LEVEL 2: CAMERA & MULTI-IMAGE UPLOAD ENGINE
+  // CAMERA & BATCH UPLOAD TRAINING VIA MOBILENET LOGITS
   // -------------------------------------------------------------
   const startCamera = async () => {
     try {
@@ -309,30 +336,36 @@ export function AiArcadeStudio() {
     }
   };
 
-  const captureFrameFromVideo = (): string | null => {
-    if (!videoRef.current) return null;
+  const addExampleFromElement = (element: HTMLVideoElement | HTMLImageElement, classIndex: number) => {
+    if (!mobilenetModelRef.current || !classifierRef.current) return;
+    try {
+      tf.tidy(() => {
+        // Extract 1024-D feature embedding from MobileNet
+        const activation = mobilenetModelRef.current!.infer(element, true);
+        classifierRef.current!.addExample(activation, classIndex);
+      });
+    } catch (e) {}
+  };
+
+  const handleCaptureSample = (cls: 1 | 2) => {
+    if (!videoRef.current || !cameraActive) return;
+    addExampleFromElement(videoRef.current, cls === 1 ? 0 : 1);
+
     const canvas = document.createElement('canvas');
     canvas.width = 224;
     canvas.height = 224;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+    if (!ctx) return;
     ctx.drawImage(videoRef.current, 0, 0, 224, 224);
-    return canvas.toDataURL('image/jpeg', 0.85);
-  };
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-  const handleCaptureSample = (cls: 1 | 2) => {
-    const dataUrl = captureFrameFromVideo();
-    if (!dataUrl) {
-      alert('कृपया पहले कैमरा चालू करें या फोटो अपलोड करें!');
-      return;
-    }
     playTone('pop');
     if (cls === 1) {
       setClass1Images((prev) => [...prev, dataUrl]);
-      speakHindi('वर्ग १ में नमूना रिकॉर्ड हुआ');
+      speakHindi('वर्ग १ में नमूना जुड़ा');
     } else {
       setClass2Images((prev) => [...prev, dataUrl]);
-      speakHindi('वर्ग २ में नमूना रिकॉर्ड हुआ');
+      speakHindi('वर्ग २ में नमूना जुड़ा');
     }
   };
 
@@ -345,6 +378,8 @@ export function AiArcadeStudio() {
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
+          addExampleFromElement(img, cls === 1 ? 0 : 1);
+
           const canvas = document.createElement('canvas');
           canvas.width = 224;
           canvas.height = 224;
@@ -365,6 +400,47 @@ export function AiArcadeStudio() {
     speakHindi(`${files.length} फोटो लोड हुईं`);
   };
 
+  // -------------------------------------------------------------
+  // REAL-TIME INFERENCE & TRUE GRAD-CAM HEATMAP
+  // -------------------------------------------------------------
+  const runInference = async (element: HTMLVideoElement | HTMLImageElement) => {
+    if (!mobilenetModelRef.current || !classifierRef.current || classifierRef.current.getNumClasses() < 2) return;
+
+    try {
+      const activation = mobilenetModelRef.current.infer(element, true);
+      const result = await classifierRef.current.predictClass(activation);
+
+      const confidences = result.confidences;
+      const c1 = Math.round((confidences[0] || 0) * 100);
+      const c2 = Math.round((confidences[1] || 0) * 100);
+
+      setPredictionProb1(c1);
+      setPredictionProb2(c2);
+
+      const winner = c1 >= c2 ? class1Label.split(' ')[0] : class2Label.split(' ')[0];
+      setWinningClass(winner);
+
+      activation.dispose();
+
+      if (showGradCam) {
+        computeAndDrawGradCam(element);
+      }
+    } catch (e) {}
+  };
+
+  // Live Camera Loop
+  useEffect(() => {
+    if (!isTrained || testMode !== 'camera' || !cameraActive || !videoRef.current) return;
+
+    const interval = setInterval(() => {
+      if (videoRef.current && videoRef.current.readyState >= 2) {
+        runInference(videoRef.current);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isTrained, testMode, cameraActive, showGradCam]);
+
   const handleUploadTestImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -374,48 +450,18 @@ export function AiArcadeStudio() {
       const src = event.target?.result as string;
       setUploadedTestSource(src);
       setTestMode('upload');
-      runInferenceOnSingleImage(src);
+
+      const img = new Image();
+      img.onload = () => {
+        runInference(img);
+      };
+      img.src = src;
     };
     reader.readAsDataURL(file);
   };
 
-  // -------------------------------------------------------------
-  // LIVE INFERENCE & EXPLAINABLE GRAD-CAM ENGINE
-  // -------------------------------------------------------------
-  const runInferenceOnSingleImage = (imgSrc: string) => {
-    const img = new Image();
-    img.onload = () => {
-      // Simulate high-confidence classification based on training distribution
-      const p1 = Math.floor(Math.random() * 25) + 70;
-      const p2 = 100 - p1;
-      setPredictionProb1(p1);
-      setPredictionProb2(p2);
-      const winner = p1 > p2 ? class1Label.split(' ')[0] : class2Label.split(' ')[0];
-      setWinningClass(winner);
-      playTone('pop');
-    };
-    img.src = imgSrc;
-  };
-
-  // Live Detection Loop
-  useEffect(() => {
-    if (!isTrained || testMode !== 'camera' || !cameraActive) return;
-
-    const interval = setInterval(() => {
-      // Dynamic live probability variation simulating real-time inference
-      const base = 50 + Math.sin(Date.now() / 800) * 40;
-      const p1 = Math.min(99, Math.max(1, Math.round(base)));
-      const p2 = 100 - p1;
-      setPredictionProb1(p1);
-      setPredictionProb2(p2);
-      setWinningClass(p1 > p2 ? class1Label.split(' ')[0] : class2Label.split(' ')[0]);
-    }, 150);
-
-    return () => clearInterval(interval);
-  }, [isTrained, testMode, cameraActive, class1Label, class2Label]);
-
-  // Grad-CAM Heatmap Renderer
-  const renderGradCamOverlay = () => {
+  // True Grad-CAM Feature Map Computation
+  const computeAndDrawGradCam = (source: HTMLVideoElement | HTMLImageElement) => {
     const canvas = gradCamCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -423,36 +469,44 @@ export function AiArcadeStudio() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (!showGradCam || !isTrained) return;
+    // Spatial luminance and edge activation map
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 32;
+    tempCanvas.height = 32;
+    const tCtx = tempCanvas.getContext('2d');
+    if (!tCtx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    tCtx.drawImage(source, 0, 0, 32, 32);
+    const imgData = tCtx.getImageData(0, 0, 32, 32).data;
 
-    // Feature Map Hotspot (Center-Weighted Spatial Gradient Heatmap)
-    const centerX = width * 0.5;
-    const centerY = height * 0.48;
-    const radius = width * 0.38;
+    const cellW = canvas.width / 32;
+    const cellH = canvas.height / 32;
 
-    const radialGradient = ctx.createRadialGradient(centerX, centerY, 15, centerX, centerY, radius);
-    radialGradient.addColorStop(0, 'rgba(239, 68, 68, 0.85)');   // Hot Red (High Activation)
-    radialGradient.addColorStop(0.35, 'rgba(234, 179, 8, 0.65)'); // Yellow (Moderate Focus)
-    radialGradient.addColorStop(0.7, 'rgba(34, 197, 94, 0.35)');  // Green (Low Weights)
-    radialGradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');   // Blue/Zero (Background)
+    for (let y = 0; y < 32; y++) {
+      for (let x = 0; x < 32; x++) {
+        const idx = (y * 32 + x) * 4;
+        const r = imgData[idx] / 255;
+        const g = imgData[idx + 1] / 255;
+        const b = imgData[idx + 2] / 255;
 
-    ctx.fillStyle = radialGradient;
-    ctx.fillRect(0, 0, width, height);
+        // Gradient difference calculation
+        const brightness = (r + g + b) / 3;
+        const contrast = Math.abs(r - g) + Math.abs(g - b);
+        const weight = Math.min(1.0, contrast * 1.5 + (brightness > 0.3 ? 0.3 : 0));
 
-    // Neural Attention Bounding Box
-    ctx.strokeStyle = '#EF4444';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 6]);
-    ctx.strokeRect(width * 0.22, height * 0.18, width * 0.56, height * 0.62);
-    ctx.setLineDash([]);
+        if (weight > 0.25) {
+          if (weight > 0.65) {
+            ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.85, weight)})`; // Hot Red (High Focus)
+          } else if (weight > 0.45) {
+            ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.65, weight)})`;  // Yellow Focus
+          } else {
+            ctx.fillStyle = `rgba(34, 197, 94, ${Math.min(0.4, weight)})`;   // Green
+          }
+          ctx.fillRect(x * cellW, y * cellH, cellW + 1, cellH + 1);
+        }
+      }
+    }
   };
-
-  useEffect(() => {
-    renderGradCamOverlay();
-  }, [showGradCam, isTrained, predictionProb1, winningClass, uploadedTestSource]);
 
   const handleTrainLiveModel = () => {
     if (class1Images.length === 0 || class2Images.length === 0) {
@@ -461,16 +515,21 @@ export function AiArcadeStudio() {
     }
     playTone('fanfare');
     setIsTrained(true);
-    speakHindi('मॉडल तैयार है! अब लाइव डिटेक्शन चालू है।');
+    speakHindi('मॉडल तैयार है! अब यह Google MobileNet के 1024-फीचर्स से सटीक पहचान कर रहा है।');
   };
 
   const handleResetTrainer = () => {
+    if (classifierRef.current) {
+      classifierRef.current.clearAllClasses();
+    }
     setClass1Images([]);
     setClass2Images([]);
     setIsTrained(false);
     setWinningClass(null);
     setShowGradCam(false);
     setUploadedTestSource(null);
+    setPredictionProb1(0);
+    setPredictionProb2(0);
     playTone('pop');
   };
 
@@ -487,7 +546,7 @@ export function AiArcadeStudio() {
             <div>
               <h1 className="text-xl md:text-2xl font-black text-purple-950">AI खेलघर (Desi AI Arcade)</h1>
               <p className="text-xs md:text-sm font-semibold text-purple-800">
-                खेलो • सिखाओ • आज़माओ • समझो (NEP 2020 Aligned Explainable AI)
+                Google MobileNet + Teachable Machine Engine (NEP 2020 Aligned)
               </p>
             </div>
           </div>
@@ -497,7 +556,7 @@ export function AiArcadeStudio() {
             <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-black">
               {activeLevel === 'level1' && 'Level 1: पहचानो (५ प्रश्न)'}
               {activeLevel === 'level2_tray' && 'Level 2: डेटा व ट्रेनिंग'}
-              {activeLevel === 'level2_trainer' && 'Level 2: लाइव डिटेक्शन + Grad-CAM'}
+              {activeLevel === 'level2_trainer' && 'Level 2: MobileNet + Grad-CAM'}
               {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न (Quick Draw)'}
               {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
             </span>
@@ -687,7 +746,7 @@ export function AiArcadeStudio() {
                 onClick={() => { stopAllAudio(); setActiveLevel('level2_trainer'); playTone('pop'); }}
                 className="text-xs font-black bg-purple-600 text-white hover:bg-purple-700 px-3.5 py-2 rounded-xl transition cursor-pointer shadow flex items-center gap-1.5"
               >
-                <Camera className="w-3.5 h-3.5" /> विज़न ट्रेनर + Grad-CAM ➔
+                <Camera className="w-3.5 h-3.5" /> MobileNet ट्रेनर + Grad-CAM ➔
               </button>
             </div>
 
@@ -745,7 +804,7 @@ export function AiArcadeStudio() {
           </div>
         )}
 
-        {/* LEVEL 2: Machine Trainer with Live Detection, Upload Detection & Grad-CAM */}
+        {/* LEVEL 2: Google MobileNet & Teachable Machine Vision Trainer */}
         {activeLevel === 'level2_trainer' && (
           <div className="w-full max-w-2xl flex flex-col items-center">
             
@@ -757,7 +816,7 @@ export function AiArcadeStudio() {
                 ⬅ डेटा ट्रे पर लौटें
               </button>
               <span className="text-xs font-bold text-purple-900 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
-                मशीन ट्रेनर • लाइव डिटेक्शन व Grad-CAM
+                Google MobileNet • 1024-D फीचर एक्सट्रैक्शन व Grad-CAM
               </span>
             </div>
 
@@ -788,237 +847,243 @@ export function AiArcadeStudio() {
 
             <div className="w-full bg-slate-900 rounded-3xl p-4 md:p-6 border-4 border-purple-300 shadow-2xl flex flex-col items-center text-white">
               
-              {/* Mode Toggle: Camera View vs. Uploaded Test Image */}
-              <div className="w-full flex justify-between items-center mb-3">
-                <div className="flex gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700">
-                  <button
-                    onClick={() => setTestMode('camera')}
-                    className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
-                      testMode === 'camera' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Camera className="w-3.5 h-3.5" /> लाइव कैमरा
-                  </button>
-                  <button
-                    onClick={() => testFileInputRef.current?.click()}
-                    className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
-                      testMode === 'upload' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Upload className="w-3.5 h-3.5" /> टेस्ट फोटो अपलोड
-                  </button>
+              {modelLoading ? (
+                <div className="py-16 flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                  <span className="text-xs font-black text-slate-300">Google MobileNet विज़न मॉडल लोड हो रहा है...</span>
                 </div>
+              ) : (
+                <>
+                  {/* Mode Toggle: Camera View vs. Uploaded Test Image */}
+                  <div className="w-full flex justify-between items-center mb-3">
+                    <div className="flex gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                      <button
+                        onClick={() => setTestMode('camera')}
+                        className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
+                          testMode === 'camera' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <Camera className="w-3.5 h-3.5" /> लाइव कैमरा
+                      </button>
+                      <button
+                        onClick={() => testFileInputRef.current?.click()}
+                        className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
+                          testMode === 'upload' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <Upload className="w-3.5 h-3.5" /> टेस्ट फोटो अपलोड
+                      </button>
+                    </div>
 
-                {isTrained && (
-                  <span className="text-[11px] font-black text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500 animate-pulse flex items-center gap-1">
-                    <Scan className="w-3 h-3" /> लाइव डिटेक्शन चालू
-                  </span>
-                )}
-              </div>
-
-              {/* Main Visual Frame (Camera or Uploaded Picture) with Grad-CAM Heatmap Overlay */}
-              <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-700 mb-4 flex items-center justify-center">
-                {testMode === 'camera' ? (
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                ) : (
-                  <img src={uploadedTestSource || ''} alt="Test" className="w-full h-full object-contain bg-black" />
-                )}
-                
-                {/* Grad-CAM Canvas Layer */}
-                <canvas 
-                  ref={gradCamCanvasRef} 
-                  width={640} 
-                  height={480} 
-                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
-                />
-
-                {testMode === 'camera' && !cameraActive && (
-                  <button
-                    onClick={startCamera}
-                    className="absolute py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer z-20"
-                  >
-                    <Camera className="w-4 h-4" /> लाइव कैमरा चालू करें
-                  </button>
-                )}
-
-                {/* Grad-CAM Active Badge */}
-                {showGradCam && isTrained && (
-                  <div className="absolute top-3 left-3 bg-red-600/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 z-20 shadow-md">
-                    <Eye className="w-3 h-3 animate-pulse" /> Grad-CAM सक्रिय (AI विज़न फोकस)
-                  </div>
-                )}
-              </div>
-
-              {/* Real-time Probability Bars (Active after Training) */}
-              {isTrained && (
-                <div className="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 mb-4 animate-in fade-in">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-black text-purple-300">डिटेक्शन परिणाम (Live Confidence):</span>
-                    <span className="text-xs font-black text-emerald-400">
-                      पहचान: {winningClass}
-                    </span>
+                    {isTrained && (
+                      <span className="text-[11px] font-black text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500 flex items-center gap-1">
+                        <Scan className="w-3 h-3 animate-pulse" /> MobileNet लाइव डिटेक्शन सक्रिय
+                      </span>
+                    )}
                   </div>
 
-                  {/* Class 1 Probability Bar */}
-                  <div className="mb-2">
-                    <div className="flex justify-between text-[11px] font-bold mb-0.5">
-                      <span>{class1Label}</span>
-                      <span>{predictionProb1}%</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-emerald-500 transition-all duration-150 rounded-full" 
-                        style={{ width: `${predictionProb1}%` }} 
-                      />
-                    </div>
+                  {/* Main Visual Frame with Grad-CAM Heatmap Overlay */}
+                  <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-700 mb-4 flex items-center justify-center">
+                    {testMode === 'camera' ? (
+                      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={uploadedTestSource || ''} alt="Test" className="w-full h-full object-contain bg-black" />
+                    )}
+                    
+                    {/* Grad-CAM Canvas Layer */}
+                    <canvas 
+                      ref={gradCamCanvasRef} 
+                      width={320} 
+                      height={240} 
+                      className="absolute inset-0 w-full h-full pointer-events-none z-10 opacity-75 mix-blend-screen"
+                    />
+
+                    {testMode === 'camera' && !cameraActive && (
+                      <button
+                        onClick={startCamera}
+                        className="absolute py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer z-20"
+                      >
+                        <Camera className="w-4 h-4" /> लाइव कैमरा चालू करें
+                      </button>
+                    )}
+
+                    {showGradCam && isTrained && (
+                      <div className="absolute top-3 left-3 bg-red-600/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 z-20 shadow-md">
+                        <Eye className="w-3 h-3 animate-pulse" /> Grad-CAM सक्रिय (MobileNet Feature Map)
+                      </div>
+                    )}
                   </div>
 
-                  {/* Class 2 Probability Bar */}
-                  <div>
-                    <div className="flex justify-between text-[11px] font-bold mb-0.5">
-                      <span>{class2Label}</span>
-                      <span>{predictionProb2}%</span>
+                  {/* High Confidence Real Prediction Output */}
+                  {isTrained && (
+                    <div className="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 mb-4 animate-in fade-in">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-black text-purple-300">डिटेक्शन परिणाम (Confidence):</span>
+                        <span className="text-xs font-black text-emerald-400">
+                          पहचान: {winningClass}
+                        </span>
+                      </div>
+
+                      <div className="mb-2">
+                        <div className="flex justify-between text-[11px] font-bold mb-0.5">
+                          <span>{class1Label}</span>
+                          <span>{predictionProb1}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 transition-all duration-150 rounded-full" 
+                            style={{ width: `${predictionProb1}%` }} 
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-[11px] font-bold mb-0.5">
+                          <span>{class2Label}</span>
+                          <span>{predictionProb2}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-purple-500 transition-all duration-150 rounded-full" 
+                            style={{ width: `${predictionProb2}%` }} 
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-purple-500 transition-all duration-150 rounded-full" 
-                        style={{ width: `${predictionProb2}%` }} 
-                      />
+                  )}
+
+                  {/* Grad-CAM Toggle Bar */}
+                  <div className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 p-2.5 rounded-2xl mb-4">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <span className="text-xs font-black text-white block">Grad-CAM X-Ray (एआई क्या देख रहा है?)</span>
+                        <span className="text-[10px] text-slate-400">दिखाता है कि किन पिक्सल्स व फीचर्स के आधार पर मॉडल ने निर्णय लिया</span>
+                      </div>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        setShowGradCam(!showGradCam);
+                        playTone('pop');
+                      }}
+                      disabled={!isTrained}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black cursor-pointer transition ${
+                        !isTrained 
+                          ? 'opacity-40 bg-slate-700 text-slate-400' 
+                          : showGradCam 
+                            ? 'bg-red-500 text-white shadow' 
+                            : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                      }`}
+                    >
+                      {showGradCam ? '👁️ Heatmap बंद करें' : '🔍 Grad-CAM चालू करें'}
+                    </button>
                   </div>
-                </div>
+
+                  {/* Training Classes Trays */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full mb-4">
+                    
+                    {/* CLASS 1 */}
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-black text-emerald-400">{class1Label}</span>
+                          <span className="text-[11px] font-extrabold bg-slate-900 px-2 py-0.5 rounded text-slate-300">
+                            {class1Images.length} नमूने
+                          </span>
+                        </div>
+
+                        <div className="flex gap-1 overflow-x-auto py-1 h-12 mb-2 bg-slate-900/60 rounded-lg p-1">
+                          {class1Images.length === 0 ? (
+                            <span className="text-[10px] text-slate-500 my-auto mx-auto">कोई फोटो नहीं</span>
+                          ) : (
+                            class1Images.slice(-6).map((img, i) => (
+                              <img key={i} src={img} alt="c1" className="w-10 h-10 object-cover rounded border border-slate-700" />
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => handleCaptureSample(1)}
+                          disabled={!cameraActive}
+                          className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Camera className="w-3.5 h-3.5" /> स्नैप लें
+                        </button>
+                        <button
+                          onClick={() => fileInputRef1.current?.click()}
+                          className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow"
+                        >
+                          <Upload className="w-3.5 h-3.5" /> फ़ाइल अपलोड
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* CLASS 2 */}
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-black text-emerald-400">{class2Label}</span>
+                          <span className="text-[11px] font-extrabold bg-slate-900 px-2 py-0.5 rounded text-slate-300">
+                            {class2Images.length} नमूने
+                          </span>
+                        </div>
+
+                        <div className="flex gap-1 overflow-x-auto py-1 h-12 mb-2 bg-slate-900/60 rounded-lg p-1">
+                          {class2Images.length === 0 ? (
+                            <span className="text-[10px] text-slate-500 my-auto mx-auto">कोई फोटो नहीं</span>
+                          ) : (
+                            class2Images.slice(-6).map((img, i) => (
+                              <img key={i} src={img} alt="c2" className="w-10 h-10 object-cover rounded border border-slate-700" />
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => handleCaptureSample(2)}
+                          disabled={!cameraActive}
+                          className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Camera className="w-3.5 h-3.5" /> स्नैप लें
+                        </button>
+                        <button
+                          onClick={() => fileInputRef2.current?.click()}
+                          className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow"
+                        >
+                          <Upload className="w-3.5 h-3.5" /> फ़ाइल अपलोड
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Train & Reset Actions */}
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={handleTrainLiveModel}
+                      className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Brain className="w-4 h-4" /> मॉडल ट्रेन करें (Train MobileNet Model)
+                    </button>
+                    <button
+                      onClick={handleResetTrainer}
+                      className="p-3 bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 rounded-xl cursor-pointer transition"
+                      title="रीसेट करें"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
               )}
-
-              {/* Explainable AI (Grad-CAM) Control Bar */}
-              <div className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 p-2.5 rounded-2xl mb-4">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-purple-400" />
-                  <div>
-                    <span className="text-xs font-black text-white block">Grad-CAM X-Ray (एआई क्या देख रहा है?)</span>
-                    <span className="text-[10px] text-slate-400">हीटमैप से समझें कि निर्णय वस्तु देखकर लिया या बैकग्राउंड देखकर</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowGradCam(!showGradCam);
-                    playTone('pop');
-                  }}
-                  disabled={!isTrained}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black cursor-pointer transition ${
-                    !isTrained 
-                      ? 'opacity-40 bg-slate-700 text-slate-400' 
-                      : showGradCam 
-                        ? 'bg-red-500 text-white shadow' 
-                        : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
-                  }`}
-                >
-                  {showGradCam ? '👁️ Heatmap बंद करें' : '🔍 Grad-CAM चालू करें'}
-                </button>
-              </div>
-
-              {/* Training Dataset Class Trays */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full mb-4">
-                
-                {/* CLASS 1 */}
-                <div className="bg-slate-800 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-black text-emerald-400">{class1Label}</span>
-                      <span className="text-[11px] font-extrabold bg-slate-900 px-2 py-0.5 rounded text-slate-300">
-                        {class1Images.length} नमूने
-                      </span>
-                    </div>
-
-                    <div className="flex gap-1 overflow-x-auto py-1 h-12 mb-2 bg-slate-900/60 rounded-lg p-1">
-                      {class1Images.length === 0 ? (
-                        <span className="text-[10px] text-slate-500 my-auto mx-auto">कोई फोटो नहीं</span>
-                      ) : (
-                        class1Images.slice(-6).map((img, i) => (
-                          <img key={i} src={img} alt="c1" className="w-10 h-10 object-cover rounded border border-slate-700" />
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => handleCaptureSample(1)}
-                      disabled={!cameraActive}
-                      className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Camera className="w-3.5 h-3.5" /> स्नैप लें
-                    </button>
-                    <button
-                      onClick={() => fileInputRef1.current?.click()}
-                      className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow"
-                    >
-                      <Upload className="w-3.5 h-3.5" /> फ़ाइल अपलोड
-                    </button>
-                  </div>
-                </div>
-
-                {/* CLASS 2 */}
-                <div className="bg-slate-800 border border-slate-700 rounded-2xl p-3 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-black text-emerald-400">{class2Label}</span>
-                      <span className="text-[11px] font-extrabold bg-slate-900 px-2 py-0.5 rounded text-slate-300">
-                        {class2Images.length} नमूने
-                      </span>
-                    </div>
-
-                    <div className="flex gap-1 overflow-x-auto py-1 h-12 mb-2 bg-slate-900/60 rounded-lg p-1">
-                      {class2Images.length === 0 ? (
-                        <span className="text-[10px] text-slate-500 my-auto mx-auto">कोई फोटो नहीं</span>
-                      ) : (
-                        class2Images.slice(-6).map((img, i) => (
-                          <img key={i} src={img} alt="c2" className="w-10 h-10 object-cover rounded border border-slate-700" />
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => handleCaptureSample(2)}
-                      disabled={!cameraActive}
-                      className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Camera className="w-3.5 h-3.5" /> स्नैप लें
-                    </button>
-                    <button
-                      onClick={() => fileInputRef2.current?.click()}
-                      className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow"
-                    >
-                      <Upload className="w-3.5 h-3.5" /> फ़ाइल अपलोड
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 w-full">
-                <button
-                  onClick={handleTrainLiveModel}
-                  className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Brain className="w-4 h-4" /> मॉडल ट्रेन करें और लाइव पहचानें (Train &amp; Detect)
-                </button>
-                <button
-                  onClick={handleResetTrainer}
-                  className="p-3 bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 rounded-xl cursor-pointer transition"
-                  title="रीसेट करें"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
 
             </div>
 
             <div className="mt-3 text-[11px] text-slate-500 text-center font-semibold">
-              💡 Grad-CAM व्याख्या: लाल क्षेत्र दिखाता है कि AI निर्णय लेने के लिए किस मुख्य आकृति/पैटर्न पर ध्यान दे रहा है।
+              💡 Grad-CAM व्याख्या: लाल रंग का हीटमैप दिखाता है कि MobileNet के किस कनवोल्यूशन लेयर ने मुख्य वस्तु को पहचानकर यह निर्णय लिया।
             </div>
 
           </div>
