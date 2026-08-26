@@ -111,6 +111,7 @@ export function AiArcadeStudio() {
 
   // Level 2 Dynamic Classes Engine
   const [modelLoading, setModelLoading] = useState<boolean>(true);
+  const [isTraining, setIsTraining] = useState<boolean>(false);
   const [cameraActive, setCameraActive] = useState<boolean>(false);
   
   const [classesList, setClassesList] = useState<CustomClassItem[]>([
@@ -412,6 +413,7 @@ export function AiArcadeStudio() {
     setClassesList((prev) =>
       prev.map((c) => (c.id === classId ? { ...c, images: [...c.images, dataUrl] } : c))
     );
+    setIsTrained(false);
     playTone('pop');
   };
 
@@ -441,11 +443,12 @@ export function AiArcadeStudio() {
       reader.readAsDataURL(file);
     });
 
+    setIsTrained(false);
     playTone('pop');
   };
 
   // -------------------------------------------------------------
-  // RE-TRAIN CLASSIFIER FROM ALL CURRENT STORED IMAGES
+  // SOLID PROMISE-BASED MOBILENET KNN TRAINING
   // -------------------------------------------------------------
   const handleTrainLiveModel = async () => {
     const emptyClass = classesList.find((c) => c.images.length === 0);
@@ -454,30 +457,46 @@ export function AiArcadeStudio() {
       return;
     }
 
-    if (!mobilenetModelRef.current || !classifierRef.current) return;
-
-    classifierRef.current.clearAllClasses();
-
-    for (let cIdx = 0; cIdx < classesList.length; cIdx++) {
-      const classItem = classesList[cIdx];
-      for (const imgUrl of classItem.images) {
-        await new Promise<void>((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            tf.tidy(() => {
-              const activation = mobilenetModelRef.current!.infer(img, true);
-              classifierRef.current!.addExample(activation, cIdx);
-            });
-            resolve();
-          };
-          img.src = imgUrl;
-        });
-      }
+    if (!mobilenetModelRef.current) {
+      alert('MobileNet विज़न मॉडल लोड हो रहा है, कृपया २ सेकंड प्रतीक्षा करें...');
+      return;
     }
 
-    playTone('fanfare');
-    setIsTrained(true);
-    speakHindi('सभी वर्गों का मॉडल सफलतापूर्वक ट्रेन हो गया है!');
+    setIsTraining(true);
+    playTone('pop');
+
+    try {
+      // Create fresh classifier
+      classifierRef.current = knnClassifier.create();
+
+      for (let cIdx = 0; cIdx < classesList.length; cIdx++) {
+        const classItem = classesList[cIdx];
+        for (const imgUrl of classItem.images) {
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              tf.tidy(() => {
+                const activation = mobilenetModelRef.current!.infer(img, true);
+                classifierRef.current!.addExample(activation, cIdx);
+              });
+              resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = imgUrl;
+          });
+        }
+      }
+
+      setIsTraining(false);
+      setIsTrained(true);
+      playTone('fanfare');
+      speakHindi('मॉडल तैयार है! अब लाइव डिटेक्शन चालू हो गया है।');
+    } catch (err) {
+      console.error(err);
+      setIsTraining(false);
+      alert('मॉडल ट्रेनिंग में त्रुटि हुई। कृपया पुनः प्रयास करें।');
+    }
   };
 
   // -------------------------------------------------------------
@@ -508,10 +527,12 @@ export function AiArcadeStudio() {
       activation.dispose();
 
       if (showGradCam) {
-        computeAndDrawGradCam(element);
+        computeAndDrawGradCam(sourceElementOrVideo(element));
       }
     } catch (e) {}
   };
+
+  const sourceElementOrVideo = (el: HTMLVideoElement | HTMLImageElement): HTMLVideoElement | HTMLImageElement => el;
 
   useEffect(() => {
     if (!isTrained || testMode !== 'camera' || !cameraActive || !videoRef.current) return;
@@ -574,15 +595,15 @@ export function AiArcadeStudio() {
 
         const brightness = (r + g + b) / 3;
         const contrast = Math.abs(r - g) + Math.abs(g - b);
-        const weight = Math.min(1.0, contrast * 1.5 + (brightness > 0.3 ? 0.3 : 0));
+        const weight = Math.min(1.0, contrast * 1.6 + (brightness > 0.35 ? 0.3 : 0));
 
-        if (weight > 0.25) {
+        if (weight > 0.22) {
           if (weight > 0.65) {
-            ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.85, weight)})`; // High Focus
+            ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.85, weight)})`; // Red focus
           } else if (weight > 0.45) {
-            ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.65, weight)})`;  // Medium Focus
+            ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.65, weight)})`;  // Yellow
           } else {
-            ctx.fillStyle = `rgba(34, 197, 94, ${Math.min(0.4, weight)})`;   // Background
+            ctx.fillStyle = `rgba(34, 197, 94, ${Math.min(0.4, weight)})`;   // Green
           }
           ctx.fillRect(x * cellW, y * cellH, cellW + 1, cellH + 1);
         }
@@ -1123,9 +1144,20 @@ export function AiArcadeStudio() {
                   <div className="flex gap-2 w-full">
                     <button
                       onClick={handleTrainLiveModel}
-                      className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+                      disabled={isTraining}
+                      className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <Brain className="w-4 h-4" /> मॉडल ट्रेन करें (Train Model)
+                      {isTraining ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>फीचर्स सीख रहे हैं (Training...)...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="w-4 h-4" />
+                          <span>मॉडल ट्रेन करें (Train Model)</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={handleResetTrainer}
