@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, RotateCcw, Trophy, CheckCircle2, XCircle, 
-  Clock, Play, Award, Loader2
+  Clock, Play, Sparkles, HelpCircle
 } from 'lucide-react';
 
 type GameMode = 'capital' | 'phonic_small';
@@ -45,6 +45,13 @@ const ALPHABETS: LetterItem[] = [
   { char: 'Z', lower: 'z', wordHindi: 'ज़ेब्रा', phonicHint: 'Zebra', hindiAnchor: 'ज़' },
 ];
 
+// Standard QWERTY Layout Rows
+const QWERTY_ROWS = [
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
+];
+
 export default function EnglishAlphabetLab() {
   const [mode, setMode] = useState<GameMode>('capital');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -53,15 +60,19 @@ export default function EnglishAlphabetLab() {
   const [wrongLetters, setWrongLetters] = useState<string[]>([]);
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [lastFeedback, setLastFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<{ type: 'correct' | 'wrong' | 'hint'; text: string } | null>(null);
+  const [wrongPressKey, setWrongPressKey] = useState<string | null>(null);
+  const [attemptsOnCurrent, setAttemptsOnCurrent] = useState<number>(0);
+  const [showHintKey, setShowHintKey] = useState<boolean>(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef<boolean>(true);
+  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
 
-  // Friendly soft sound effects
-  const playBeep = (type: 'correct' | 'wrong' | 'fanfare') => {
+  // Play pleasant musical feedback sounds
+  const playSoundEffect = (type: 'correct' | 'wrong' | 'fanfare') => {
     if (typeof window === 'undefined') return;
     try {
       if (!audioCtxRef.current) {
@@ -76,19 +87,19 @@ export default function EnglishAlphabetLab() {
 
       if (type === 'correct') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.3);
+        osc.stop(now + 0.35);
       } else if (type === 'wrong') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(140, now + 0.2);
-        gain.gain.setValueAtTime(0.15, now);
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(160, now + 0.22);
+        gain.gain.setValueAtTime(0.18, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -97,9 +108,9 @@ export default function EnglishAlphabetLab() {
       } else {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(440, now);
-        osc.frequency.setValueAtTime(554.37, now + 0.15);
-        osc.frequency.setValueAtTime(659.25, now + 0.3);
-        osc.frequency.setValueAtTime(880, now + 0.45);
+        osc.frequency.setValueAtTime(554.37, now + 0.12);
+        osc.frequency.setValueAtTime(659.25, now + 0.24);
+        osc.frequency.setValueAtTime(880, now + 0.36);
         gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
         osc.connect(gain);
@@ -110,67 +121,71 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Bulletproof voice synthesizer with timeout fallback
-  const speakVoicePromise = (text: string, lang = 'hi-IN', rate = 0.85): Promise<void> => {
+  // Robust Speech Synthesizer that works reliably on Chromium
+  const speakText = (text: string, lang = 'hi-IN', rate = 0.85): Promise<void> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !window.speechSynthesis) {
         resolve();
         return;
       }
 
-      let isResolved = false;
-      const safeResolve = () => {
-        if (!isResolved) {
-          isResolved = true;
-          resolve();
-        }
-      };
-
-      // Fallback timer: Chromium sometimes hangs on utterance onend
-      const maxWait = Math.max(1500, text.length * 90);
-      const fallbackTimer = setTimeout(safeResolve, maxWait);
-
       try {
+        // Resume in case Chrome paused speech
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
         window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = lang;
-        u.rate = rate;
-        u.pitch = 1.08;
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        activeUtteranceRef.current = utterance; // Prevent Chrome GC bug
+        utterance.lang = lang;
+        utterance.rate = rate;
+        utterance.pitch = 1.06;
 
         const voices = window.speechSynthesis.getVoices();
         const preferred = voices.find(v => v.lang === 'hi-IN' || v.lang === 'en-IN');
-        if (preferred) u.voice = preferred;
+        if (preferred) utterance.voice = preferred;
 
-        u.onend = () => {
-          clearTimeout(fallbackTimer);
-          safeResolve();
-        };
-        u.onerror = () => {
-          clearTimeout(fallbackTimer);
-          safeResolve();
+        let finished = false;
+        const done = () => {
+          if (!finished) {
+            finished = true;
+            isSpeakingRef.current = false;
+            resolve();
+          }
         };
 
-        window.speechSynthesis.speak(u);
-      } catch (e) {
-        clearTimeout(fallbackTimer);
-        safeResolve();
+        utterance.onend = done;
+        utterance.onerror = done;
+
+        // Safety timeout so browser never hangs
+        setTimeout(done, Math.max(1600, text.length * 110));
+
+        isSpeakingRef.current = true;
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        isSpeakingRef.current = false;
+        resolve();
       }
     });
   };
 
-  // Prompt the target letter for 3-4 year olds
+  // Announce the target letter
   const promptTargetLetter = async (index: number, currentMode: GameMode) => {
     const item = ALPHABETS[index];
     if (!item || !isMountedRef.current) return;
 
+    setShowHintKey(false);
+    setWrongPressKey(null);
+
     if (currentMode === 'capital') {
-      await speakVoicePromise(`कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
+      await speakText(`कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
     } else {
-      await speakVoicePromise(`${item.hindiAnchor}, जैसे ${item.wordHindi}। कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
+      await speakText(`${item.hindiAnchor}, जैसे ${item.wordHindi}। कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
     }
   };
 
-  // Start / Restart game
+  // Start or restart session
   const handleStartGame = async (selectedMode = mode) => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -183,73 +198,87 @@ export default function EnglishAlphabetLab() {
     setWrongLetters([]);
     setTimerSeconds(0);
     setIsFinished(false);
-    setLastFeedback(null);
+    setFeedback(null);
+    setWrongPressKey(null);
+    setAttemptsOnCurrent(0);
+    setShowHintKey(false);
     setIsPlaying(true);
-    setIsProcessing(true);
 
     timerRef.current = setInterval(() => {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
 
-    await new Promise(r => setTimeout(r, 250));
+    await new Promise(r => setTimeout(r, 200));
     await promptTargetLetter(0, selectedMode);
-    setIsProcessing(false);
   };
 
-  // Handle letter press with explicit Hindi praise / correction
+  // Key press evaluation logic: stays on current letter if wrong!
   const handleLetterPress = async (pressedKey: string) => {
-    if (!isPlaying || isFinished || isProcessing) return;
-    setIsProcessing(true); // Lock buttons while feedback is speaking
+    if (!isPlaying || isFinished || isSpeakingRef.current) return;
 
     const currentTarget = ALPHABETS[currentIndex];
     const normalizedPress = pressedKey.toUpperCase();
     const isCorrect = normalizedPress === currentTarget.char;
 
-    let spokenFeedback = '';
-
     if (isCorrect) {
-      playBeep('correct');
-      setScore((prev) => prev + 1);
-      setLastFeedback({
-        isCorrect: true,
-        text: `बहुत बढ़िया! बिल्कुल सही (${mode === 'capital' ? currentTarget.char : currentTarget.lower})`
+      // Correct answer
+      playSoundEffect('correct');
+      setWrongPressKey(null);
+      setShowHintKey(false);
+
+      if (attemptsOnCurrent === 0) {
+        setScore((prev) => prev + 1);
+      }
+
+      setFeedback({
+        type: 'correct',
+        text: `बहुत बढ़िया! शाबाश (${mode === 'capital' ? currentTarget.char : currentTarget.lower})`
       });
-      spokenFeedback = `बहुत बढ़िया! शाबाश!`;
+
+      await speakText(`बहुत बढ़िया! शाबाश!`, 'hi-IN', 0.9);
+      await new Promise(r => setTimeout(r, 450));
+
+      if (!isMountedRef.current) return;
+
+      if (currentIndex + 1 >= 26) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setIsPlaying(false);
+        setIsFinished(true);
+        playSoundEffect('fanfare');
+
+        const finalScore = score + (attemptsOnCurrent === 0 ? 1 : 0);
+        await speakText(`वाह! टेस्ट पूरा हुआ। आपने 26 में से ${finalScore} अंक प्राप्त किए।`, 'hi-IN', 0.85);
+      } else {
+        const nextIdx = currentIndex + 1;
+        setCurrentIndex(nextIdx);
+        setAttemptsOnCurrent(0);
+        setFeedback(null);
+        await promptTargetLetter(nextIdx, mode);
+      }
+
     } else {
-      playBeep('wrong');
-      const letterRecord = mode === 'capital' ? currentTarget.char : `${currentTarget.char} (${currentTarget.hindiAnchor})`;
-      setWrongLetters((prev) => [...prev, letterRecord]);
-      setLastFeedback({
-        isCorrect: false,
-        text: `अरे नहीं! सही अक्षर ${currentTarget.char} है।`
+      // Wrong answer - DO NOT ADVANCE! Guide the preschooler gently
+      playSoundEffect('wrong');
+      setWrongPressKey(normalizedPress);
+      setAttemptsOnCurrent((prev) => prev + 1);
+
+      // Record as missed for final report card
+      const record = mode === 'capital' ? currentTarget.char : `${currentTarget.char} (${currentTarget.hindiAnchor})`;
+      if (!wrongLetters.includes(record)) {
+        setWrongLetters((prev) => [...prev, record]);
+      }
+
+      setFeedback({
+        type: 'wrong',
+        text: `अरे नहीं! आपने ${normalizedPress} दबाया। कीबोर्ड पर ${currentTarget.char} खोजिए!`
       });
-      spokenFeedback = `अरे नहीं, यह गलत है। सही अक्षर ${currentTarget.char} है।`;
-    }
 
-    // Speak the spoken feedback completely
-    await speakVoicePromise(spokenFeedback, 'hi-IN', 0.88);
+      // Show glowing hint on the keyboard if they miss it twice
+      if (attemptsOnCurrent >= 1) {
+        setShowHintKey(true);
+      }
 
-    // Give 3-4 year olds 800ms of breathing room to see the visual card
-    await new Promise(r => setTimeout(r, 800));
-
-    if (!isMountedRef.current) return;
-
-    if (currentIndex + 1 >= 26) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      setIsPlaying(false);
-      setIsFinished(true);
-      playBeep('fanfare');
-
-      const finalScore = score + (isCorrect ? 1 : 0);
-      await speakVoicePromise(`वाह! टेस्ट पूरा हुआ। आपने छब्बीस में से ${finalScore} सही किए।`, 'hi-IN', 0.85);
-      setIsProcessing(false);
-    } else {
-      const nextIdx = currentIndex + 1;
-      setCurrentIndex(nextIdx);
-
-      // Speak next prompt clearly
-      await promptTargetLetter(nextIdx, mode);
-      setIsProcessing(false);
+      await speakText(`अरे नहीं! यह गलत है। कीबोर्ड पर ${currentTarget.char} दबाइए।`, 'hi-IN', 0.85);
     }
   };
 
@@ -257,7 +286,7 @@ export default function EnglishAlphabetLab() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
-      if (!isPlaying || isFinished || isProcessing) return;
+      if (!isPlaying || isFinished) return;
 
       const key = e.key.toUpperCase();
       if (/^[A-Z]$/.test(key)) {
@@ -268,7 +297,7 @@ export default function EnglishAlphabetLab() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, isFinished, isProcessing, currentIndex, mode]);
+  }, [isPlaying, isFinished, currentIndex, mode, attemptsOnCurrent, score]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -281,6 +310,8 @@ export default function EnglishAlphabetLab() {
     };
   }, []);
 
+  const currentTarget = ALPHABETS[currentIndex];
+
   return (
     <div className="max-w-4xl mx-auto p-3 md:p-6 select-none font-sans">
       
@@ -289,10 +320,10 @@ export default function EnglishAlphabetLab() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-2xl">🔤</span>
-            <h1 className="text-xl md:text-2xl font-black">नन्हे वैज्ञानिक इंग्लिश लैब (Preschool A–Z)</h1>
+            <h1 className="text-xl md:text-2xl font-black">नन्हे वैज्ञानिक QWERTY टाइपिंग व फोनिक्स लैब</h1>
           </div>
           <p className="text-xs md:text-sm text-indigo-100 font-semibold">
-            आवाज़ सुनो • कीबोर्ड पर बटन दबाओ • शाबाशी पाओ
+            आवाज़ सुनो • असली कीबोर्ड पर बटन खोजो • शाबाशी पाओ
           </p>
         </div>
 
@@ -317,17 +348,17 @@ export default function EnglishAlphabetLab() {
         </div>
       </div>
 
-      {/* Start Screen */}
+      {/* Start Welcome Screen */}
       {!isPlaying && !isFinished && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-8 text-center shadow-xl flex flex-col items-center">
           <div className="w-20 h-20 bg-indigo-100 text-indigo-700 rounded-3xl flex items-center justify-center text-4xl mb-4 shadow-inner">
             ⌨️
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-2">
-            {mode === 'capital' ? 'Capital Letters (A to Z) स्पीड व पहचान' : 'Small Letters & Phonics ध्वनि खेल'}
+            {mode === 'capital' ? 'Capital Letters (A to Z) QWERTY पहचान' : 'Small Letters & Phonics ध्वनि खेल'}
           </h2>
           <p className="text-xs md:text-sm text-slate-600 max-w-md mb-6 leading-relaxed">
-            सिस्टम बोलेगा <strong>"कीबोर्ड पर [अक्षर] दबाइए"</strong>। बच्चों को कीबोर्ड या नीचे दिए गए बटनों पर वह अक्षर दबाना है।
+            सिस्टम आपको बोलेगा <strong>"कीबोर्ड पर [अक्षर] दबाइए"</strong>। बच्चों को लैपटॉप/कंप्यूटर कीबोर्ड पर वह अक्षर पहचान कर दबाना है।
           </p>
           <button
             onClick={() => handleStartGame(mode)}
@@ -338,12 +369,12 @@ export default function EnglishAlphabetLab() {
         </div>
       )}
 
-      {/* Active Question Session */}
-      {isPlaying && (
-        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 shadow-xl flex flex-col items-center">
+      {/* Active Game Stage */}
+      {isPlaying && currentTarget && (
+        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-4 md:p-6 shadow-xl flex flex-col items-center">
           
           {/* Top Info Bar */}
-          <div className="w-full flex justify-between items-center mb-6 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl">
+          <div className="w-full flex justify-between items-center mb-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-indigo-950 bg-indigo-100 px-3 py-1 rounded-full">
                 अक्षर: {currentIndex + 1} / 26
@@ -359,55 +390,86 @@ export default function EnglishAlphabetLab() {
             </div>
           </div>
 
-          {/* Big Interactive Prompt Center */}
-          <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-6 text-center shadow-inner mb-6 flex flex-col items-center">
+          {/* Big Visual Prompt Card */}
+          <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-5 text-center shadow-inner mb-4 flex flex-col items-center">
             
             <button
               onClick={() => promptTargetLetter(currentIndex, mode)}
-              disabled={isProcessing}
-              className="p-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-full transition cursor-pointer shadow-md mb-3 flex items-center gap-2"
+              className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-2 flex items-center gap-2"
               title="फिर से सुनें"
             >
-              <Volume2 className="w-6 h-6 animate-pulse" />
+              <Volume2 className="w-5 h-5 animate-pulse" />
             </button>
 
-            <span className="text-xs font-bold text-indigo-900 block mb-1">
-              {mode === 'capital' ? 'सिस्टम की आवाज़ सुनें:' : 'इस ध्वनि का अक्षर खोजें:'}
+            <span className="text-xs font-bold text-indigo-900 block">
+              {mode === 'capital' ? 'इस अक्षर को कीबोर्ड पर खोजें:' : 'इस ध्वनि का अक्षर खोजें:'}
             </span>
 
             <div className="text-5xl md:text-6xl font-black text-indigo-950 my-1 tracking-wider">
-              {mode === 'capital' 
-                ? `${ALPHABETS[currentIndex].char}` 
-                : `${ALPHABETS[currentIndex].hindiAnchor}`}
+              {mode === 'capital' ? currentTarget.char : currentTarget.hindiAnchor}
             </div>
 
-            <p className="text-xs font-bold text-indigo-800 mt-2">
-              {isProcessing ? '⏳ आवाज़ सुनिए...' : 'कीबोर्ड पर दबाएं या नीचे दिए बटन छुएं'}
-            </p>
+            <div className="text-xs font-black text-purple-800 mt-1 flex items-center gap-1">
+              <span>{currentTarget.char} for {currentTarget.phonicHint} ({currentTarget.wordHindi})</span>
+            </div>
           </div>
 
-          {/* Visual Feedback Banner */}
-          {lastFeedback && (
-            <div className={`w-full max-w-md p-3.5 rounded-2xl border-2 text-center text-xs md:text-sm font-black mb-5 animate-in fade-in flex items-center justify-center gap-2 ${
-              lastFeedback.isCorrect ? 'bg-emerald-50 border-emerald-400 text-emerald-950' : 'bg-rose-50 border-rose-400 text-rose-950'
+          {/* Real-time Feedback Banner */}
+          {feedback && (
+            <div className={`w-full max-w-xl p-3 rounded-2xl border-2 text-center text-xs md:text-sm font-black mb-4 animate-in fade-in flex items-center justify-center gap-2 ${
+              feedback.type === 'correct' 
+                ? 'bg-emerald-50 border-emerald-400 text-emerald-950' 
+                : 'bg-rose-50 border-rose-400 text-rose-950 animate-shake'
             }`}>
-              {lastFeedback.isCorrect ? <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" /> : <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
-              <span>{lastFeedback.text}</span>
+              {feedback.type === 'correct' ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              ) : (
+                <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+              )}
+              <span>{feedback.text}</span>
             </div>
           )}
 
-          {/* Preschool Friendly Keypad (Large, Touch-Friendly) */}
-          <div className="w-full max-w-2xl bg-slate-50 border border-slate-200 rounded-3xl p-4">
-            <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-13 gap-1.5 md:gap-2">
-              {ALPHABETS.map((a) => (
-                <button
-                  key={a.char}
-                  onClick={() => handleLetterPress(a.char)}
-                  disabled={isProcessing}
-                  className="py-3 bg-white hover:bg-indigo-600 hover:text-white disabled:opacity-50 border-2 border-slate-200 hover:border-indigo-600 rounded-xl font-black text-base text-slate-800 shadow-sm transition active:scale-95 cursor-pointer"
-                >
-                  {mode === 'capital' ? a.char : a.lower}
-                </button>
+          {/* Realistic Physical QWERTY Keyboard Display */}
+          <div className="w-full max-w-2xl bg-slate-100 border-2 border-slate-300 rounded-3xl p-3 md:p-5 shadow-inner">
+            <div className="flex justify-between items-center mb-2 px-1">
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                ⌨️ QWERTY कीबोर्ड लेआउट (नीचे छुएं या लैपटॉप कीबोर्ड दबाएं)
+              </span>
+              {showHintKey && (
+                <span className="text-[11px] font-black text-amber-600 animate-pulse flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5" /> हिंट: चमकता हुआ बटन देखें!
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2 items-center">
+              {QWERTY_ROWS.map((row, rowIdx) => (
+                <div key={rowIdx} className="flex gap-1.5 md:gap-2 justify-center w-full">
+                  {row.map((letter) => {
+                    const isTarget = letter === currentTarget.char;
+                    const isWrongJustPressed = letter === wrongPressKey;
+                    const isGlowHint = isTarget && showHintKey;
+
+                    return (
+                      <button
+                        key={letter}
+                        onClick={() => handleLetterPress(letter)}
+                        className={`
+                          h-11 md:h-13 w-8 sm:w-11 md:w-14 rounded-xl font-black text-base md:text-lg transition-all active:scale-95 shadow-sm cursor-pointer flex flex-col items-center justify-center
+                          ${isWrongJustPressed 
+                            ? 'bg-rose-500 text-white border-2 border-rose-700 animate-shake' 
+                            : isGlowHint 
+                              ? 'bg-amber-300 text-amber-950 border-3 border-amber-500 animate-bounce ring-4 ring-amber-200' 
+                              : 'bg-white hover:bg-indigo-600 hover:text-white border-2 border-slate-200 text-slate-800'
+                          }
+                        `}
+                      >
+                        <span>{mode === 'capital' ? letter : letter.toLowerCase()}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               ))}
             </div>
           </div>
@@ -415,7 +477,7 @@ export default function EnglishAlphabetLab() {
         </div>
       )}
 
-      {/* 26-Letter Summary Card */}
+      {/* Assessment Final Report */}
       {isFinished && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 md:p-8 text-center shadow-xl flex flex-col items-center animate-in zoom-in-95">
           <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-3">
@@ -429,7 +491,7 @@ export default function EnglishAlphabetLab() {
 
           <div className="w-full max-w-md grid grid-cols-3 gap-3 bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 mb-6">
             <div>
-              <span className="text-[11px] font-bold text-slate-500 block">कुल सही</span>
+              <span className="text-[11px] font-bold text-slate-500 block">पहली बार में सही</span>
               <span className="text-2xl font-black text-emerald-600">{score} / 26</span>
             </div>
             <div>
@@ -447,7 +509,7 @@ export default function EnglishAlphabetLab() {
             {wrongLetters.length === 0 ? (
               <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span>अद्भुत! आपने सभी 26 अक्षरों को बिना किसी गलती के पहचाना।</span>
+                <span>अद्भुत! आपने सभी 26 अक्षरों को पहली बार में सही पहचाना।</span>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl">
