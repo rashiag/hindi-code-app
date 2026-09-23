@@ -1,22 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Volume2, RotateCcw, Trophy, CheckCircle2, XCircle, 
-  Clock, Play, Sparkles
+  Clock, Play, Sparkles, ArrowRight, Pencil, Key
 } from 'lucide-react';
 
+type LabSection = 'recognition' | 'tracing';
 type GameMode = 'phonic_sound' | 'capital';
 
 interface PhonicItem {
   char: string;
   lower: string;
-  hindiSound: string;      // Notebook sound display
-  spokenCue: string;       // Clean text without punctuation so speech engine speaks purely
+  hindiSound: string;
+  spokenCue: string;
   exampleWord: string;
 }
 
-// Mapped exactly to your notebook with clean phonetic speech text
 const NOTEBOOK_PHONICS: PhonicItem[] = [
   { char: 'A', lower: 'a', hindiSound: 'ऐ', spokenCue: 'ऐ की ध्वनि', exampleWord: 'Apple' },
   { char: 'B', lower: 'b', hindiSound: 'ब', spokenCue: 'ब की ध्वनि', exampleWord: 'Ball' },
@@ -52,7 +52,86 @@ const QWERTY_ROWS = [
   ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
 ];
 
+interface PatternDefinition {
+  id: string;
+  name: string;
+  hindiName: string;
+  segments: Array<Array<[number, number]>>;
+}
+
+const PATTERNS: PatternDefinition[] = [
+  {
+    id: 'standing-line',
+    name: 'Standing Line',
+    hindiName: 'सीधी खड़ी रेखा (|)',
+    segments: [[[0.5, 0.15], [0.5, 0.85]]]
+  },
+  {
+    id: 'sleeping-line',
+    name: 'Sleeping Line',
+    hindiName: 'सीधी लेटी रेखा (—)',
+    segments: [[[0.15, 0.5], [0.85, 0.5]]]
+  },
+  {
+    id: 'slanting-line',
+    name: 'Slanting Line',
+    hindiName: 'तिरछी रेखा (/)',
+    segments: [[[0.2, 0.2], [0.8, 0.8]]]
+  },
+  {
+    id: 'zigzag',
+    name: 'Zig-Zag Waves',
+    hindiName: 'टेढ़ी-मेढ़ी लहरें (Zig-Zag)',
+    segments: [[[0.15, 0.7], [0.35, 0.3], [0.5, 0.7], [0.65, 0.3], [0.85, 0.7]]]
+  },
+  {
+    id: 'circle',
+    name: 'Circle',
+    hindiName: 'गोल चक्र (Circle)',
+    segments: [
+      Array.from({ length: 33 }, (_, i) => {
+        const theta = (i / 32) * Math.PI * 2;
+        return [0.5 + 0.35 * Math.cos(theta), 0.5 + 0.35 * Math.sin(theta)] as [number, number];
+      })
+    ]
+  },
+  {
+    id: 'letter-a',
+    name: 'Letter A',
+    hindiName: 'अक्षर A ट्रेसिंग',
+    segments: [
+      [[0.5, 0.15], [0.2, 0.85]],
+      [[0.5, 0.15], [0.8, 0.85]],
+      [[0.32, 0.55], [0.68, 0.55]]
+    ]
+  },
+  {
+    id: 'letter-b',
+    name: 'Letter B',
+    hindiName: 'अक्षर B ट्रेसिंग',
+    segments: [
+      [[0.25, 0.15], [0.25, 0.85]],
+      [[0.25, 0.15], [0.55, 0.15], [0.68, 0.25], [0.68, 0.4], [0.55, 0.5], [0.25, 0.5]],
+      [[0.25, 0.5], [0.6, 0.5], [0.72, 0.62], [0.72, 0.75], [0.6, 0.85], [0.25, 0.85]]
+    ]
+  },
+  {
+    id: 'letter-c',
+    name: 'Letter C',
+    hindiName: 'अक्षर C ट्रेसिंग',
+    segments: [
+      Array.from({ length: 24 }, (_, i) => {
+        const angle = (0.75 * Math.PI) + (i / 23) * (1.5 * Math.PI);
+        return [0.55 + 0.32 * Math.cos(angle), 0.5 + 0.35 * Math.sin(angle)] as [number, number];
+      })
+    ]
+  }
+];
+
 export default function EnglishAlphabetLab() {
+  const [section, setSection] = useState<LabSection>('recognition');
+
+  // --- RECOGNITION STATE ---
   const [mode, setMode] = useState<GameMode>('phonic_sound');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -65,10 +144,18 @@ export default function EnglishAlphabetLab() {
   const [showHintKey, setShowHintKey] = useState<boolean>(false);
   const [pressedAnimationKey, setPressedAnimationKey] = useState<string | null>(null);
 
+  // --- TRACING STATE ---
+  const [patternIndex, setPatternIndex] = useState<number>(0);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [traceResult, setTraceResult] = useState<'success' | 'fail' | null>(null);
+  const [traceScore, setTraceScore] = useState<number>(0);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const userDrawnPointsRef = useRef<Array<{ x: number; y: number }>>([]);
+
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef<boolean>(true);
-  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const currentTargetCharRef = useRef<string>('A');
   const isAdvancingRef = useRef<boolean>(false);
   const attemptsOnCurrentRef = useRef<number>(0);
@@ -79,7 +166,6 @@ export default function EnglishAlphabetLab() {
     }
   }, [currentIndex]);
 
-  // Pure Web Audio Synth: Celebratory Chimes & Error Tones
   const playSoundEffect = (type: 'correct' | 'wrong' | 'fanfare') => {
     if (typeof window === 'undefined') return;
     try {
@@ -92,7 +178,6 @@ export default function EnglishAlphabetLab() {
       const now = ctx.currentTime;
 
       if (type === 'correct') {
-        // Multi-tone cheerful bell chime (C5 -> E5 -> G5)
         [523.25, 659.25, 783.99].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -105,9 +190,7 @@ export default function EnglishAlphabetLab() {
           osc.start(now + i * 0.08);
           osc.stop(now + i * 0.08 + 0.3);
         });
-
       } else if (type === 'wrong') {
-        // Soft dual-buzzer (low gentle thud, not scary)
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
@@ -119,9 +202,7 @@ export default function EnglishAlphabetLab() {
         gain.connect(ctx.destination);
         osc.start(now);
         osc.stop(now + 0.25);
-
       } else if (type === 'fanfare') {
-        // Grand victory chord for completing 26 letters
         const chord = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
         chord.forEach((freq, idx) => {
           const osc = ctx.createOscillator();
@@ -139,17 +220,13 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Clean speech synthesis: only calls out the target sound, NO punctuation marks!
   const speakCleanPrompt = (text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      activeUtteranceRef.current = utterance;
       utterance.lang = 'hi-IN';
       utterance.rate = 0.85;
       utterance.pitch = 1.05;
@@ -162,7 +239,6 @@ export default function EnglishAlphabetLab() {
     } catch (err) {}
   };
 
-  // Only asks for the sound cleanly
   const promptTargetSound = (index: number, currentMode: GameMode) => {
     const item = NOTEBOOK_PHONICS[index];
     if (!item || !isMountedRef.current) return;
@@ -207,7 +283,6 @@ export default function EnglishAlphabetLab() {
     }, 150);
   };
 
-  // Instant Key Press Handler: NO verbal speech on feedback, ONLY audio chimes!
   const handleLetterPress = (pressedKey: string) => {
     if (!isPlaying || isFinished || isAdvancingRef.current) return;
 
@@ -215,12 +290,10 @@ export default function EnglishAlphabetLab() {
     const expectedChar = currentTargetCharRef.current;
     const currentTarget = NOTEBOOK_PHONICS[currentIndex];
 
-    // Tap bounce animation
     setPressedAnimationKey(normalizedPress);
     setTimeout(() => setPressedAnimationKey(null), 150);
 
     if (normalizedPress === expectedChar) {
-      // 1. Correct: Play celebratory chime immediately!
       playSoundEffect('correct');
       setWrongPressKey(null);
       setShowHintKey(false);
@@ -235,7 +308,6 @@ export default function EnglishAlphabetLab() {
         text: `शाबाश! सही उत्तर: ${currentTarget.hindiSound} (${currentTarget.lower})`
       });
 
-      // Advance immediately with no delay
       setTimeout(() => {
         if (!isMountedRef.current) return;
 
@@ -253,9 +325,7 @@ export default function EnglishAlphabetLab() {
           promptTargetSound(nextIdx, mode);
         }
       }, 550);
-
     } else {
-      // 2. Wrong: Play gentle error tone immediately!
       playSoundEffect('wrong');
       setWrongPressKey(normalizedPress);
       attemptsOnCurrentRef.current += 1;
@@ -268,16 +338,16 @@ export default function EnglishAlphabetLab() {
         text: `गलत बटन! ध्वनि '${currentTarget.hindiSound}' के लिए '${currentTarget.lower}' दबाइए`
       });
 
-      // Show glowing hint button on the keyboard if they struggle
       if (attemptsOnCurrentRef.current >= 1) {
         setShowHintKey(true);
       }
     }
   };
 
+  // Keyboard capture for Recognition mode only
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
+      if (e.repeat || section !== 'recognition') return;
       if (!isPlaying || isFinished) return;
 
       const key = e.key.toUpperCase();
@@ -290,7 +360,160 @@ export default function EnglishAlphabetLab() {
 
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-  }, [isPlaying, isFinished, currentIndex, mode, score]);
+  }, [isPlaying, isFinished, currentIndex, mode, score, section]);
+
+  // --- TRACING LOGIC ---
+  const currentPattern = PATTERNS[patternIndex];
+
+  const drawGuide = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.save();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 14;
+    ctx.setLineDash([4, 18]);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    currentPattern.segments.forEach((seg) => {
+      if (seg.length < 2) return;
+      ctx.beginPath();
+      ctx.moveTo(seg[0][0] * w, seg[0][1] * h);
+      for (let i = 1; i < seg.length; i++) {
+        ctx.lineTo(seg[i][0] * w, seg[i][1] * h);
+      }
+      ctx.stroke();
+    });
+
+    currentPattern.segments.forEach((seg) => {
+      const startPt = seg[0];
+      ctx.beginPath();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#22c55e';
+      ctx.arc(startPt[0] * w, startPt[1] * h, 9, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.restore();
+  }, [currentPattern]);
+
+  useEffect(() => {
+    if (section === 'tracing') {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = canvas.parentElement?.clientWidth || 500;
+        canvas.height = 340;
+        drawGuide();
+      }
+      setTraceResult(null);
+      userDrawnPointsRef.current = [];
+    }
+  }, [section, patternIndex, drawGuide]);
+
+  const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    return {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
+  };
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDrawing(true);
+    const { x, y } = getCoordinates(e);
+    userDrawnPointsRef.current.push({ x, y });
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  };
+
+  const drawMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
+    const { x, y } = getCoordinates(e);
+    userDrawnPointsRef.current.push({ x, y });
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const verifyTracingMatch = () => {
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const userPts = userDrawnPointsRef.current;
+    if (userPts.length < 5) return;
+
+    const checkpoints: Array<{ x: number; y: number }> = [];
+    currentPattern.segments.forEach((seg) => {
+      for (let i = 0; i < seg.length - 1; i++) {
+        const p1 = seg[i];
+        const p2 = seg[i + 1];
+        const steps = 10;
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          checkpoints.push({
+            x: (p1[0] + (p2[0] - p1[0]) * t) * w,
+            y: (p1[1] + (p2[1] - p1[1]) * t) * h
+          });
+        }
+      }
+    });
+
+    const tolerance = 44;
+    let hitCount = 0;
+    checkpoints.forEach((cp) => {
+      const isHit = userPts.some((up) => Math.hypot(up.x - cp.x, up.y - cp.y) <= tolerance);
+      if (isHit) hitCount++;
+    });
+
+    const matchRatio = hitCount / checkpoints.length;
+
+    if (matchRatio >= 0.60) {
+      playSoundEffect('correct');
+      setTraceResult('success');
+      setTraceScore((prev) => prev + 1);
+    } else {
+      playSoundEffect('wrong');
+      setTraceResult('fail');
+    }
+  };
+
+  const handleClearTracing = () => {
+    userDrawnPointsRef.current = [];
+    setTraceResult(null);
+    drawGuide();
+  };
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -308,228 +531,299 @@ export default function EnglishAlphabetLab() {
   return (
     <div className="max-w-4xl mx-auto p-3 md:p-6 select-none font-sans">
       
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-5 rounded-3xl shadow-lg mb-6 flex flex-wrap justify-between items-center gap-4">
+      {/* Preschool Main Header Banner */}
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 md:p-5 rounded-3xl shadow-lg mb-4 flex flex-wrap justify-between items-center gap-3">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">🔤</span>
-            <h1 className="text-xl md:text-2xl font-black">नन्हे वैज्ञानिक फोनिक्स ध्वनि व टाइपिंग लैब</h1>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-2xl">🧸</span>
+            <h1 className="text-lg md:text-xl font-black">नन्हे वैज्ञानिक प्रीस्कूल लैब (Preschool Discovery Lab)</h1>
           </div>
-          <p className="text-xs md:text-sm text-indigo-100 font-semibold">
-            ध्वनि सुनो • कीबोर्ड पर बटन दबाओ • संगीतमय धुन पाओ
+          <p className="text-[11px] md:text-xs text-indigo-100 font-semibold">
+            NEP 2020 Foundational Literacy • ध्वनि पहचान, कीबोर्ड टाइपिंग व पेंसिल ट्रेसिंग
           </p>
         </div>
 
-        {/* Mode Selector */}
-        <div className="flex bg-white/20 p-1.5 rounded-2xl backdrop-blur-md gap-1">
+        {/* Unified Sub-tab Switcher: Recognition vs Tracing */}
+        <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md gap-1">
           <button
-            onClick={() => handleStartGame('phonic_sound')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
-              mode === 'phonic_sound' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+            onClick={() => setSection('recognition')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+              section === 'recognition' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
             }`}
           >
-            🔊 Phonic Sound (ध्वनि से अक्षर)
+            <Key className="w-3.5 h-3.5" /> 🔤 अक्षर व ध्वनि
           </button>
           <button
-            onClick={() => handleStartGame('capital')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
-              mode === 'capital' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+            onClick={() => setSection('tracing')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+              section === 'tracing' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
             }`}
           >
-            Capital A–Z (अक्षर पहचान)
+            <Pencil className="w-3.5 h-3.5" /> ✏️ पैटर्न ट्रेसिंग
           </button>
         </div>
       </div>
 
-      {/* Start Welcome Screen */}
-      {!isPlaying && !isFinished && (
-        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-8 text-center shadow-xl flex flex-col items-center">
-          <div className="w-20 h-20 bg-indigo-100 text-indigo-700 rounded-3xl flex items-center justify-center text-4xl mb-4 shadow-inner">
-            🎵
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">
-            {mode === 'phonic_sound' ? 'फोनिक ध्वनि सुनो और कीबोर्ड पर दबाओ' : 'Capital Letters स्पीड टेस्ट'}
-          </h2>
-          <p className="text-xs md:text-sm text-slate-600 max-w-md mb-6 leading-relaxed">
-            सिस्टम आपको ध्वनि बोलेगा (जैसे <strong>"ब की ध्वनि"</strong>)। सही बटन दबाने पर सुंदर घंटी बजेगी और गलत बटन पर कोमल बीप।
-          </p>
-          <button
-            onClick={() => handleStartGame(mode)}
-            className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-lg transition cursor-pointer flex items-center gap-2"
-          >
-            <Play className="w-4 h-4 fill-white" /> खेल शुरू करें ➔
-          </button>
-        </div>
-      )}
-
-      {/* Active Game Session */}
-      {isPlaying && currentTarget && (
-        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-4 md:p-6 shadow-xl flex flex-col items-center">
-          
-          {/* Top Info Bar */}
-          <div className="w-full flex justify-between items-center mb-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-indigo-950 bg-indigo-100 px-3 py-1 rounded-full">
-                अक्षर: {currentIndex + 1} / 26
-              </span>
-              <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
-                सही: {score}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
-              <Clock className="w-4 h-4 text-indigo-600" />
-              <span>समय: {timerSeconds}s</span>
-            </div>
-          </div>
-
-          {/* Central Target Display Card */}
-          <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-5 text-center shadow-inner mb-4 flex flex-col items-center">
-            
+      {/* ============================================================== */}
+      {/* 1. RECOGNITION & PHONICS SECTION                                */}
+      {/* ============================================================== */}
+      {section === 'recognition' && (
+        <>
+          {/* Sub-modes for Recognition */}
+          <div className="flex justify-end gap-2 mb-3">
             <button
-              onClick={() => promptTargetSound(currentIndex, mode)}
-              className="p-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-2 flex items-center gap-2"
-              title="फिर से ध्वनि सुनें"
+              onClick={() => handleStartGame('phonic_sound')}
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
+                mode === 'phonic_sound' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-200 text-slate-700'
+              }`}
             >
-              <Volume2 className="w-6 h-6 animate-pulse" />
+              🔊 Phonic Sound (ध्वनि से अक्षर)
             </button>
-
-            <span className="text-xs font-bold text-indigo-900 block">
-              {mode === 'phonic_sound' ? 'इस ध्वनि का अक्षर दबाएं:' : 'यह अक्षर कीबोर्ड पर दबाएं:'}
-            </span>
-
-            {/* In Phonic mode, display the Hindi Sound directly from the notebook */}
-            <div className="text-6xl md:text-7xl font-black text-indigo-950 my-1 font-mono tracking-wider">
-              {mode === 'phonic_sound' ? currentTarget.hindiSound : currentTarget.char}
-            </div>
-
-            <div className="text-xs font-black text-purple-800 mt-1 bg-purple-100 px-4 py-1 rounded-full">
-              <span>जैसे {currentTarget.exampleWord} ({currentTarget.lower})</span>
-            </div>
+            <button
+              onClick={() => handleStartGame('capital')}
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
+                mode === 'capital' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              Capital A–Z (अक्षर पहचान)
+            </button>
           </div>
 
-          {/* Visual Feedback Pill (Instant & Clean) */}
-          {feedback && (
-            <div className={`w-full max-w-xl p-3 rounded-2xl border-2 text-center text-xs md:text-sm font-black mb-4 animate-in fade-in flex items-center justify-center gap-2 ${
-              feedback.type === 'correct' 
-                ? 'bg-emerald-50 border-emerald-400 text-emerald-950' 
-                : 'bg-rose-50 border-rose-400 text-rose-950'
-            }`}>
-              {feedback.type === 'correct' ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              ) : (
-                <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
-              )}
-              <span>{feedback.text}</span>
+          {!isPlaying && !isFinished && (
+            <div className="bg-white border-2 border-indigo-200 rounded-3xl p-8 text-center shadow-xl flex flex-col items-center">
+              <div className="w-16 h-16 bg-indigo-100 text-indigo-700 rounded-3xl flex items-center justify-center text-3xl mb-3 shadow-inner">
+                🎵
+              </div>
+              <h2 className="text-xl font-black text-slate-900 mb-1">
+                {mode === 'phonic_sound' ? 'फोनिक ध्वनि सुनो और कीबोर्ड पर दबाओ' : 'Capital Letters स्पीड टेस्ट'}
+              </h2>
+              <p className="text-xs text-slate-600 max-w-md mb-6 leading-relaxed">
+                सिस्टम आपको ध्वनि बोलेगा (जैसे <strong>"ब की ध्वनि"</strong>)। सही बटन दबाने पर संगीतमय घंटी बजेगी और गलत बटन पर कोमल बीप।
+              </p>
+              <button
+                onClick={() => handleStartGame(mode)}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-2xl shadow-lg transition cursor-pointer flex items-center gap-1.5"
+              >
+                <Play className="w-4 h-4 fill-white" /> टेस्ट शुरू करें ➔
+              </button>
             </div>
           )}
 
-          {/* QWERTY Keyboard Matching Layout */}
-          <div className="w-full max-w-2xl bg-slate-100 border-2 border-slate-300 rounded-3xl p-3 md:p-5 shadow-inner">
-            <div className="flex justify-between items-center mb-2 px-1">
-              <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                ⌨️ QWERTY कीबोर्ड (स्क्रीन पर छुएं या लैपटॉप की दबाएं)
-              </span>
-              {showHintKey && (
-                <span className="text-[11px] font-black text-amber-600 animate-pulse flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" /> हिंट: चमकता हुआ बटन दबाएं!
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2 items-center">
-              {QWERTY_ROWS.map((row, rowIdx) => (
-                <div key={rowIdx} className="flex gap-1.5 md:gap-2 justify-center w-full">
-                  {row.map((letter) => {
-                    const isTarget = letter === currentTarget.char;
-                    const isWrongJustPressed = letter === wrongPressKey;
-                    const isGlowHint = isTarget && showHintKey;
-                    const isCurrentlyPressed = letter === pressedAnimationKey;
-
-                    return (
-                      <button
-                        key={letter}
-                        onClick={() => handleLetterPress(letter)}
-                        className={`
-                          h-11 md:h-13 w-8 sm:w-11 md:w-14 rounded-xl font-black text-base md:text-lg transition-transform shadow-sm cursor-pointer flex flex-col items-center justify-center
-                          ${isCurrentlyPressed ? 'scale-90 ring-4 ring-indigo-300' : 'active:scale-95'}
-                          ${isWrongJustPressed 
-                            ? 'bg-rose-500 text-white border-2 border-rose-700' 
-                            : isGlowHint 
-                              ? 'bg-amber-300 text-amber-950 border-3 border-amber-500 animate-bounce ring-4 ring-amber-200' 
-                              : 'bg-white hover:bg-indigo-600 hover:text-white border-2 border-slate-200 text-slate-800'
-                          }
-                        `}
-                      >
-                        <span>{mode === 'phonic_sound' ? letter.toLowerCase() : letter}</span>
-                      </button>
-                    );
-                  })}
+          {isPlaying && currentTarget && (
+            <div className="bg-white border-2 border-indigo-200 rounded-3xl p-4 md:p-5 shadow-xl flex flex-col items-center">
+              <div className="w-full flex justify-between items-center mb-3 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black text-indigo-950 bg-indigo-100 px-2.5 py-0.5 rounded-full">
+                    अक्षर: {currentIndex + 1} / 26
+                  </span>
+                  <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                    सही: {score}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex items-center gap-1 text-[11px] font-black text-slate-700">
+                  <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>समय: {timerSeconds}s</span>
+                </div>
+              </div>
 
-        </div>
+              <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-4 text-center shadow-inner mb-3 flex flex-col items-center">
+                <button
+                  onClick={() => promptTargetSound(currentIndex, mode)}
+                  className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-1 flex items-center gap-2"
+                  title="फिर से ध्वनि सुनें"
+                >
+                  <Volume2 className="w-5 h-5 animate-pulse" />
+                </button>
+                <span className="text-xs font-bold text-indigo-900 block">
+                  {mode === 'phonic_sound' ? 'इस ध्वनि का अक्षर दबाएं:' : 'यह अक्षर कीबोर्ड पर दबाएं:'}
+                </span>
+                <div className="text-5xl md:text-6xl font-black text-indigo-950 my-1 font-mono tracking-wider">
+                  {mode === 'phonic_sound' ? currentTarget.hindiSound : currentTarget.char}
+                </div>
+                <div className="text-xs font-black text-purple-800 bg-purple-100 px-3 py-0.5 rounded-full">
+                  <span>जैसे {currentTarget.exampleWord} ({currentTarget.lower})</span>
+                </div>
+              </div>
+
+              {feedback && (
+                <div className={`w-full max-w-xl p-2.5 rounded-2xl border-2 text-center text-xs font-black mb-3 flex items-center justify-center gap-2 ${
+                  feedback.type === 'correct' ? 'bg-emerald-50 border-emerald-400 text-emerald-950' : 'bg-rose-50 border-rose-400 text-rose-950'
+                }`}>
+                  {feedback.type === 'correct' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+                  <span>{feedback.text}</span>
+                </div>
+              )}
+
+              <div className="w-full max-w-2xl bg-slate-100 border-2 border-slate-300 rounded-3xl p-3 shadow-inner">
+                <div className="flex justify-between items-center mb-1.5 px-1">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    ⌨️ QWERTY कीबोर्ड (टच करें या लैपटॉप की दबाएं)
+                  </span>
+                  {showHintKey && (
+                    <span className="text-[10px] font-black text-amber-600 animate-pulse flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> हिंट: चमकता हुआ बटन दबाएं!
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5 items-center">
+                  {QWERTY_ROWS.map((row, rowIdx) => (
+                    <div key={rowIdx} className="flex gap-1.5 justify-center w-full">
+                      {row.map((letter) => {
+                        const isTarget = letter === currentTarget.char;
+                        const isWrongJustPressed = letter === wrongPressKey;
+                        const isGlowHint = isTarget && showHintKey;
+                        const isCurrentlyPressed = letter === pressedAnimationKey;
+
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => handleLetterPress(letter)}
+                            className={`
+                              h-10 md:h-12 w-8 sm:w-10 md:w-12 rounded-xl font-black text-sm md:text-base transition-transform shadow-sm cursor-pointer flex flex-col items-center justify-center
+                              ${isCurrentlyPressed ? 'scale-90 ring-4 ring-indigo-300' : 'active:scale-95'}
+                              ${isWrongJustPressed 
+                                ? 'bg-rose-500 text-white border-2 border-rose-700' 
+                                : isGlowHint 
+                                  ? 'bg-amber-300 text-amber-950 border-2 border-amber-500 animate-bounce ring-4 ring-amber-200' 
+                                  : 'bg-white hover:bg-indigo-600 hover:text-white border-2 border-slate-200 text-slate-800'
+                              }
+                            `}
+                          >
+                            <span>{mode === 'phonic_sound' ? letter.toLowerCase() : letter}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isFinished && (
+            <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 text-center shadow-xl flex flex-col items-center">
+              <div className="w-14 h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg mb-2">
+                🏆
+              </div>
+              <h2 className="text-xl font-black text-indigo-950 mb-1">फोनिक्स एक्यूरेसी रिपोर्ट</h2>
+              <div className="w-full max-w-md grid grid-cols-3 gap-2 bg-indigo-50/60 border border-indigo-200 rounded-2xl p-3 mb-4">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 block">सही</span>
+                  <span className="text-xl font-black text-emerald-600">{score} / 26</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 block">सटीकता</span>
+                  <span className="text-xl font-black text-indigo-900">{Math.round((score / 26) * 100)}%</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 block">समय</span>
+                  <span className="text-xl font-black text-purple-900">{timerSeconds}s</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => handleStartGame(mode)}
+                  className="py-2 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> पुनः खेलें
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Assessment Final Report */}
-      {isFinished && (
-        <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 md:p-8 text-center shadow-xl flex flex-col items-center animate-in zoom-in-95">
-          <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-3">
-            🏆
+      {/* ============================================================== */}
+      {/* 2. DOTTED PATTERN TRACING SECTION                              */}
+      {/* ============================================================== */}
+      {section === 'tracing' && (
+        <div className="bg-white border-2 border-teal-200 rounded-3xl p-4 md:p-5 shadow-xl flex flex-col items-center">
+          
+          {/* Pattern Carousel Buttons */}
+          <div className="flex gap-1.5 overflow-x-auto w-full no-scrollbar pb-2 mb-3">
+            {PATTERNS.map((p, idx) => (
+              <button
+                key={p.id}
+                onClick={() => setPatternIndex(idx)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                  patternIndex === idx ? 'bg-teal-600 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                {idx + 1}. {p.name}
+              </button>
+            ))}
           </div>
 
-          <h2 className="text-2xl font-black text-indigo-950 mb-1">फोनिक्स व ध्वनि एक्यूरेसी रिपोर्ट</h2>
-          <p className="text-xs text-slate-600 font-semibold mb-6">
-            NEP 2020 Foundational Literacy Card
-          </p>
-
-          <div className="w-full max-w-md grid grid-cols-3 gap-3 bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 mb-6">
-            <div>
-              <span className="text-[11px] font-bold text-slate-500 block">पहली बार में सही</span>
-              <span className="text-2xl font-black text-emerald-600">{score} / 26</span>
-            </div>
-            <div>
-              <span className="text-[11px] font-bold text-slate-500 block">सटीकता</span>
-              <span className="text-2xl font-black text-indigo-900">{Math.round((score / 26) * 100)}%</span>
-            </div>
-            <div>
-              <span className="text-[11px] font-bold text-slate-500 block">कुल समय</span>
-              <span className="text-2xl font-black text-purple-900">{timerSeconds}s</span>
+          {/* Top Tracing Info Bar */}
+          <div className="w-full flex justify-between items-center mb-3 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-2xl">
+            <span className="text-xs font-black text-teal-950">
+              लक्ष्य: {currentPattern.hindiName}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                सफल: {traceScore}
+              </span>
+              <button
+                onClick={handleClearTracing}
+                className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" /> मिटाएं
+              </button>
             </div>
           </div>
 
-          <div className="w-full max-w-md text-left mb-6">
-            <h4 className="text-xs font-black text-slate-800 mb-2">जिन ध्वनियों का पुनः अभ्यास करना है:</h4>
-            {wrongLetters.length === 0 ? (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span>अद्भुत! आपने सभी 26 ध्वनियों को पहली बार में सही पहचाना।</span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl">
-                {wrongLetters.map((l, i) => (
-                  <span key={i} className="bg-white border border-rose-300 px-2.5 py-1 rounded-lg text-xs font-black text-rose-800 shadow-sm">
-                    {l}
-                  </span>
-                ))}
-              </div>
-            )}
+          {/* Interactive Dotted Canvas */}
+          <div className="w-full bg-slate-50 border-4 border-dashed border-teal-300 rounded-3xl overflow-hidden shadow-inner relative flex justify-center items-center touch-none">
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={drawMove}
+              onMouseUp={verifyTracingMatch}
+              onMouseLeave={() => isDrawing && verifyTracingMatch()}
+              onTouchStart={startDrawing}
+              onTouchMove={drawMove}
+              onTouchEnd={verifyTracingMatch}
+              className="cursor-crosshair w-full block"
+            />
+            <div className="absolute top-2 left-3 pointer-events-none bg-white/90 border border-teal-300 px-2.5 py-0.5 rounded-full text-[10px] font-black text-teal-800 shadow-sm flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>हरे बिंदु से शुरू करके डॉटेड लाइन पर चलाएं</span>
+            </div>
           </div>
 
-          <div className="flex gap-3 justify-center">
+          {/* Result Banner */}
+          {traceResult === 'success' && (
+            <div className="w-full max-w-md mt-3 p-2.5 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl text-center font-black text-xs flex items-center justify-center gap-1.5 animate-in zoom-in-95">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>शानदार! आपने पैटर्न बिल्कुल सही ट्रेस किया 🏆</span>
+            </div>
+          )}
+
+          {traceResult === 'fail' && (
+            <div className="w-full max-w-md mt-3 p-2.5 bg-rose-50 border-2 border-rose-300 text-rose-950 rounded-2xl text-center font-black text-xs flex items-center justify-center gap-1.5 animate-in fade-in">
+              <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>थोड़ा भटक गए। "मिटाएं" दबाकर पुनः प्रयास करें 🔄</span>
+            </div>
+          )}
+
+          {/* Footer Controls */}
+          <div className="w-full flex justify-between items-center mt-3 pt-2 border-t border-slate-200">
             <button
-              onClick={() => handleStartGame(mode)}
-              className="py-2.5 px-6 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
+              onClick={handleClearTracing}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
             >
-              <RotateCcw className="w-4 h-4" /> पुनः खेलें
+              <RotateCcw className="w-3.5 h-3.5" /> रीसेट
             </button>
             <button
-              onClick={() => handleStartGame(mode === 'phonic_sound' ? 'capital' : 'phonic_sound')}
-              className="py-2.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
+              onClick={() => {
+                if (patternIndex + 1 < PATTERNS.length) setPatternIndex(prev => prev + 1);
+                else setPatternIndex(0);
+              }}
+              className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1"
             >
-              {mode === 'phonic_sound' ? 'Capital A–Z मोड ➔' : '🔊 Phonic Sound मोड ➔'}
+              अगला पैटर्न <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
