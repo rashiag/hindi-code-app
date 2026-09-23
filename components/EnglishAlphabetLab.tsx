@@ -6,44 +6,44 @@ import {
   Clock, Play, Sparkles
 } from 'lucide-react';
 
-type GameMode = 'capital' | 'phonic_sound';
+type GameMode = 'phonic_sound' | 'capital';
 
 interface PhonicItem {
   char: string;
   lower: string;
-  hindiSound: string;      // Exact Hindi sound from the notebook
-  spokenSound: string;     // Phonetic pronunciation for TTS
+  hindiSound: string;      // Notebook sound display
+  spokenCue: string;       // Clean text without punctuation so speech engine speaks purely
   exampleWord: string;
 }
 
-// Exactly mapped from your handwritten notebook
+// Mapped exactly to your notebook with clean phonetic speech text
 const NOTEBOOK_PHONICS: PhonicItem[] = [
-  { char: 'A', lower: 'a', hindiSound: 'ऐ', spokenSound: 'ऐ', exampleWord: 'Apple' },
-  { char: 'B', lower: 'b', hindiSound: 'ब', spokenSound: 'ब', exampleWord: 'Ball' },
-  { char: 'C', lower: 'c', hindiSound: 'क', spokenSound: 'क', exampleWord: 'Cat' },
-  { char: 'D', lower: 'd', hindiSound: 'ड', spokenSound: 'ड', exampleWord: 'Dog' },
-  { char: 'E', lower: 'e', hindiSound: 'ए', spokenSound: 'ए', exampleWord: 'Elephant' },
-  { char: 'F', lower: 'f', hindiSound: 'फ़', spokenSound: 'फ़', exampleWord: 'Fish' },
-  { char: 'G', lower: 'g', hindiSound: 'ग', spokenSound: 'ग', exampleWord: 'Grapes' },
-  { char: 'H', lower: 'h', hindiSound: 'ह', spokenSound: 'ह', exampleWord: 'Hat' },
-  { char: 'I', lower: 'i', hindiSound: 'इ', spokenSound: 'इ', exampleWord: 'Igloo' },
-  { char: 'J', lower: 'j', hindiSound: 'ज', spokenSound: 'ज', exampleWord: 'Jug' },
-  { char: 'K', lower: 'k', hindiSound: 'क', spokenSound: 'क', exampleWord: 'Kite' },
-  { char: 'L', lower: 'l', hindiSound: 'ल', spokenSound: 'ल', exampleWord: 'Lion' },
-  { char: 'M', lower: 'm', hindiSound: 'म', spokenSound: 'म', exampleWord: 'Mango' },
-  { char: 'N', lower: 'n', hindiSound: 'न', spokenSound: 'न', exampleWord: 'Nest' },
-  { char: 'O', lower: 'o', hindiSound: 'ओ', spokenSound: 'ओ', exampleWord: 'Orange' },
-  { char: 'P', lower: 'p', hindiSound: 'प', spokenSound: 'प', exampleWord: 'Pen' },
-  { char: 'Q', lower: 'q', hindiSound: 'क्व', spokenSound: 'क्व', exampleWord: 'Queen' },
-  { char: 'R', lower: 'r', hindiSound: 'र', spokenSound: 'र', exampleWord: 'Ring' },
-  { char: 'S', lower: 's', hindiSound: 'स', spokenSound: 'स', exampleWord: 'Sun' },
-  { char: 'T', lower: 't', hindiSound: 'ट', spokenSound: 'ट', exampleWord: 'Tree' },
-  { char: 'U', lower: 'u', hindiSound: 'अ', spokenSound: 'अ', exampleWord: 'Umbrella' },
-  { char: 'V', lower: 'v', hindiSound: 'व', spokenSound: 'व', exampleWord: 'Van' },
-  { char: 'W', lower: 'w', hindiSound: 'वॉ', spokenSound: 'वॉ', exampleWord: 'Watch' },
-  { char: 'X', lower: 'x', hindiSound: 'क्स', spokenSound: 'क्स', exampleWord: 'Xylophone' },
-  { char: 'Y', lower: 'y', hindiSound: 'य', spokenSound: 'य', exampleWord: 'Yak' },
-  { char: 'Z', lower: 'z', hindiSound: 'ज़', spokenSound: 'ज़', exampleWord: 'Zebra' },
+  { char: 'A', lower: 'a', hindiSound: 'ऐ', spokenCue: 'ऐ की ध्वनि', exampleWord: 'Apple' },
+  { char: 'B', lower: 'b', hindiSound: 'ब', spokenCue: 'ब की ध्वनि', exampleWord: 'Ball' },
+  { char: 'C', lower: 'c', hindiSound: 'क', spokenCue: 'क की ध्वनि', exampleWord: 'Cat' },
+  { char: 'D', lower: 'd', hindiSound: 'ड', spokenCue: 'ड की ध्वनि', exampleWord: 'Dog' },
+  { char: 'E', lower: 'e', hindiSound: 'ए', spokenCue: 'ए की ध्वनि', exampleWord: 'Elephant' },
+  { char: 'F', lower: 'f', hindiSound: 'फ़', spokenCue: 'फ़ की ध्वनि', exampleWord: 'Fish' },
+  { char: 'G', lower: 'g', hindiSound: 'ग', spokenCue: 'ग की ध्वनि', exampleWord: 'Grapes' },
+  { char: 'H', lower: 'h', hindiSound: 'ह', spokenCue: 'ह की ध्वनि', exampleWord: 'Hat' },
+  { char: 'I', lower: 'i', hindiSound: 'इ', spokenCue: 'इ की ध्वनि', exampleWord: 'Igloo' },
+  { char: 'J', lower: 'j', hindiSound: 'ज', spokenCue: 'ज की ध्वनि', exampleWord: 'Jug' },
+  { char: 'K', lower: 'k', hindiSound: 'क', spokenCue: 'क की ध्वनि', exampleWord: 'Kite' },
+  { char: 'L', lower: 'l', hindiSound: 'ल', spokenCue: 'ल की ध्वनि', exampleWord: 'Lion' },
+  { char: 'M', lower: 'm', hindiSound: 'म', spokenCue: 'म की ध्वनि', exampleWord: 'Mango' },
+  { char: 'N', lower: 'n', hindiSound: 'न', spokenCue: 'न की ध्वनि', exampleWord: 'Nest' },
+  { char: 'O', lower: 'o', hindiSound: 'ओ', spokenCue: 'ओ की ध्वनि', exampleWord: 'Orange' },
+  { char: 'P', lower: 'p', hindiSound: 'प', spokenCue: 'प की ध्वनि', exampleWord: 'Pen' },
+  { char: 'Q', lower: 'q', hindiSound: 'क्व', spokenCue: 'क्व की ध्वनि', exampleWord: 'Queen' },
+  { char: 'R', lower: 'r', hindiSound: 'र', spokenCue: 'र की ध्वनि', exampleWord: 'Ring' },
+  { char: 'S', lower: 's', hindiSound: 'स', spokenCue: 'स की ध्वनि', exampleWord: 'Sun' },
+  { char: 'T', lower: 't', hindiSound: 'ट', spokenCue: 'ट की ध्वनि', exampleWord: 'Tree' },
+  { char: 'U', lower: 'u', hindiSound: 'अ', spokenCue: 'अ की ध्वनि', exampleWord: 'Umbrella' },
+  { char: 'V', lower: 'v', hindiSound: 'व', spokenCue: 'व की ध्वनि', exampleWord: 'Van' },
+  { char: 'W', lower: 'w', hindiSound: 'वॉ', spokenCue: 'वॉ की ध्वनि', exampleWord: 'Watch' },
+  { char: 'X', lower: 'x', hindiSound: 'क्स', spokenCue: 'क्स की ध्वनि', exampleWord: 'Xylophone' },
+  { char: 'Y', lower: 'y', hindiSound: 'य', spokenCue: 'य की ध्वनि', exampleWord: 'Yak' },
+  { char: 'Z', lower: 'z', hindiSound: 'ज़', spokenCue: 'ज़ की ध्वनि', exampleWord: 'Zebra' },
 ];
 
 const QWERTY_ROWS = [
@@ -79,6 +79,7 @@ export default function EnglishAlphabetLab() {
     }
   }, [currentIndex]);
 
+  // Pure Web Audio Synth: Celebratory Chimes & Error Tones
   const playSoundEffect = (type: 'correct' | 'wrong' | 'fanfare') => {
     if (typeof window === 'undefined') return;
     try {
@@ -89,46 +90,57 @@ export default function EnglishAlphabetLab() {
       if (ctx.state === 'suspended') ctx.resume();
 
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
 
       if (type === 'correct') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.3);
+        // Multi-tone cheerful bell chime (C5 -> E5 -> G5)
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          gain.gain.setValueAtTime(0.22, now + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.3);
+        });
+
       } else if (type === 'wrong') {
+        // Soft dual-buzzer (low gentle thud, not scary)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.22);
         gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.22);
-      } else {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.setValueAtTime(554.37, now + 0.12);
-        osc.frequency.setValueAtTime(659.25, now + 0.24);
-        osc.frequency.setValueAtTime(880, now + 0.36);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.7);
+        osc.stop(now + 0.25);
+
+      } else if (type === 'fanfare') {
+        // Grand victory chord for completing 26 letters
+        const chord = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+        chord.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+          gain.gain.setValueAtTime(0.25, now + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.07);
+          osc.stop(now + 1.2);
+        });
       }
     } catch (e) {}
   };
 
-  const speakText = (text: string, lang = 'hi-IN', rate = 0.84) => {
+  // Clean speech synthesis: only calls out the target sound, NO punctuation marks!
+  const speakCleanPrompt = (text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
       if (window.speechSynthesis.paused) {
@@ -138,8 +150,8 @@ export default function EnglishAlphabetLab() {
 
       const utterance = new SpeechSynthesisUtterance(text);
       activeUtteranceRef.current = utterance;
-      utterance.lang = lang;
-      utterance.rate = rate;
+      utterance.lang = 'hi-IN';
+      utterance.rate = 0.85;
       utterance.pitch = 1.05;
 
       const voices = window.speechSynthesis.getVoices();
@@ -150,7 +162,7 @@ export default function EnglishAlphabetLab() {
     } catch (err) {}
   };
 
-  // Speaks ONLY the Hindi Phonic Sound so the child connects Sound -> Letter
+  // Only asks for the sound cleanly
   const promptTargetSound = (index: number, currentMode: GameMode) => {
     const item = NOTEBOOK_PHONICS[index];
     if (!item || !isMountedRef.current) return;
@@ -160,10 +172,9 @@ export default function EnglishAlphabetLab() {
     attemptsOnCurrentRef.current = 0;
 
     if (currentMode === 'capital') {
-      speakText(`अक्षर पहचानिए: ${item.char}. कीबोर्ड पर बड़ा ${item.char} दबाइए!`, 'hi-IN', 0.82);
+      speakCleanPrompt(`अक्षर ${item.char} दबाइए`);
     } else {
-      // Calls out the pure sound from your notebook
-      speakText(`ध्वनि सुनो: ${item.spokenSound}. ${item.spokenSound}... कीबोर्ड पर सही अक्षर दबाइए!`, 'hi-IN', 0.82);
+      speakCleanPrompt(`${item.spokenCue} दबाइए`);
     }
   };
 
@@ -193,9 +204,10 @@ export default function EnglishAlphabetLab() {
 
     setTimeout(() => {
       promptTargetSound(0, selectedMode);
-    }, 200);
+    }, 150);
   };
 
+  // Instant Key Press Handler: NO verbal speech on feedback, ONLY audio chimes!
   const handleLetterPress = (pressedKey: string) => {
     if (!isPlaying || isFinished || isAdvancingRef.current) return;
 
@@ -203,11 +215,12 @@ export default function EnglishAlphabetLab() {
     const expectedChar = currentTargetCharRef.current;
     const currentTarget = NOTEBOOK_PHONICS[currentIndex];
 
+    // Tap bounce animation
     setPressedAnimationKey(normalizedPress);
-    setTimeout(() => setPressedAnimationKey(null), 180);
+    setTimeout(() => setPressedAnimationKey(null), 150);
 
     if (normalizedPress === expectedChar) {
-      // 1. Correct Press
+      // 1. Correct: Play celebratory chime immediately!
       playSoundEffect('correct');
       setWrongPressKey(null);
       setShowHintKey(false);
@@ -219,11 +232,10 @@ export default function EnglishAlphabetLab() {
 
       setFeedback({
         type: 'correct',
-        text: `बहुत बढ़िया! शाबाश! (${currentTarget.hindiSound} = ${currentTarget.lower})`
+        text: `शाबाश! सही उत्तर: ${currentTarget.hindiSound} (${currentTarget.lower})`
       });
 
-      speakText(`बहुत बढ़िया! शाबाश! '${currentTarget.spokenSound}' की ध्वनि है '${currentTarget.lower}'!`, 'hi-IN', 0.9);
-
+      // Advance immediately with no delay
       setTimeout(() => {
         if (!isMountedRef.current) return;
 
@@ -232,9 +244,6 @@ export default function EnglishAlphabetLab() {
           setIsPlaying(false);
           setIsFinished(true);
           playSoundEffect('fanfare');
-
-          const finalScore = score + (attemptsOnCurrentRef.current === 0 ? 1 : 0);
-          speakText(`वाह! टेस्ट पूरा हुआ। आपने 26 में से ${finalScore} सही किए।`, 'hi-IN', 0.85);
         } else {
           const nextIdx = currentIndex + 1;
           setCurrentIndex(nextIdx);
@@ -243,10 +252,10 @@ export default function EnglishAlphabetLab() {
           isAdvancingRef.current = false;
           promptTargetSound(nextIdx, mode);
         }
-      }, 850);
+      }, 550);
 
     } else {
-      // 2. Wrong Press - Stays on current sound until they find it
+      // 2. Wrong: Play gentle error tone immediately!
       playSoundEffect('wrong');
       setWrongPressKey(normalizedPress);
       attemptsOnCurrentRef.current += 1;
@@ -256,15 +265,13 @@ export default function EnglishAlphabetLab() {
 
       setFeedback({
         type: 'wrong',
-        text: `अरे नहीं! आपने '${normalizedPress.toLowerCase()}' दबाया। ध्वनि '${currentTarget.hindiSound}' के लिए '${currentTarget.lower}' खोजिए!`
+        text: `गलत बटन! ध्वनि '${currentTarget.hindiSound}' के लिए '${currentTarget.lower}' दबाइए`
       });
 
-      // Show bouncing hint key if missed twice
+      // Show glowing hint button on the keyboard if they struggle
       if (attemptsOnCurrentRef.current >= 1) {
         setShowHintKey(true);
       }
-
-      speakText(`अरे नहीं! यह गलत है। ध्वनि '${currentTarget.spokenSound}' के लिए कीबोर्ड पर '${currentTarget.lower}' दबाइए।`, 'hi-IN', 0.86);
     }
   };
 
@@ -309,7 +316,7 @@ export default function EnglishAlphabetLab() {
             <h1 className="text-xl md:text-2xl font-black">नन्हे वैज्ञानिक फोनिक्स ध्वनि व टाइपिंग लैब</h1>
           </div>
           <p className="text-xs md:text-sm text-indigo-100 font-semibold">
-            ध्वनि सुनो • कीबोर्ड पर अक्षर पहचानो • शाबाशी पाओ
+            ध्वनि सुनो • कीबोर्ड पर बटन दबाओ • संगीतमय धुन पाओ
           </p>
         </div>
 
@@ -329,7 +336,7 @@ export default function EnglishAlphabetLab() {
               mode === 'capital' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
             }`}
           >
-            Capital A–Z (अक्षर से अक्षर)
+            Capital A–Z (अक्षर पहचान)
           </button>
         </div>
       </div>
@@ -338,30 +345,28 @@ export default function EnglishAlphabetLab() {
       {!isPlaying && !isFinished && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-8 text-center shadow-xl flex flex-col items-center">
           <div className="w-20 h-20 bg-indigo-100 text-indigo-700 rounded-3xl flex items-center justify-center text-4xl mb-4 shadow-inner">
-            🔊
+            🎵
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-2">
-            {mode === 'phonic_sound' ? 'फोनिक ध्वनि सुनो और कीबोर्ड पर दबाओ' : 'Capital Letters (A to Z) स्पीड टेस्ट'}
+            {mode === 'phonic_sound' ? 'फोनिक ध्वनि सुनो और कीबोर्ड पर दबाओ' : 'Capital Letters स्पीड टेस्ट'}
           </h2>
           <p className="text-xs md:text-sm text-slate-600 max-w-md mb-6 leading-relaxed">
-            {mode === 'phonic_sound'
-              ? 'सिस्टम बोलेगा: "ध्वनि सुनो: \'ब\'... कीबोर्ड पर सही अक्षर दबाइए"। बच्चे को स्क्रीन पर ? देखकर कीबोर्ड पर \'b\' दबाना है!'
-              : 'सिस्टम बोलेगा "बड़ा अक्षर A दबाइए"। कीबोर्ड पर वह बटन दबाएं।'}
+            सिस्टम आपको ध्वनि बोलेगा (जैसे <strong>"ब की ध्वनि"</strong>)। सही बटन दबाने पर सुंदर घंटी बजेगी और गलत बटन पर कोमल बीप।
           </p>
           <button
             onClick={() => handleStartGame(mode)}
             className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-lg transition cursor-pointer flex items-center gap-2"
           >
-            <Play className="w-4 h-4 fill-white" /> टेस्ट शुरू करें ➔
+            <Play className="w-4 h-4 fill-white" /> खेल शुरू करें ➔
           </button>
         </div>
       )}
 
-      {/* Active Game Stage */}
+      {/* Active Game Session */}
       {isPlaying && currentTarget && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-4 md:p-6 shadow-xl flex flex-col items-center">
           
-          {/* Top Status Bar */}
+          {/* Top Info Bar */}
           <div className="w-full flex justify-between items-center mb-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-indigo-950 bg-indigo-100 px-3 py-1 rounded-full">
@@ -378,32 +383,32 @@ export default function EnglishAlphabetLab() {
             </div>
           </div>
 
-          {/* Central Listening / Sound Challenge Card */}
+          {/* Central Target Display Card */}
           <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-5 text-center shadow-inner mb-4 flex flex-col items-center">
             
             <button
               onClick={() => promptTargetSound(currentIndex, mode)}
               className="p-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-2 flex items-center gap-2"
-              title="फिर से आवाज़ सुनें"
+              title="फिर से ध्वनि सुनें"
             >
               <Volume2 className="w-6 h-6 animate-pulse" />
             </button>
 
             <span className="text-xs font-bold text-indigo-900 block">
-              {mode === 'phonic_sound' ? 'आवाज़ ध्यान से सुनिए:' : 'यह बड़ा अक्षर दबाएं:'}
+              {mode === 'phonic_sound' ? 'इस ध्वनि का अक्षर दबाएं:' : 'यह अक्षर कीबोर्ड पर दबाएं:'}
             </span>
 
-            {/* In Phonic Mode, show the sound anchor in quotes or a question mark to test them */}
+            {/* In Phonic mode, display the Hindi Sound directly from the notebook */}
             <div className="text-6xl md:text-7xl font-black text-indigo-950 my-1 font-mono tracking-wider">
-              {mode === 'phonic_sound' ? `"${currentTarget.hindiSound}"` : currentTarget.char}
+              {mode === 'phonic_sound' ? currentTarget.hindiSound : currentTarget.char}
             </div>
 
             <div className="text-xs font-black text-purple-800 mt-1 bg-purple-100 px-4 py-1 rounded-full">
-              <span>ध्वनि: {currentTarget.hindiSound} • जैसे {currentTarget.exampleWord}</span>
+              <span>जैसे {currentTarget.exampleWord} ({currentTarget.lower})</span>
             </div>
           </div>
 
-          {/* Feedback Banner */}
+          {/* Visual Feedback Pill (Instant & Clean) */}
           {feedback && (
             <div className={`w-full max-w-xl p-3 rounded-2xl border-2 text-center text-xs md:text-sm font-black mb-4 animate-in fade-in flex items-center justify-center gap-2 ${
               feedback.type === 'correct' 
@@ -419,7 +424,7 @@ export default function EnglishAlphabetLab() {
             </div>
           )}
 
-          {/* Physical QWERTY Keyboard Matching Layout */}
+          {/* QWERTY Keyboard Matching Layout */}
           <div className="w-full max-w-2xl bg-slate-100 border-2 border-slate-300 rounded-3xl p-3 md:p-5 shadow-inner">
             <div className="flex justify-between items-center mb-2 px-1">
               <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
@@ -456,7 +461,6 @@ export default function EnglishAlphabetLab() {
                           }
                         `}
                       >
-                        {/* Shows matching lower case letter on keyboard in phonic mode */}
                         <span>{mode === 'phonic_sound' ? letter.toLowerCase() : letter}</span>
                       </button>
                     );
