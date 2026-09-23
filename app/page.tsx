@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import BlocklyWorkspace from '@/components/BlocklyWorkspace';
 import GameCanvas from '@/components/GameCanvas';
 import { EnglishLiteracyHub } from '@/components/EnglishLiteracyHub';
+import EnglishAlphabetLab from '@/components/EnglishAlphabetLab';
 import { AiArcadeStudio } from '@/components/AiArcadeStudio';
 import { HindiMusicStudio } from '@/components/HindiMusicStudio';
 import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
@@ -322,7 +323,7 @@ function CodingAppInner() {
             </div>
           </div>
 
-          {/* Smooth Horizontal Scrolling Tab Bar for Mobile & Desktop */}
+          {/* Smooth Horizontal Scrolling Tab Bar */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 w-full md:w-auto shrink-0 touch-pan-x">
             <button
               onClick={() => switchTab('coding')}
@@ -331,6 +332,16 @@ function CodingAppInner() {
               }`}
             >
               🎮 मेज़ कोडिंग
+            </button>
+
+            {/* Preschool Recognition Lab Tab */}
+            <button
+              onClick={() => switchTab('preschool')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shrink-0 cursor-pointer transition ${
+                activeTab === 'preschool' || activeTab === 'letters' ? 'bg-blue-600 text-white shadow' : 'bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200'
+              }`}
+            >
+              🔤 अक्षर पहचान
             </button>
 
             <button
@@ -357,7 +368,7 @@ function CodingAppInner() {
                 activeTab === 'english' || activeTab === 'phonics' ? 'bg-teal-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
-              🔤 English
+              📖 English Hub
             </button>
 
             <button
@@ -411,7 +422,7 @@ function CodingAppInner() {
       {/* Main Sandbox Area */}
       <main className="flex-1 p-2 md:p-6 max-w-7xl mx-auto w-full">
         
-        {/* 1. CODING LOGIC MAZE (FULLY RESPONSIVE STACK ON PHONES) */}
+        {/* 1. CODING LOGIC MAZE */}
         {activeTab === 'coding' && (
           <div className="flex flex-col lg:flex-row gap-3 md:gap-4 min-h-[auto] lg:h-[calc(100vh-140px)]">
             
@@ -488,18 +499,31 @@ function CodingAppInner() {
           </div>
         )}
 
-        {/* 2. GEOGRAPHY & INDIA MAP */}
+        {/* 2. PRESCHOOL ENGLISH & PHONICS RECOGNITION LAB */}
+        {(activeTab === 'preschool' || activeTab === 'letters') && <EnglishAlphabetLab />}
+
+        {/* 3. GEOGRAPHY & INDIA MAP */}
         {(activeTab === 'geo' || activeTab === 'geography') && <HindiGeoStudio />}
 
-        {/* 3. ART & COLORS STUDIO */}
+        {/* 4. ART & COLORS STUDIO */}
         {(activeTab === 'art' || activeTab === 'colors') && <HindiArtStudio />}
 
-        {/* 4. OTHER MODULES */}
+        {/* 5. ENGLISH LITERACY HUB */}
         {(activeTab === 'english' || activeTab === 'phonics' || activeTab === 'syntax' || activeTab === 'vocab') && <EnglishLiteracyHub />}
+
+        {/* 6. AI ARCADE STUDIO */}
         {(activeTab === 'ai' || activeTab === 'ml') && <AiArcadeStudio />}
+
+        {/* 7. MATHS */}
         {activeTab === 'maths' && <HindiMathStudio />}
+
+        {/* 8. MUSIC */}
         {activeTab === 'music' && <HindiMusicStudio />}
+
+        {/* 9. SCIENCE */}
         {activeTab === 'researcher' && <JuniorResearcherStudio />}
+
+        {/* 10. EVS */}
         {activeTab === 'evs' && <HindiAnimalStudio />}
 
       </main>
@@ -526,7 +550,7 @@ function CodingAppInner() {
               <Star className="w-8 h-8 text-amber-400 fill-amber-400 animate-bounce [animation-delay:300ms]" />
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-5 grid grid-cols-2 gap-3 text-left">
+            <div className="bg-slate-50 border-slate-200 rounded-2xl p-4 mb-5 grid grid-cols-2 gap-3 text-left">
               <div>
                 <span className="text-[11px] font-bold text-slate-500 block">अवधारणा (Concept)</span>
                 <span className="text-xs font-black text-slate-800">{currentLevel.concept || 'Sequencing'}</span>
