@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, RotateCcw, Trophy, CheckCircle2, XCircle, 
-  Clock, Play, Sparkles, HelpCircle
+  Clock, Play, Sparkles
 } from 'lucide-react';
 
 type GameMode = 'capital' | 'phonic_small';
@@ -45,7 +45,6 @@ const ALPHABETS: LetterItem[] = [
   { char: 'Z', lower: 'z', wordHindi: 'ज़ेब्रा', phonicHint: 'Zebra', hindiAnchor: 'ज़' },
 ];
 
-// Standard QWERTY Layout Rows
 const QWERTY_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
@@ -60,18 +59,27 @@ export default function EnglishAlphabetLab() {
   const [wrongLetters, setWrongLetters] = useState<string[]>([]);
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<{ type: 'correct' | 'wrong' | 'hint'; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'correct' | 'wrong'; text: string } | null>(null);
   const [wrongPressKey, setWrongPressKey] = useState<string | null>(null);
-  const [attemptsOnCurrent, setAttemptsOnCurrent] = useState<number>(0);
   const [showHintKey, setShowHintKey] = useState<boolean>(false);
+  const [pressedAnimationKey, setPressedAnimationKey] = useState<string | null>(null);
 
+  // References to eliminate lag and stale closures
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const isSpeakingRef = useRef<boolean>(false);
+  const currentTargetCharRef = useRef<string>('A');
+  const isAdvancingRef = useRef<boolean>(false);
+  const attemptsOnCurrentRef = useRef<number>(0);
 
-  // Play pleasant musical feedback sounds
+  // Keep ref synchronized instantly with state
+  useEffect(() => {
+    if (ALPHABETS[currentIndex]) {
+      currentTargetCharRef.current = ALPHABETS[currentIndex].char;
+    }
+  }, [currentIndex]);
+
   const playSoundEffect = (type: 'correct' | 'wrong' | 'fanfare') => {
     if (typeof window === 'undefined') return;
     try {
@@ -87,24 +95,24 @@ export default function EnglishAlphabetLab() {
 
       if (type === 'correct') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15);
         gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.35);
+        osc.stop(now + 0.3);
       } else if (type === 'wrong') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(280, now);
-        osc.frequency.exponentialRampToValueAtTime(160, now + 0.22);
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
         gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.25);
+        osc.stop(now + 0.22);
       } else {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(440, now);
@@ -121,72 +129,44 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Robust Speech Synthesizer that works reliably on Chromium
-  const speakText = (text: string, lang = 'hi-IN', rate = 0.85): Promise<void> => {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined' || !window.speechSynthesis) {
-        resolve();
-        return;
+  const speakText = (text: string, lang = 'hi-IN', rate = 0.86) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
       }
+      window.speechSynthesis.cancel();
 
-      try {
-        // Resume in case Chrome paused speech
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-        }
-        window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      activeUtteranceRef.current = utterance;
+      utterance.lang = lang;
+      utterance.rate = rate;
+      utterance.pitch = 1.05;
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        activeUtteranceRef.current = utterance; // Prevent Chrome GC bug
-        utterance.lang = lang;
-        utterance.rate = rate;
-        utterance.pitch = 1.06;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.lang === 'hi-IN' || v.lang === 'en-IN');
+      if (preferred) utterance.voice = preferred;
 
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = voices.find(v => v.lang === 'hi-IN' || v.lang === 'en-IN');
-        if (preferred) utterance.voice = preferred;
-
-        let finished = false;
-        const done = () => {
-          if (!finished) {
-            finished = true;
-            isSpeakingRef.current = false;
-            resolve();
-          }
-        };
-
-        utterance.onend = done;
-        utterance.onerror = done;
-
-        // Safety timeout so browser never hangs
-        setTimeout(done, Math.max(1600, text.length * 110));
-
-        isSpeakingRef.current = true;
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        isSpeakingRef.current = false;
-        resolve();
-      }
-    });
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {}
   };
 
-  // Announce the target letter
-  const promptTargetLetter = async (index: number, currentMode: GameMode) => {
+  const promptTargetLetter = (index: number, currentMode: GameMode) => {
     const item = ALPHABETS[index];
     if (!item || !isMountedRef.current) return;
 
     setShowHintKey(false);
     setWrongPressKey(null);
+    attemptsOnCurrentRef.current = 0;
 
     if (currentMode === 'capital') {
-      await speakText(`कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
+      speakText(`कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
     } else {
-      await speakText(`${item.hindiAnchor}, जैसे ${item.wordHindi}। कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
+      speakText(`${item.hindiAnchor}, जैसे ${item.wordHindi}। कीबोर्ड पर ${item.char} दबाइए`, 'hi-IN', 0.82);
     }
   };
 
-  // Start or restart session
-  const handleStartGame = async (selectedMode = mode) => {
+  const handleStartGame = (selectedMode = mode) => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -194,39 +174,47 @@ export default function EnglishAlphabetLab() {
 
     setMode(selectedMode);
     setCurrentIndex(0);
+    currentTargetCharRef.current = ALPHABETS[0].char;
     setScore(0);
     setWrongLetters([]);
     setTimerSeconds(0);
     setIsFinished(false);
     setFeedback(null);
     setWrongPressKey(null);
-    setAttemptsOnCurrent(0);
     setShowHintKey(false);
+    attemptsOnCurrentRef.current = 0;
+    isAdvancingRef.current = false;
     setIsPlaying(true);
 
     timerRef.current = setInterval(() => {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
 
-    await new Promise(r => setTimeout(r, 200));
-    await promptTargetLetter(0, selectedMode);
+    setTimeout(() => {
+      promptTargetLetter(0, selectedMode);
+    }, 200);
   };
 
-  // Key press evaluation logic: stays on current letter if wrong!
-  const handleLetterPress = async (pressedKey: string) => {
-    if (!isPlaying || isFinished || isSpeakingRef.current) return;
+  // Instant response on very first press
+  const handleLetterPress = (pressedKey: string) => {
+    if (!isPlaying || isFinished || isAdvancingRef.current) return;
 
-    const currentTarget = ALPHABETS[currentIndex];
     const normalizedPress = pressedKey.toUpperCase();
-    const isCorrect = normalizedPress === currentTarget.char;
+    const expectedChar = currentTargetCharRef.current;
+    const currentTarget = ALPHABETS[currentIndex];
 
-    if (isCorrect) {
-      // Correct answer
+    // Trigger immediate visual tap feedback
+    setPressedAnimationKey(normalizedPress);
+    setTimeout(() => setPressedAnimationKey(null), 180);
+
+    if (normalizedPress === expectedChar) {
+      // 1. Correct Press
       playSoundEffect('correct');
       setWrongPressKey(null);
       setShowHintKey(false);
+      isAdvancingRef.current = true; // Temporary lock so it doesn't double-skip
 
-      if (attemptsOnCurrent === 0) {
+      if (attemptsOnCurrentRef.current === 0) {
         setScore((prev) => prev + 1);
       }
 
@@ -235,54 +223,54 @@ export default function EnglishAlphabetLab() {
         text: `बहुत बढ़िया! शाबाश (${mode === 'capital' ? currentTarget.char : currentTarget.lower})`
       });
 
-      await speakText(`बहुत बढ़िया! शाबाश!`, 'hi-IN', 0.9);
-      await new Promise(r => setTimeout(r, 450));
+      speakText(`बहुत बढ़िया! शाबाश!`, 'hi-IN', 0.92);
 
-      if (!isMountedRef.current) return;
+      // Advance smoothly after positive feedback
+      setTimeout(() => {
+        if (!isMountedRef.current) return;
 
-      if (currentIndex + 1 >= 26) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        setIsPlaying(false);
-        setIsFinished(true);
-        playSoundEffect('fanfare');
+        if (currentIndex + 1 >= 26) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          setIsPlaying(false);
+          setIsFinished(true);
+          playSoundEffect('fanfare');
 
-        const finalScore = score + (attemptsOnCurrent === 0 ? 1 : 0);
-        await speakText(`वाह! टेस्ट पूरा हुआ। आपने 26 में से ${finalScore} अंक प्राप्त किए।`, 'hi-IN', 0.85);
-      } else {
-        const nextIdx = currentIndex + 1;
-        setCurrentIndex(nextIdx);
-        setAttemptsOnCurrent(0);
-        setFeedback(null);
-        await promptTargetLetter(nextIdx, mode);
-      }
+          const finalScore = score + (attemptsOnCurrentRef.current === 0 ? 1 : 0);
+          speakText(`वाह! टेस्ट पूरा हुआ। आपने 26 में से ${finalScore} अंक प्राप्त किए।`, 'hi-IN', 0.85);
+        } else {
+          const nextIdx = currentIndex + 1;
+          setCurrentIndex(nextIdx);
+          currentTargetCharRef.current = ALPHABETS[nextIdx].char;
+          setFeedback(null);
+          isAdvancingRef.current = false;
+          promptTargetLetter(nextIdx, mode);
+        }
+      }, 750);
 
     } else {
-      // Wrong answer - DO NOT ADVANCE! Guide the preschooler gently
+      // 2. Wrong Press - Immediate response without dropping input
       playSoundEffect('wrong');
       setWrongPressKey(normalizedPress);
-      setAttemptsOnCurrent((prev) => prev + 1);
+      attemptsOnCurrentRef.current += 1;
 
-      // Record as missed for final report card
-      const record = mode === 'capital' ? currentTarget.char : `${currentTarget.char} (${currentTarget.hindiAnchor})`;
-      if (!wrongLetters.includes(record)) {
-        setWrongLetters((prev) => [...prev, record]);
-      }
+      const record = mode === 'capital' ? expectedChar : `${expectedChar} (${currentTarget.hindiAnchor})`;
+      setWrongLetters((prev) => (prev.includes(record) ? prev : [...prev, record]));
 
       setFeedback({
         type: 'wrong',
-        text: `अरे नहीं! आपने ${normalizedPress} दबाया। कीबोर्ड पर ${currentTarget.char} खोजिए!`
+        text: `अरे नहीं! आपने ${normalizedPress} दबाया। कीबोर्ड पर ${expectedChar} खोजिए!`
       });
 
-      // Show glowing hint on the keyboard if they miss it twice
-      if (attemptsOnCurrent >= 1) {
+      // Show glowing hint if missed
+      if (attemptsOnCurrentRef.current >= 1) {
         setShowHintKey(true);
       }
 
-      await speakText(`अरे नहीं! यह गलत है। कीबोर्ड पर ${currentTarget.char} दबाइए।`, 'hi-IN', 0.85);
+      speakText(`अरे नहीं! यह गलत है। कीबोर्ड पर ${expectedChar} दबाइए।`, 'hi-IN', 0.88);
     }
   };
 
-  // Physical Keyboard Listener
+  // Immediate physical keyboard capture
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
@@ -291,13 +279,14 @@ export default function EnglishAlphabetLab() {
       const key = e.key.toUpperCase();
       if (/^[A-Z]$/.test(key)) {
         e.preventDefault();
+        e.stopPropagation();
         handleLetterPress(key);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, isFinished, currentIndex, mode, attemptsOnCurrent, score]);
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+  }, [isPlaying, isFinished, currentIndex, mode, score]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -348,7 +337,7 @@ export default function EnglishAlphabetLab() {
         </div>
       </div>
 
-      {/* Start Welcome Screen */}
+      {/* Start Screen */}
       {!isPlaying && !isFinished && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-8 text-center shadow-xl flex flex-col items-center">
           <div className="w-20 h-20 bg-indigo-100 text-indigo-700 rounded-3xl flex items-center justify-center text-4xl mb-4 shadow-inner">
@@ -419,7 +408,7 @@ export default function EnglishAlphabetLab() {
             <div className={`w-full max-w-xl p-3 rounded-2xl border-2 text-center text-xs md:text-sm font-black mb-4 animate-in fade-in flex items-center justify-center gap-2 ${
               feedback.type === 'correct' 
                 ? 'bg-emerald-50 border-emerald-400 text-emerald-950' 
-                : 'bg-rose-50 border-rose-400 text-rose-950 animate-shake'
+                : 'bg-rose-50 border-rose-400 text-rose-950'
             }`}>
               {feedback.type === 'correct' ? (
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -450,15 +439,17 @@ export default function EnglishAlphabetLab() {
                     const isTarget = letter === currentTarget.char;
                     const isWrongJustPressed = letter === wrongPressKey;
                     const isGlowHint = isTarget && showHintKey;
+                    const isCurrentlyPressed = letter === pressedAnimationKey;
 
                     return (
                       <button
                         key={letter}
                         onClick={() => handleLetterPress(letter)}
                         className={`
-                          h-11 md:h-13 w-8 sm:w-11 md:w-14 rounded-xl font-black text-base md:text-lg transition-all active:scale-95 shadow-sm cursor-pointer flex flex-col items-center justify-center
+                          h-11 md:h-13 w-8 sm:w-11 md:w-14 rounded-xl font-black text-base md:text-lg transition-transform shadow-sm cursor-pointer flex flex-col items-center justify-center
+                          ${isCurrentlyPressed ? 'scale-90 ring-4 ring-indigo-300' : 'active:scale-95'}
                           ${isWrongJustPressed 
-                            ? 'bg-rose-500 text-white border-2 border-rose-700 animate-shake' 
+                            ? 'bg-rose-500 text-white border-2 border-rose-700' 
                             : isGlowHint 
                               ? 'bg-amber-300 text-amber-950 border-3 border-amber-500 animate-bounce ring-4 ring-amber-200' 
                               : 'bg-white hover:bg-indigo-600 hover:text-white border-2 border-slate-200 text-slate-800'
