@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, RotateCcw, Trophy, CheckCircle2, XCircle, 
-  Clock, Sparkles, ArrowRight, Play, Award, Zap
+  Clock, Play, Award, Loader2
 } from 'lucide-react';
 
 type GameMode = 'capital' | 'phonic_small';
@@ -16,32 +16,32 @@ interface LetterItem {
 }
 
 const ALPHABETS: LetterItem[] = [
-  { char: 'A', lower: 'a', phonicHint: 'ऐ (æ) as in Apple', hindiAnchor: 'ऐ' },
-  { char: 'B', lower: 'b', phonicHint: 'ब (b) as in Ball', hindiAnchor: 'ब' },
-  { char: 'C', lower: 'c', phonicHint: 'क (k) as in Cat', hindiAnchor: 'क' },
-  { char: 'D', lower: 'd', phonicHint: 'ड (d) as in Dog', hindiAnchor: 'ड' },
-  { char: 'E', lower: 'e', phonicHint: 'ए (e) as in Elephant', hindiAnchor: 'ए' },
-  { char: 'F', lower: 'f', phonicHint: 'फ़ (f) as in Fish', hindiAnchor: 'फ़' },
-  { char: 'G', lower: 'g', phonicHint: 'ग (g) as in Grapes', hindiAnchor: 'ग' },
-  { char: 'H', lower: 'h', phonicHint: 'ह (h) as in Hat', hindiAnchor: 'ह' },
-  { char: 'I', lower: 'i', phonicHint: 'इ (i) as in Igloo', hindiAnchor: 'इ' },
-  { char: 'J', lower: 'j', phonicHint: 'ज (j) as in Jug', hindiAnchor: 'ज' },
-  { char: 'K', lower: 'k', phonicHint: 'क (k) as in Kite', hindiAnchor: 'क' },
-  { char: 'L', lower: 'l', phonicHint: 'ल (l) as in Lion', hindiAnchor: 'ल' },
-  { char: 'M', lower: 'm', phonicHint: 'म (m) as in Mango', hindiAnchor: 'म' },
-  { char: 'N', lower: 'n', phonicHint: 'न (n) as in Nest', hindiAnchor: 'न' },
-  { char: 'O', lower: 'o', phonicHint: 'ऑ (ɒ) as in Orange', hindiAnchor: 'ऑ' },
-  { char: 'P', lower: 'p', phonicHint: 'प (p) as in Pen', hindiAnchor: 'प' },
-  { char: 'Q', lower: 'q', phonicHint: 'क्व (kw) as in Queen', hindiAnchor: 'क्व' },
-  { char: 'R', lower: 'r', phonicHint: 'र (r) as in Ring', hindiAnchor: 'र' },
-  { char: 'S', lower: 's', phonicHint: 'स (s) as in Sun', hindiAnchor: 'स' },
-  { char: 'T', lower: 't', phonicHint: 'ट (t) as in Tree', hindiAnchor: 'ट' },
-  { char: 'U', lower: 'u', phonicHint: 'अ (ʌ) as in Umbrella', hindiAnchor: 'अ' },
-  { char: 'V', lower: 'v', phonicHint: 'व (v) as in Van', hindiAnchor: 'व' },
-  { char: 'W', lower: 'w', phonicHint: 'व (w) as in Watch', hindiAnchor: 'व' },
-  { char: 'X', lower: 'x', phonicHint: 'क्स (ks) as in Xylophone', hindiAnchor: 'क्स' },
-  { char: 'Y', lower: 'y', phonicHint: 'य (j) as in Yak', hindiAnchor: 'य' },
-  { char: 'Z', lower: 'z', phonicHint: 'ज़ (z) as in Zebra', hindiAnchor: 'ज़' },
+  { char: 'A', lower: 'a', phonicHint: 'Apple', hindiAnchor: 'ऐ' },
+  { char: 'B', lower: 'b', phonicHint: 'Ball', hindiAnchor: 'ब' },
+  { char: 'C', lower: 'c', phonicHint: 'Cat', hindiAnchor: 'क' },
+  { char: 'D', lower: 'd', phonicHint: 'Dog', hindiAnchor: 'ड' },
+  { char: 'E', lower: 'e', phonicHint: 'Elephant', hindiAnchor: 'ए' },
+  { char: 'F', lower: 'f', phonicHint: 'Fish', hindiAnchor: 'फ़' },
+  { char: 'G', lower: 'g', phonicHint: 'Grapes', hindiAnchor: 'ग' },
+  { char: 'H', lower: 'h', phonicHint: 'Hat', hindiAnchor: 'ह' },
+  { char: 'I', lower: 'i', phonicHint: 'Igloo', hindiAnchor: 'इ' },
+  { char: 'J', lower: 'j', phonicHint: 'Jug', hindiAnchor: 'ज' },
+  { char: 'K', lower: 'k', phonicHint: 'Kite', hindiAnchor: 'क' },
+  { char: 'L', lower: 'l', phonicHint: 'Lion', hindiAnchor: 'ल' },
+  { char: 'M', lower: 'm', phonicHint: 'Mango', hindiAnchor: 'म' },
+  { char: 'N', lower: 'n', phonicHint: 'Nest', hindiAnchor: 'न' },
+  { char: 'O', lower: 'o', phonicHint: 'Orange', hindiAnchor: 'ऑ' },
+  { char: 'P', lower: 'p', phonicHint: 'Pen', hindiAnchor: 'प' },
+  { char: 'Q', lower: 'q', phonicHint: 'Queen', hindiAnchor: 'क्व' },
+  { char: 'R', lower: 'r', phonicHint: 'Ring', hindiAnchor: 'र' },
+  { char: 'S', lower: 's', phonicHint: 'Sun', hindiAnchor: 'स' },
+  { char: 'T', lower: 't', phonicHint: 'Tree', hindiAnchor: 'ट' },
+  { char: 'U', lower: 'u', phonicHint: 'Umbrella', hindiAnchor: 'अ' },
+  { char: 'V', lower: 'v', phonicHint: 'Van', hindiAnchor: 'व' },
+  { char: 'W', lower: 'w', phonicHint: 'Watch', hindiAnchor: 'व' },
+  { char: 'X', lower: 'x', phonicHint: 'Xylophone', hindiAnchor: 'क्स' },
+  { char: 'Y', lower: 'y', phonicHint: 'Yak', hindiAnchor: 'य' },
+  { char: 'Z', lower: 'z', phonicHint: 'Zebra', hindiAnchor: 'ज़' },
 ];
 
 export default function EnglishAlphabetLab() {
@@ -53,11 +53,13 @@ export default function EnglishAlphabetLab() {
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [lastFeedback, setLastFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
-  // Play browser Web Audio tone for instant feedback
+  // Web Audio chime
   const playBeep = (type: 'correct' | 'wrong' | 'fanfare') => {
     if (typeof window === 'undefined') return;
     try {
@@ -76,28 +78,28 @@ export default function EnglishAlphabetLab() {
         osc.frequency.setValueAtTime(523.25, now);
         osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
         gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.35);
+        osc.stop(now + 0.3);
       } else if (type === 'wrong') {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(220, now);
         osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
         gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.35);
+        osc.stop(now + 0.3);
       } else {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(440, now);
         osc.frequency.setValueAtTime(554.37, now + 0.15);
         osc.frequency.setValueAtTime(659.25, now + 0.3);
         osc.frequency.setValueAtTime(880, now + 0.45);
-        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.setValueAtTime(0.35, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -107,40 +109,52 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Indian Accent Speech Synthesis Callout
-  const speakIndianVoice = (text: string, lang = 'hi-IN') => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      u.rate = 0.82; // Calibrated slower pace so preschoolers can understand clearly
-      u.pitch = 1.05;
+  // Promise-based Speech Synthesis with Indian Voice
+  const speakVoicePromise = (text: string, lang = 'hi-IN', rate = 0.85): Promise<void> => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !window.speechSynthesis) {
+        resolve();
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        u.rate = rate; // Slower cadence for preschool clarity
+        u.pitch = 1.05;
 
-      // Prioritize en-IN or hi-IN voices
-      const voices = window.speechSynthesis.getVoices();
-      const indianVoice = voices.find(v => v.lang === 'en-IN' || v.lang === 'hi-IN');
-      if (indianVoice) u.voice = indianVoice;
+        const voices = window.speechSynthesis.getVoices();
+        const indianVoice = voices.find(v => v.lang === 'en-IN' || v.lang === 'hi-IN');
+        if (indianVoice) u.voice = indianVoice;
 
-      window.speechSynthesis.speak(u);
-    } catch (e) {}
+        u.onend = () => resolve();
+        u.onerror = () => resolve();
+
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        resolve();
+      }
+    });
   };
 
-  // Prompt the current target letter
-  const promptTargetLetter = (index: number, currentMode: GameMode) => {
+  // Announce the target letter
+  const promptTargetLetter = async (index: number, currentMode: GameMode) => {
     const item = ALPHABETS[index];
-    if (!item) return;
+    if (!item || !isMountedRef.current) return;
 
     if (currentMode === 'capital') {
-      speakIndianVoice(`${item.char}. कीबोर्ड पर ${item.char} दबाएं!`);
+      await speakVoicePromise(`${item.char}`, 'en-IN', 0.82);
     } else {
-      speakIndianVoice(`फोनिक साउंड: ${item.hindiAnchor}. ${item.char} as in ${item.phonicHint.split('as in ')[1] || item.char}`);
+      await speakVoicePromise(`${item.hindiAnchor}. ${item.phonicHint}`, 'hi-IN', 0.82);
     }
   };
 
-  // Start / Restart the 26-Letter Recognition Assessment
-  const handleStartGame = (selectedMode = mode) => {
+  // Start assessment
+  const handleStartGame = async (selectedMode = mode) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
 
     setMode(selectedMode);
     setCurrentIndex(0);
@@ -150,23 +164,28 @@ export default function EnglishAlphabetLab() {
     setIsFinished(false);
     setLastFeedback(null);
     setIsPlaying(true);
+    setIsProcessing(true);
 
     timerRef.current = setInterval(() => {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
 
-    setTimeout(() => {
-      promptTargetLetter(0, selectedMode);
-    }, 300);
+    // Initial audio prompt
+    await new Promise(r => setTimeout(r, 200));
+    await promptTargetLetter(0, selectedMode);
+    setIsProcessing(false);
   };
 
-  // Handle letter input (from keyboard or virtual on-screen keypad)
-  const handleLetterPress = (pressedKey: string) => {
-    if (!isPlaying || isFinished) return;
+  // Sequenced key press resolution
+  const handleLetterPress = async (pressedKey: string) => {
+    if (!isPlaying || isFinished || isProcessing) return;
+    setIsProcessing(true); // Lock input during feedback speech
 
     const currentTarget = ALPHABETS[currentIndex];
     const normalizedPress = pressedKey.toUpperCase();
     const isCorrect = normalizedPress === currentTarget.char;
+
+    let spokenFeedback = '';
 
     if (isCorrect) {
       playBeep('correct');
@@ -175,6 +194,7 @@ export default function EnglishAlphabetLab() {
         isCorrect: true,
         text: `शाबाश! बिल्कुल सही — यह ${mode === 'capital' ? currentTarget.char : currentTarget.lower} है।`
       });
+      spokenFeedback = `शाबाश! सही उत्तर है ${currentTarget.char}`;
     } else {
       playBeep('wrong');
       const letterRecord = mode === 'capital' ? currentTarget.char : `${currentTarget.char} (${currentTarget.hindiAnchor})`;
@@ -183,31 +203,42 @@ export default function EnglishAlphabetLab() {
         isCorrect: false,
         text: `गलत! आपने ${normalizedPress} दबाया, सही अक्षर ${currentTarget.char} था।`
       });
+      spokenFeedback = `गलत! सही अक्षर ${currentTarget.char} है।`;
     }
 
-    // Advance to next letter or finish test
+    // Speak the spoken feedback and wait for it to finish
+    await speakVoicePromise(spokenFeedback, 'hi-IN', 0.88);
+
+    // Brief pause to allow the child to absorb the correction
+    await new Promise(r => setTimeout(r, 350));
+
+    if (!isMountedRef.current) return;
+
     if (currentIndex + 1 >= 26) {
       if (timerRef.current) clearInterval(timerRef.current);
       setIsPlaying(false);
       setIsFinished(true);
       playBeep('fanfare');
 
-      setTimeout(() => {
-        speakIndianVoice(`टेस्ट पूरा हुआ! आपने छब्बीस में से ${score + (isCorrect ? 1 : 0)} अंक प्राप्त किए हैं।`);
-      }, 500);
+      const finalScore = score + (isCorrect ? 1 : 0);
+      await speakVoicePromise(`टेस्ट पूरा हुआ! आपने छब्बीस में से ${finalScore} अंक प्राप्त किए हैं।`, 'hi-IN', 0.85);
+      setIsProcessing(false);
     } else {
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
-      setTimeout(() => {
-        promptTargetLetter(nextIdx, mode);
-      }, 700);
+
+      // Now announce the new letter
+      await promptTargetLetter(nextIdx, mode);
+      setIsProcessing(false); // Unlock input for child to answer
     }
   };
 
-  // Physical Keyboard Listener
+  // Keyboard handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isPlaying || isFinished) return;
+      if (e.repeat) return;
+      if (!isPlaying || isFinished || isProcessing) return;
+
       const key = e.key.toUpperCase();
       if (/^[A-Z]$/.test(key)) {
         e.preventDefault();
@@ -217,10 +248,12 @@ export default function EnglishAlphabetLab() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, isFinished, currentIndex, mode]);
+  }, [isPlaying, isFinished, isProcessing, currentIndex, mode]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -264,7 +297,7 @@ export default function EnglishAlphabetLab() {
         </div>
       </div>
 
-      {/* Main Game Interface */}
+      {/* Welcome Screen */}
       {!isPlaying && !isFinished && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-8 text-center shadow-xl flex flex-col items-center">
           <div className="w-20 h-20 bg-indigo-100 text-indigo-700 rounded-3xl flex items-center justify-center text-4xl mb-4 shadow-inner">
@@ -285,11 +318,11 @@ export default function EnglishAlphabetLab() {
         </div>
       )}
 
-      {/* Active Question Session */}
+      {/* Active Session */}
       {isPlaying && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 shadow-xl flex flex-col items-center">
           
-          {/* Progress Tracker Bar */}
+          {/* Progress Bar */}
           <div className="w-full flex justify-between items-center mb-6 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-indigo-950 bg-indigo-100 px-3 py-1 rounded-full">
@@ -306,12 +339,13 @@ export default function EnglishAlphabetLab() {
             </div>
           </div>
 
-          {/* Central Callout Prompter */}
+          {/* Prompt Card */}
           <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-6 text-center shadow-inner mb-6 flex flex-col items-center">
             
             <button
               onClick={() => promptTargetLetter(currentIndex, mode)}
-              className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-3 flex items-center gap-2"
+              disabled={isProcessing}
+              className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-full transition cursor-pointer shadow-md mb-3 flex items-center gap-2"
               title="फिर से सुनें"
             >
               <Volume2 className="w-6 h-6 animate-pulse" />
@@ -328,28 +362,29 @@ export default function EnglishAlphabetLab() {
             </div>
 
             <p className="text-[11px] text-slate-500 font-semibold mt-1">
-              (कीबोर्ड पर दबाएं या नीचे दिए बटन छुएं)
+              {isProcessing ? 'उत्तर जांचा जा रहा है...' : '(कीबोर्ड पर दबाएं या नीचे दिए बटन छुएं)'}
             </p>
           </div>
 
-          {/* Feedback Display */}
+          {/* Instant Visual Feedback Pill */}
           {lastFeedback && (
             <div className={`w-full max-w-md p-3 rounded-xl border text-center text-xs font-bold mb-5 animate-in fade-in flex items-center justify-center gap-2 ${
               lastFeedback.isCorrect ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'bg-rose-50 border-rose-300 text-rose-900'
             }`}>
-              {lastFeedback.isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-rose-600" />}
+              {lastFeedback.isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
               <span>{lastFeedback.text}</span>
             </div>
           )}
 
-          {/* On-Screen Touch Keypad (For Tablets, Phones & Smartboards) */}
+          {/* On-Screen Touch Pad */}
           <div className="w-full max-w-2xl bg-slate-50 border border-slate-200 rounded-2xl p-4">
             <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-13 gap-1.5">
               {ALPHABETS.map((a) => (
                 <button
                   key={a.char}
                   onClick={() => handleLetterPress(a.char)}
-                  className="py-2.5 bg-white hover:bg-indigo-600 hover:text-white border border-slate-300 hover:border-indigo-600 rounded-xl font-black text-sm md:text-base text-slate-800 shadow-sm transition active:scale-95 cursor-pointer"
+                  disabled={isProcessing}
+                  className="py-2.5 bg-white hover:bg-indigo-600 hover:text-white disabled:opacity-40 border border-slate-300 hover:border-indigo-600 rounded-xl font-black text-sm md:text-base text-slate-800 shadow-sm transition active:scale-95 cursor-pointer"
                 >
                   {mode === 'capital' ? a.char : a.lower}
                 </button>
@@ -360,7 +395,7 @@ export default function EnglishAlphabetLab() {
         </div>
       )}
 
-      {/* End Assessment Report Card */}
+      {/* Results Screen */}
       {isFinished && (
         <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 md:p-8 text-center shadow-xl flex flex-col items-center animate-in zoom-in-95">
           <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg mb-3">
@@ -372,7 +407,6 @@ export default function EnglishAlphabetLab() {
             NEP 2020 Foundational Literacy Assessment
           </p>
 
-          {/* Core Metrics Table */}
           <div className="w-full max-w-md grid grid-cols-3 gap-3 bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 mb-6">
             <div>
               <span className="text-[11px] font-bold text-slate-500 block">स्कोर</span>
@@ -388,12 +422,11 @@ export default function EnglishAlphabetLab() {
             </div>
           </div>
 
-          {/* Wrong Letters Breakdown */}
           <div className="w-full max-w-md text-left mb-6">
             <h4 className="text-xs font-black text-slate-800 mb-2">गलत हुए अक्षरों का विवरण (Letters to Revise):</h4>
             {wrongLetters.length === 0 ? (
               <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>अद्भुत! आपने सभी 26 अक्षरों को पहली बार में सही पहचाना।</span>
               </div>
             ) : (
@@ -407,7 +440,6 @@ export default function EnglishAlphabetLab() {
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => handleStartGame(mode)}
