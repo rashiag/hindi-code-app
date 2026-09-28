@@ -52,7 +52,7 @@ const QWERTY_ROWS = [
   ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
 ];
 
-// --- DATA: CVC DICTIONARY ---
+// --- DATA: CVC FLASHCARDS WITH HIGH-CONTRAST VECTOR ART ---
 export interface CvcWordItem {
   id: string;
   word: string;
@@ -61,66 +61,66 @@ export interface CvcWordItem {
   phonics: string;
   article: 'a' | 'an';
   emoji: string;
-  imageUrl: string;
+  badgeBg: string; // Vibrant child-friendly card gradient
 }
 
 const CVC_DICTIONARY: CvcWordItem[] = [
-  // Vowel A
-  { id: 'cat', word: 'cat', vowel: 'A', hindiMeaning: 'बिल्ली', phonics: 'c - a - t', article: 'a', emoji: '🐱', imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80' },
-  { id: 'bat', word: 'bat', vowel: 'A', hindiMeaning: 'बल्ला', phonics: 'b - a - t', article: 'a', emoji: '🏏', imageUrl: 'https://images.unsplash.com/photo-1593786481097-cf281dd12e9e?w=400&auto=format&fit=crop&q=80' },
-  { id: 'hat', word: 'hat', vowel: 'A', hindiMeaning: 'टोपी', phonics: 'h - a - t', article: 'a', emoji: '👒', imageUrl: 'https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?w=400&auto=format&fit=crop&q=80' },
-  { id: 'mat', word: 'mat', vowel: 'A', hindiMeaning: 'चटाई', phonics: 'm - a - t', article: 'a', emoji: '🧘', imageUrl: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=400&auto=format&fit=crop&q=80' },
-  { id: 'fan', word: 'fan', vowel: 'A', hindiMeaning: 'पंखा', phonics: 'f - a - n', article: 'a', emoji: '🪭', imageUrl: 'https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=400&auto=format&fit=crop&q=80' },
-  { id: 'pan', word: 'pan', vowel: 'A', hindiMeaning: 'तवा / पैन', phonics: 'p - a - n', article: 'a', emoji: '🍳', imageUrl: 'https://images.unsplash.com/photo-1584990347449-399a0a03006d?w=400&auto=format&fit=crop&q=80' },
-  { id: 'van', word: 'van', vowel: 'A', hindiMeaning: 'वैन गाड़ी', phonics: 'v - a - n', article: 'a', emoji: '🚐', imageUrl: 'https://images.unsplash.com/photo-1566008885218-90abf9200ddb?w=400&auto=format&fit=crop&q=80' },
-  { id: 'cap', word: 'cap', vowel: 'A', hindiMeaning: 'कैप', phonics: 'c - a - p', article: 'a', emoji: '🧢', imageUrl: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&auto=format&fit=crop&q=80' },
-  { id: 'map', word: 'map', vowel: 'A', hindiMeaning: 'नक्शा', phonics: 'm - a - p', article: 'a', emoji: '🗺️', imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=400&auto=format&fit=crop&q=80' },
-  { id: 'bag', word: 'bag', vowel: 'A', hindiMeaning: 'बस्ता', phonics: 'b - a - g', article: 'a', emoji: '🎒', imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80' },
+  // --- VOWEL A ---
+  { id: 'cat', word: 'cat', vowel: 'A', hindiMeaning: 'बिल्ली', phonics: 'c - a - t', article: 'a', emoji: '🐱', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'bat', word: 'bat', vowel: 'A', hindiMeaning: 'बल्ला', phonics: 'b - a - t', article: 'a', emoji: '🏏', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
+  { id: 'hat', word: 'hat', vowel: 'A', hindiMeaning: 'टोपी', phonics: 'h - a - t', article: 'a', emoji: '👒', badgeBg: 'from-emerald-100 to-teal-100 border-emerald-300' },
+  { id: 'mat', word: 'mat', vowel: 'A', hindiMeaning: 'चटाई', phonics: 'm - a - t', article: 'a', emoji: '🧘', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
+  { id: 'fan', word: 'fan', vowel: 'A', hindiMeaning: 'पंखा', phonics: 'f - a - n', article: 'a', emoji: '🪭', badgeBg: 'from-sky-100 to-blue-100 border-sky-300' },
+  { id: 'pan', word: 'pan', vowel: 'A', hindiMeaning: 'कड़ाही / पैन', phonics: 'p - a - n', article: 'a', emoji: '🍳', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'van', word: 'van', vowel: 'A', hindiMeaning: 'वैन गाड़ी', phonics: 'v - a - n', article: 'a', emoji: '🚐', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'cap', word: 'cap', vowel: 'A', hindiMeaning: 'कैप', phonics: 'c - a - p', article: 'a', emoji: '🧢', badgeBg: 'from-cyan-100 to-teal-100 border-cyan-300' },
+  { id: 'map', word: 'map', vowel: 'A', hindiMeaning: 'नक्शा', phonics: 'm - a - p', article: 'a', emoji: '🗺️', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
+  { id: 'bag', word: 'bag', vowel: 'A', hindiMeaning: 'बस्ता', phonics: 'b - a - g', article: 'a', emoji: '🎒', badgeBg: 'from-rose-100 to-pink-100 border-rose-300' },
 
-  // Vowel E
-  { id: 'bed', word: 'bed', vowel: 'E', hindiMeaning: 'बिस्तर', phonics: 'b - e - d', article: 'a', emoji: '🛏️', imageUrl: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&auto=format&fit=crop&q=80' },
-  { id: 'red', word: 'red', vowel: 'E', hindiMeaning: 'लाल रंग', phonics: 'r - e - d', article: 'a', emoji: '🔴', imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&auto=format&fit=crop&q=80' },
-  { id: 'pen', word: 'pen', vowel: 'E', hindiMeaning: 'कलम', phonics: 'p - e - n', article: 'a', emoji: '🖊️', imageUrl: 'https://images.unsplash.com/photo-1585336261026-77cc7c44415e?w=400&auto=format&fit=crop&q=80' },
-  { id: 'hen', word: 'hen', vowel: 'E', hindiMeaning: 'मुर्गी', phonics: 'h - e - n', article: 'a', emoji: '🐔', imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400&auto=format&fit=crop&q=80' },
-  { id: 'net', word: 'net', vowel: 'E', hindiMeaning: 'जाल', phonics: 'n - e - t', article: 'a', emoji: '🥅', imageUrl: 'https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=400&auto=format&fit=crop&q=80' },
-  { id: 'jet', word: 'jet', vowel: 'E', hindiMeaning: 'जेट विमान', phonics: 'j - e - t', article: 'a', emoji: '✈️', imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&auto=format&fit=crop&q=80' },
-  { id: 'leg', word: 'leg', vowel: 'E', hindiMeaning: 'टांग / पैर', phonics: 'l - e - g', article: 'a', emoji: '🦵', imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&auto=format&fit=crop&q=80' },
-  { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', article: 'a', emoji: '🕸️', imageUrl: 'https://images.unsplash.com/photo-1520699049698-acd2fccb8cc8?w=400&auto=format&fit=crop&q=80' },
+  // --- VOWEL E ---
+  { id: 'bed', word: 'bed', vowel: 'E', hindiMeaning: 'बिस्तर', phonics: 'b - e - d', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'red', word: 'red', vowel: 'E', hindiMeaning: 'लाल रंग', phonics: 'r - e - d', article: 'a', emoji: '🔴', badgeBg: 'from-red-100 to-rose-100 border-red-300' },
+  { id: 'pen', word: 'pen', vowel: 'E', hindiMeaning: 'कलम', phonics: 'p - e - n', article: 'a', emoji: '🖊️', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
+  { id: 'hen', word: 'hen', vowel: 'E', hindiMeaning: 'मुर्गी', phonics: 'h - e - n', article: 'a', emoji: '🐔', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'net', word: 'net', vowel: 'E', hindiMeaning: 'जाल', phonics: 'n - e - t', article: 'a', emoji: '🥅', badgeBg: 'from-teal-100 to-emerald-100 border-teal-300' },
+  { id: 'jet', word: 'jet', vowel: 'E', hindiMeaning: 'जेट विमान', phonics: 'j - e - t', article: 'a', emoji: '✈️', badgeBg: 'from-sky-100 to-indigo-100 border-sky-300' },
+  { id: 'leg', word: 'leg', vowel: 'E', hindiMeaning: 'टांग / पैर', phonics: 'l - e - g', article: 'a', emoji: '🦵', badgeBg: 'from-orange-100 to-amber-100 border-orange-300' },
+  { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
 
-  // Vowel I
-  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️', imageUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&auto=format&fit=crop&q=80' },
-  { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', article: 'a', emoji: '📍', imageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&auto=format&fit=crop&q=80' },
-  { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', article: 'a', emoji: '🥫', imageUrl: 'https://images.unsplash.com/photo-1584559582128-b8be739912e1?w=400&auto=format&fit=crop&q=80' },
-  { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', article: 'a', emoji: '👄', imageUrl: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&auto=format&fit=crop&q=80' },
-  { id: 'zip', word: 'zip', vowel: 'I', hindiMeaning: 'चेन / ज़िप', phonics: 'z - i - p', article: 'a', emoji: '🤐', imageUrl: 'https://images.unsplash.com/photo-1528458909336-e7a0adfed0a5?w=400&auto=format&fit=crop&q=80' },
-  { id: 'pig', word: 'pig', vowel: 'I', hindiMeaning: 'सुअर', phonics: 'p - i - g', article: 'a', emoji: '🐷', imageUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&auto=format&fit=crop&q=80' },
-  { id: 'wig', word: 'wig', vowel: 'I', hindiMeaning: 'नकली बाल', phonics: 'w - i - g', article: 'a', emoji: '💇', imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&auto=format&fit=crop&q=80' },
-  { id: 'lid', word: 'lid', vowel: 'I', hindiMeaning: 'ढक्कन', phonics: 'l - i - d', article: 'a', emoji: '🫙', imageUrl: 'https://images.unsplash.com/photo-1584990347449-399a0a03006d?w=400&auto=format&fit=crop&q=80' },
-  { id: 'six', word: 'six', vowel: 'I', hindiMeaning: 'छह (६)', phonics: 's - i - x', article: 'a', emoji: '6️⃣', imageUrl: 'https://images.unsplash.com/photo-1568832359672-e36cf5d74f54?w=400&auto=format&fit=crop&q=80' },
+  // --- VOWEL I ---
+  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
+  { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
+  { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
+  { id: 'zip', word: 'zip', vowel: 'I', hindiMeaning: 'चेन / ज़िप', phonics: 'z - i - p', article: 'a', emoji: '🤐', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'pig', word: 'pig', vowel: 'I', hindiMeaning: 'सुअर', phonics: 'p - i - g', article: 'a', emoji: '🐷', badgeBg: 'from-pink-100 to-purple-100 border-pink-300' },
+  { id: 'wig', word: 'wig', vowel: 'I', hindiMeaning: 'नकली बाल', phonics: 'w - i - g', article: 'a', emoji: '💇', badgeBg: 'from-purple-100 to-indigo-100 border-purple-300' },
+  { id: 'lid', word: 'lid', vowel: 'I', hindiMeaning: 'ढक्कन', phonics: 'l - i - d', article: 'a', emoji: '🫙', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
+  { id: 'six', word: 'six', vowel: 'I', hindiMeaning: 'छह (६)', phonics: 's - i - x', article: 'a', emoji: '6️⃣', badgeBg: 'from-blue-100 to-sky-100 border-blue-300' },
 
-  // Vowel O
-  { id: 'dog', word: 'dog', vowel: 'O', hindiMeaning: 'कुत्ता', phonics: 'd - o - g', article: 'a', emoji: '🐶', imageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&auto=format&fit=crop&q=80' },
-  { id: 'log', word: 'log', vowel: 'O', hindiMeaning: 'लकड़ी का लट्ठा', phonics: 'l - o - g', article: 'a', emoji: '🪵', imageUrl: 'https://images.unsplash.com/photo-1520114878144-6123749968dd?w=400&auto=format&fit=crop&q=80' },
-  { id: 'pot', word: 'pot', vowel: 'O', hindiMeaning: 'गमला / बर्तन', phonics: 'p - o - t', article: 'a', emoji: '🪴', imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&auto=format&fit=crop&q=80' },
-  { id: 'cot', word: 'cot', vowel: 'O', hindiMeaning: 'खटिया / पालना', phonics: 'c - o - t', article: 'a', emoji: '🛏️', imageUrl: 'https://images.unsplash.com/photo-1540518614846-7ede433c4550?w=400&auto=format&fit=crop&q=80' },
-  { id: 'box', word: 'box', vowel: 'O', hindiMeaning: 'डिब्बा', phonics: 'b - o - x', article: 'a', emoji: '📦', imageUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=400&auto=format&fit=crop&q=80' },
-  { id: 'fox', word: 'fox', vowel: 'O', hindiMeaning: 'लोमड़ी', phonics: 'f - o - x', article: 'a', emoji: '🦊', imageUrl: 'https://images.unsplash.com/photo-1516934024742-b461fba47600?w=400&auto=format&fit=crop&q=80' },
-  { id: 'top', word: 'top', vowel: 'O', hindiMeaning: 'लट्टू', phonics: 't - o - p', article: 'a', emoji: '🪀', imageUrl: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&auto=format&fit=crop&q=80' },
-  { id: 'mop', word: 'mop', vowel: 'O', hindiMeaning: 'पोछा', phonics: 'm - o - p', article: 'a', emoji: '🧹', imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&auto=format&fit=crop&q=80' },
-  { id: 'toy', word: 'toy', vowel: 'O', hindiMeaning: 'खिलौना', phonics: 't - o - y', article: 'a', emoji: '🧸', imageUrl: 'https://images.unsplash.com/photo-1558877385-81a1c7e67d72?w=400&auto=format&fit=crop&q=80' },
+  // --- VOWEL O ---
+  { id: 'dog', word: 'dog', vowel: 'O', hindiMeaning: 'कुत्ता', phonics: 'd - o - g', article: 'a', emoji: '🐶', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'log', word: 'log', vowel: 'O', hindiMeaning: 'लकड़ी का लट्ठा', phonics: 'l - o - g', article: 'a', emoji: '🪵', badgeBg: 'from-amber-100 to-stone-100 border-amber-300' },
+  { id: 'pot', word: 'pot', vowel: 'O', hindiMeaning: 'गमला / बर्तन', phonics: 'p - o - t', article: 'a', emoji: '🪴', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
+  { id: 'cot', word: 'cot', vowel: 'O', hindiMeaning: 'खटिया / पालना', phonics: 'c - o - t', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'box', word: 'box', vowel: 'O', hindiMeaning: 'डिब्बा', phonics: 'b - o - x', article: 'a', emoji: '📦', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'fox', word: 'fox', vowel: 'O', hindiMeaning: 'लोमड़ी', phonics: 'f - o - x', article: 'a', emoji: '🦊', badgeBg: 'from-orange-100 to-red-100 border-orange-300' },
+  { id: 'top', word: 'top', vowel: 'O', hindiMeaning: 'लट्टू', phonics: 't - o - p', article: 'a', emoji: '🪀', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
+  { id: 'mop', word: 'mop', vowel: 'O', hindiMeaning: 'पोछा', phonics: 'm - o - p', article: 'a', emoji: '🧹', badgeBg: 'from-cyan-100 to-blue-100 border-cyan-300' },
+  { id: 'toy', word: 'toy', vowel: 'O', hindiMeaning: 'खिलौना', phonics: 't - o - y', article: 'a', emoji: '🧸', badgeBg: 'from-rose-100 to-amber-100 border-rose-300' },
 
-  // Vowel U
-  { id: 'sun', word: 'sun', vowel: 'U', hindiMeaning: 'सूरज', phonics: 's - u - n', article: 'a', emoji: '☀️', imageUrl: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?w=400&auto=format&fit=crop&q=80' },
-  { id: 'bun', word: 'bun', vowel: 'U', hindiMeaning: 'बन रोटी', phonics: 'b - u - n', article: 'a', emoji: '🍔', imageUrl: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400&auto=format&fit=crop&q=80' },
-  { id: 'cup', word: 'cup', vowel: 'U', hindiMeaning: 'प्याला / कप', phonics: 'c - u - p', article: 'a', emoji: '☕', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80' },
-  { id: 'pup', word: 'pup', vowel: 'U', hindiMeaning: 'कुत्ते का पिल्ला', phonics: 'p - u - p', article: 'a', emoji: '🐶', imageUrl: 'https://images.unsplash.com/photo-1591160690555-5debfba289f0?w=400&auto=format&fit=crop&q=80' },
-  { id: 'tub', word: 'tub', vowel: 'U', hindiMeaning: 'टब', phonics: 't - u - b', article: 'a', emoji: '🛁', imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&auto=format&fit=crop&q=80' },
-  { id: 'bus', word: 'bus', vowel: 'U', hindiMeaning: 'बस', phonics: 'b - u - s', article: 'a', emoji: '🚌', imageUrl: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400&auto=format&fit=crop&q=80' },
-  { id: 'hut', word: 'hut', vowel: 'U', hindiMeaning: 'झोपड़ी', phonics: 'h - u - t', article: 'a', emoji: '🛖', imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400&auto=format&fit=crop&q=80' },
-  { id: 'nut', word: 'nut', vowel: 'U', hindiMeaning: 'अखरोट / मूंगफली', phonics: 'n - u - t', article: 'a', emoji: '🥜', imageUrl: 'https://images.unsplash.com/photo-1508736705847-9ca397ce7a40?w=400&auto=format&fit=crop&q=80' },
-  { id: 'bug', word: 'bug', vowel: 'U', hindiMeaning: 'कीड़ा', phonics: 'b - u - g', article: 'a', emoji: '🐞', imageUrl: 'https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=400&auto=format&fit=crop&q=80' },
-  { id: 'jug', word: 'jug', vowel: 'U', hindiMeaning: 'जग', phonics: 'j - u - g', article: 'a', emoji: '🫖', imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&auto=format&fit=crop&q=80' },
-  { id: 'mug', word: 'mug', vowel: 'U', hindiMeaning: 'मग / प्याला', phonics: 'm - u - g', article: 'a', emoji: '☕', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80' }
+  // --- VOWEL U ---
+  { id: 'sun', word: 'sun', vowel: 'U', hindiMeaning: 'सूरज', phonics: 's - u - n', article: 'a', emoji: '☀️', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'bun', word: 'bun', vowel: 'U', hindiMeaning: 'बन रोटी', phonics: 'b - u - n', article: 'a', emoji: '🍔', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'cup', word: 'cup', vowel: 'U', hindiMeaning: 'प्याला / कप', phonics: 'c - u - p', article: 'a', emoji: '☕', badgeBg: 'from-orange-100 to-yellow-100 border-orange-300' },
+  { id: 'pup', word: 'pup', vowel: 'U', hindiMeaning: 'कुत्ते का पिल्ला', phonics: 'p - u - p', article: 'a', emoji: '🐶', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'tub', word: 'tub', vowel: 'U', hindiMeaning: 'टब', phonics: 't - u - b', article: 'a', emoji: '🛁', badgeBg: 'from-sky-100 to-cyan-100 border-sky-300' },
+  { id: 'bus', word: 'bus', vowel: 'U', hindiMeaning: 'बस', phonics: 'b - u - s', article: 'a', emoji: '🚌', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'hut', word: 'hut', vowel: 'U', hindiMeaning: 'झोपड़ी', phonics: 'h - u - t', article: 'a', emoji: '🛖', badgeBg: 'from-stone-100 to-amber-100 border-stone-300' },
+  { id: 'nut', word: 'nut', vowel: 'U', hindiMeaning: 'अखरोट / मूंगफली', phonics: 'n - u - t', article: 'a', emoji: '🥜', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'bug', word: 'bug', vowel: 'U', hindiMeaning: 'कीड़ा (लेडीबग)', phonics: 'b - u - g', article: 'a', emoji: '🐞', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
+  { id: 'jug', word: 'jug', vowel: 'U', hindiMeaning: 'जग', phonics: 'j - u - g', article: 'a', emoji: '🫖', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
+  { id: 'mug', word: 'mug', vowel: 'U', hindiMeaning: 'मग / प्याला', phonics: 'm - u - g', article: 'a', emoji: '☕', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' }
 ];
 
 const VOWEL_OPTIONS: Array<'A' | 'E' | 'I' | 'O' | 'U'> = ['A', 'E', 'I', 'O', 'U'];
@@ -911,7 +911,7 @@ export default function EnglishAlphabetLab() {
       )}
 
       {/* ============================================================== */}
-      {/* SECTION 3: CVC WORDS (LEARN & PLAY GAME)                       */}
+      {/* SECTION 3: CVC WORDS (100% RELIABLE FLASHCARDS & QUIZ)         */}
       {/* ============================================================== */}
       {section === 'cvc' && (
         <div className="space-y-4">
@@ -927,7 +927,7 @@ export default function EnglishAlphabetLab() {
                   </div>
                   <h3 className="text-xl font-black text-slate-900 mb-1">शब्द सीखो (Learn CVC)</h3>
                   <p className="text-xs text-slate-600 mb-5 leading-relaxed">
-                    स्वर (Vowel) चुनें: <strong>A, E, I, O, U</strong>। हर शब्द की असली तस्वीर, फोनिक्स स्पेलिंग व उच्चारण एक-एक करके देखें।
+                    स्वर (Vowel) चुनें: <strong>A, E, I, O, U</strong>। हर शब्द की स्पष्ट सचित्र पहचान, फोनिक्स स्पेलिंग व उच्चारण एक-एक करके देखें।
                   </p>
                 </div>
 
@@ -1024,15 +1024,15 @@ export default function EnglishAlphabetLab() {
                 </span>
               </div>
 
+              {/* High-Contrast Vector Flashcard */}
               <div className="w-full max-w-md bg-stone-50 border-2 border-teal-300 rounded-3xl p-4 text-center shadow-inner flex flex-col items-center mb-5">
-                <div className="w-full h-52 md:h-56 rounded-2xl overflow-hidden mb-3 border border-teal-200 shadow relative bg-white flex items-center justify-center">
-                  <img
-                    src={currentCvcWord.imageUrl}
-                    alt={currentCvcWord.word}
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-2 right-2 text-2xl bg-white/85 p-1 rounded-xl shadow-sm">
+                
+                <div className={`w-full h-56 md:h-64 rounded-2xl mb-3 border-2 shadow-sm bg-gradient-to-br ${currentCvcWord.badgeBg} flex flex-col items-center justify-center relative overflow-hidden`}>
+                  <span className="text-8xl md:text-9xl drop-shadow-md select-none transform transition-transform hover:scale-110 duration-200">
                     {currentCvcWord.emoji}
+                  </span>
+                  <span className="mt-2 text-xs font-black uppercase tracking-wider text-slate-700/80 bg-white/70 px-3 py-0.5 rounded-full backdrop-blur-sm border border-slate-300/40">
+                    {currentCvcWord.article} {currentCvcWord.word}
                   </span>
                 </div>
 
@@ -1102,14 +1102,11 @@ export default function EnglishAlphabetLab() {
                 </span>
               </div>
 
+              {/* Challenge Visual Card */}
               <div className="w-full max-w-md bg-stone-50 border-2 border-indigo-200 rounded-3xl p-4 text-center shadow-inner flex flex-col items-center mb-4">
-                <div className="w-full h-52 md:h-56 rounded-2xl overflow-hidden mb-3 border border-indigo-200 shadow relative bg-white flex items-center justify-center">
-                  <img
-                    src={cvcQuizList[cvcQuizIndex].target.imageUrl}
-                    alt="Identify CVC"
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-2 right-2 text-2xl bg-white/80 p-1.5 rounded-xl shadow-sm">
+                
+                <div className={`w-full h-56 md:h-64 rounded-2xl mb-3 border-2 shadow-sm bg-gradient-to-br ${cvcQuizList[cvcQuizIndex].target.badgeBg} flex flex-col items-center justify-center relative overflow-hidden`}>
+                  <span className="text-8xl md:text-9xl drop-shadow-md select-none animate-pulse">
                     {cvcQuizList[cvcQuizIndex].target.emoji}
                   </span>
                 </div>
