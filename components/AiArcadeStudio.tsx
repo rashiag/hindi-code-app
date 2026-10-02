@@ -9,14 +9,14 @@ import {
 } from 'lucide-react';
 import HindiQuickDraw from '@/components/HindiQuickDraw';
 import ClusteringLab from '@/components/ClusteringLab';
+import TaraBittuDoctorLab from '@/components/TaraBittuDoctorLab';
 
 // TensorFlow.js & Official MobileNet + KNN stack
 import * as tf from '@tensorflow/tfjs';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 
-type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact' | 'level5_cluster';
-
+type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact' | 'level5_cluster' | 'level6_doctor';
 interface QuizQuestion {
   id: string;
   name: string;
