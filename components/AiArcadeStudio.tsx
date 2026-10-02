@@ -8,13 +8,14 @@ import {
   RefreshCw, Scan, Loader2, Plus, Trash2, Edit3, X
 } from 'lucide-react';
 import HindiQuickDraw from '@/components/HindiQuickDraw';
+import ClusteringLab from '@/components/ClusteringLab';
 
 // TensorFlow.js & Official MobileNet + KNN stack
 import * as tf from '@tensorflow/tfjs';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 
-type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact';
+type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact' | 'level5_cluster';
 
 interface QuizQuestion {
   id: string;
@@ -466,7 +467,6 @@ export function AiArcadeStudio() {
     playTone('pop');
 
     try {
-      // Create fresh classifier
       classifierRef.current = knnClassifier.create();
 
       for (let cIdx = 0; cIdx < classesList.length; cIdx++) {
@@ -653,12 +653,13 @@ export function AiArcadeStudio() {
               {activeLevel === 'level2_trainer' && 'Level 2: कस्टम वर्ग व Grad-CAM'}
               {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न (Quick Draw)'}
               {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
+              {activeLevel === 'level5_cluster' && 'Level 5: अनसुपरवाइज्ड क्लस्टरिंग'}
             </span>
           </div>
         </div>
 
-        {/* 4-Stage Roadmap */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-5">
+        {/* 5-Stage Roadmap */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-5">
           <button
             onClick={() => { stopAllAudio(); setActiveLevel('level1'); playTone('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
@@ -706,6 +707,18 @@ export function AiArcadeStudio() {
             <span className="text-[10px] font-black opacity-80 block">चरण ४ (LEVEL 4)</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
               🧐 सच या कल्पना?
+            </span>
+          </button>
+
+          <button
+            onClick={() => { stopAllAudio(); setActiveLevel('level5_cluster'); playTone('pop'); }}
+            className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+              activeLevel === 'level5_cluster' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-black opacity-80 block">चरण ५ (LEVEL 5)</span>
+            <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
+              🧲 क्लस्टरिंग (K-Means)
             </span>
           </button>
         </div>
@@ -1213,6 +1226,13 @@ export function AiArcadeStudio() {
                 🔍 सबक: AI कई बार गलत जानकारियाँ भी आत्मविश्वास से बनाता है (Hallucination)। इसलिए हमेशा जाँच (Fact-Check) करें!
               </div>
             </div>
+          </div>
+        )}
+
+        {/* LEVEL 5: Unsupervised Clustering (K-Means) */}
+        {activeLevel === 'level5_cluster' && (
+          <div className="w-full">
+            <ClusteringLab />
           </div>
         )}
 
