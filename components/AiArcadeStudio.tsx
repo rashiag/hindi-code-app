@@ -17,6 +17,7 @@ import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 
 type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'level4_fact' | 'level5_cluster' | 'level6_doctor';
+
 interface QuizQuestion {
   id: string;
   name: string;
@@ -654,12 +655,13 @@ export function AiArcadeStudio() {
               {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न (Quick Draw)'}
               {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
               {activeLevel === 'level5_cluster' && 'Level 5: अनसुपरवाइज्ड क्लस्टरिंग'}
+              {activeLevel === 'level6_doctor' && 'Level 6: डॉक्टर का क्लीनिक (Accuracy)'}
             </span>
           </div>
         </div>
 
-        {/* 5-Stage Roadmap */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-5">
+        {/* 6-Stage Roadmap Navigation */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mt-5">
           <button
             onClick={() => { stopAllAudio(); setActiveLevel('level1'); playTone('pop'); }}
             className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
@@ -718,7 +720,19 @@ export function AiArcadeStudio() {
           >
             <span className="text-[10px] font-black opacity-80 block">चरण ५ (LEVEL 5)</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🧲 क्लस्टरिंग (K-Means)
+              🧲 क्लस्टरिंग
+            </span>
+          </button>
+
+          <button
+            onClick={() => { stopAllAudio(); setActiveLevel('level6_doctor'); playTone('pop'); }}
+            className={`p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+              activeLevel === 'level6_doctor' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
+            }`}
+          >
+            <span className="text-[10px] font-black opacity-80 block">चरण ६ (LEVEL 6)</span>
+            <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
+              🩺 डॉक्टर क्लीनिक
             </span>
           </button>
         </div>
@@ -1233,6 +1247,13 @@ export function AiArcadeStudio() {
         {activeLevel === 'level5_cluster' && (
           <div className="w-full">
             <ClusteringLab />
+          </div>
+        )}
+
+        {/* LEVEL 6: Tara & Bittu Doctor Clinic (Accuracy & Confusion Matrix) */}
+        {activeLevel === 'level6_doctor' && (
+          <div className="w-full">
+            <TaraBittuDoctorLab />
           </div>
         )}
 
