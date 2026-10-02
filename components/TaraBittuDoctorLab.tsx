@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Volume2, VolumeX, ChevronLeft, ChevronRight, Play, 
-  RotateCcw, Award, CheckCircle2, AlertTriangle, ShieldCheck, HeartPulse
+  Volume2, VolumeX, ChevronLeft, ChevronRight, RotateCcw
 } from 'lucide-react';
 
 interface CaseStudy {
@@ -29,19 +28,29 @@ const TEN_PATIENT_CASES: CaseStudy[] = [
   { id: 10, reportTypeEn: 'Bacterial Throat Infection', reportTypeHi: 'गले में जीवाणु संक्रमण', icon: '🔬', bittuPrediction: true, doctorDecision: true, classification: 'TP' },
 ];
 
-export default function TaraBittuDoctorLab() {
+export default function TaraBittuDoctorLab({ initialLang = 'hi' }: { initialLang?: 'en' | 'hi' }) {
   const [mode, setMode] = useState<'story' | 'matrix' | 'game' | 'results'>('story');
-  const [currentPage, setCurrentPage] = useState<number>(53); // 53 to 61
-  const [currentLang, setCurrentLang] = useState<'en' | 'hi'>('hi');
+  const [currentPage, setCurrentPage] = useState<number>(53);
+  const [currentLang, setCurrentLang] = useState<'en' | 'hi'>(initialLang);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  // Sync with parent language change if provided
+  useEffect(() => {
+    setCurrentLang(initialLang);
+  }, [initialLang]);
 
   // Game States
   const [caseIdx, setCaseIdx] = useState<number>(0);
   const [counts, setCounts] = useState({ TP: 0, TN: 0, FP: 0, FN: 0 });
   const [lastFeedback, setLastFeedback] = useState<{ isCorrect: boolean; textEn: string; textHi: string } | null>(null);
 
-  // Audio Context for Sound Effects
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const stopAudio = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
 
   const playTone = (type: 'correct' | 'wrong' | 'click' | 'fanfare') => {
     if (isMuted || typeof window === 'undefined') return;
@@ -166,30 +175,47 @@ export default function TaraBittuDoctorLab() {
     }
   };
 
+  // Only auto-speak when on Storybook mode
   useEffect(() => {
     if (mode === 'story' && PAGE_SCRIPTS[currentPage]) {
       const script = PAGE_SCRIPTS[currentPage];
       speak(currentLang === 'hi' ? script.hi : script.en, script.speaker);
+    } else {
+      stopAudio();
     }
   }, [currentPage, mode, currentLang]);
 
+  // Clean up speech synthesis when component unmounts
+  useEffect(() => {
+    return () => {
+      stopAudio();
+    };
+  }, []);
+
+  const switchMode = (newMode: 'story' | 'matrix' | 'game' | 'results') => {
+    stopAudio();
+    playTone('click');
+    setMode(newMode);
+  };
+
   const handleNextPage = () => {
+    stopAudio();
     playTone('click');
     if (currentPage < 61) {
       setCurrentPage((prev) => prev + 1);
     } else {
-      setMode('game');
+      switchMode('game');
     }
   };
 
   const handlePrevPage = () => {
+    stopAudio();
     playTone('click');
     if (currentPage > 53) {
       setCurrentPage((prev) => prev - 1);
     }
   };
 
-  // Game Logic
   const handleAnswer = (chosen: 'TP' | 'TN' | 'FP' | 'FN') => {
     const currentCase = TEN_PATIENT_CASES[caseIdx];
     const isCorrect = chosen === currentCase.classification;
@@ -218,6 +244,7 @@ export default function TaraBittuDoctorLab() {
       if (caseIdx + 1 < TEN_PATIENT_CASES.length) {
         setCaseIdx((prev) => prev + 1);
       } else {
+        stopAudio();
         setMode('results');
         playTone('fanfare');
         speak(currentLang === 'hi' ? 'शाबाश! आपने क्लीनिक का मूल्यांकन पूरा कर लिया।' : 'Congratulations! You evaluated the clinic.', 'doctor');
@@ -250,7 +277,10 @@ export default function TaraBittuDoctorLab() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={() => {
+              if (!isMuted) stopAudio();
+              setIsMuted(!isMuted);
+            }}
             className="p-2 bg-white/20 hover:bg-white/30 rounded-xl text-white transition cursor-pointer"
             title={isMuted ? 'Unmute' : 'Mute'}
           >
@@ -259,7 +289,7 @@ export default function TaraBittuDoctorLab() {
 
           <div className="flex bg-white/20 p-1 rounded-xl backdrop-blur gap-1">
             <button
-              onClick={() => setCurrentLang('hi')}
+              onClick={() => { stopAudio(); setCurrentLang('hi'); }}
               className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
                 currentLang === 'hi' ? 'bg-white text-blue-950 shadow' : 'text-white'
               }`}
@@ -267,7 +297,7 @@ export default function TaraBittuDoctorLab() {
               हिंदी
             </button>
             <button
-              onClick={() => setCurrentLang('en')}
+              onClick={() => { stopAudio(); setCurrentLang('en'); }}
               className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
                 currentLang === 'en' ? 'bg-white text-blue-950 shadow' : 'text-white'
               }`}
@@ -281,7 +311,7 @@ export default function TaraBittuDoctorLab() {
       {/* Mode Navigation Tabs */}
       <div className="flex gap-2 mb-4 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
         <button
-          onClick={() => { setMode('story'); playTone('click'); }}
+          onClick={() => switchMode('story')}
           className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
             mode === 'story' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
@@ -289,7 +319,7 @@ export default function TaraBittuDoctorLab() {
           📖 {currentLang === 'hi' ? 'सचित्र कहानी (Storybook)' : 'Storybook'}
         </button>
         <button
-          onClick={() => { setMode('matrix'); playTone('click'); }}
+          onClick={() => switchMode('matrix')}
           className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
             mode === 'matrix' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
@@ -297,7 +327,7 @@ export default function TaraBittuDoctorLab() {
           🔲 {currentLang === 'hi' ? 'कंफ्यूजन मैट्रिक्स (4 खाने)' : 'Confusion Matrix'}
         </button>
         <button
-          onClick={() => { setMode('game'); playTone('click'); }}
+          onClick={() => switchMode('game')}
           className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
             mode === 'game' || mode === 'results' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
@@ -325,7 +355,7 @@ export default function TaraBittuDoctorLab() {
             </button>
           </div>
 
-          {/* Book Image -> Loads PNG files! */}
+          {/* Book Image */}
           <div className="w-full max-w-md aspect-[3/4] bg-slate-50 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-md relative mb-4 flex items-center justify-center">
             <img 
               src={`/story/${currentPage}.png`} 
@@ -445,7 +475,7 @@ export default function TaraBittuDoctorLab() {
           </div>
 
           <button
-            onClick={() => { setMode('game'); playTone('click'); }}
+            onClick={() => switchMode('game')}
             className="py-3 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-2"
           >
             <span>🎮 {currentLang === 'hi' ? '१० मरीजों की परीक्षा लें (Start Game)' : 'Start 10 Patient Challenge'}</span>
@@ -553,7 +583,7 @@ export default function TaraBittuDoctorLab() {
         </div>
       )}
 
-      {/* VIEW 4: RESULTS REPORT CARD & ACCURACY CALCULATION */}
+      {/* VIEW 4: RESULTS REPORT CARD */}
       {mode === 'results' && (
         <div className="bg-white border-2 border-blue-200 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col items-center text-center max-w-lg mx-auto">
           <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center text-3xl mb-3 shadow-lg">
@@ -605,6 +635,7 @@ export default function TaraBittuDoctorLab() {
 
           <button
             onClick={() => {
+              stopAudio();
               setCaseIdx(0);
               setCounts({ TP: 0, TN: 0, FP: 0, FN: 0 });
               setMode('story');

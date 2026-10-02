@@ -5,7 +5,7 @@ import {
   Sparkles, Brain, CheckCircle2, XCircle, RotateCcw, ArrowRight, 
   Eye, Lightbulb, ShieldAlert, Award, Bot, Cpu, Volume2, Trophy, 
   Star, Camera, Play, Check, Upload, Layers, Image as ImageIcon, 
-  RefreshCw, Scan, Loader2, Plus, Trash2, Edit3, X
+  RefreshCw, Scan, Loader2, Plus, Trash2, Edit3, X, Globe
 } from 'lucide-react';
 import HindiQuickDraw from '@/components/HindiQuickDraw';
 import ClusteringLab from '@/components/ClusteringLab';
@@ -20,75 +20,100 @@ type AiLevel = 'level1' | 'level2_tray' | 'level2_trainer' | 'level3_draw' | 'le
 
 interface QuizQuestion {
   id: string;
-  name: string;
+  nameHi: string;
+  nameEn: string;
   emoji: string;
   isAi: boolean;
-  onCorrectText: string;
-  onWrongText: string;
-  audioPrompt: string;
+  onCorrectTextHi: string;
+  onCorrectTextEn: string;
+  onWrongTextHi: string;
+  onWrongTextEn: string;
+  audioPromptHi: string;
+  audioPromptEn: string;
 }
 
 const FIVE_QUESTIONS: QuizQuestion[] = [
   { 
     id: 'maps', 
-    name: 'Google Maps (रास्ता व ट्रैफिक)', 
+    nameHi: 'Google Maps (रास्ता व ट्रैफिक)', 
+    nameEn: 'Google Maps (Route & Traffic)',
     emoji: '🗺️', 
     isAi: true, 
-    onCorrectText: 'सही उत्तर! Maps लाइव ट्रैफिक डेटा और AI से सबसे तेज़ रास्ता खोजता है।', 
-    onWrongText: 'गलत उत्तर! Google Maps में AI का इस्तेमाल होता है। यह डेटा सीखकर रास्ता तय करता है।', 
-    audioPrompt: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?' 
+    onCorrectTextHi: 'सही उत्तर! Maps लाइव ट्रैफिक डेटा और AI से सबसे तेज़ रास्ता खोजता है।', 
+    onCorrectTextEn: 'Correct! Maps uses live traffic data and AI algorithms to find the fastest route.',
+    onWrongTextHi: 'गलत उत्तर! Google Maps में AI का इस्तेमाल होता है। यह डेटा सीखकर रास्ता तय करता है।', 
+    onWrongTextEn: 'Wrong! Google Maps does use AI to calculate the optimal route dynamically.',
+    audioPromptHi: 'गूगल मैप्स। क्या यह काम करने के लिए ए आई का इस्तेमाल करता है?',
+    audioPromptEn: 'Google Maps. Does it use AI to recommend routes?'
   },
   { 
     id: 'washing', 
-    name: 'वाशिंग मशीन (Washing Machine)', 
+    nameHi: 'वाशिंग मशीन (Washing Machine)', 
+    nameEn: 'Washing Machine',
     emoji: '🧺', 
     isAi: false, 
-    onCorrectText: 'सही उत्तर! इसमें पहले से तय मोटर टाइमर होते हैं। यह खुद सोचकर नया निर्णय नहीं लेती।', 
-    onWrongText: 'गलत उत्तर! साधारण वाशिंग मशीन में AI नहीं होता। यह सिर्फ पहले से तय टाइमर और मोटर से चलती है।', 
-    audioPrompt: 'वाशिंग मशीन। क्या इसमें ए आई है?' 
+    onCorrectTextHi: 'सही उत्तर! इसमें पहले से तय मोटर टाइमर होते हैं। यह खुद सोचकर नया निर्णय नहीं लेती।', 
+    onCorrectTextEn: 'Correct! It operates on pre-programmed electromechanical timers without AI learning.',
+    onWrongTextHi: 'गलत उत्तर! साधारण वाशिंग मशीन में AI नहीं होता। यह सिर्फ पहले से तय टाइमर और मोटर से चलती है।', 
+    onWrongTextEn: 'Wrong! Standard washing machines do not learn from experience; they run fixed programs.',
+    audioPromptHi: 'वाशिंग मशीन। क्या इसमें ए आई है?',
+    audioPromptEn: 'Washing machine. Does this standard appliance use AI?'
   },
   { 
     id: 'youtube', 
-    name: 'YouTube वीडियो सुझाव (Recommendations)', 
+    nameHi: 'YouTube वीडियो सुझाव (Recommendations)', 
+    nameEn: 'YouTube Recommendations',
     emoji: '📺', 
     isAi: true, 
-    onCorrectText: 'सही उत्तर! YouTube AI आपकी पसंद को समझकर वैसे ही नए वीडियो खोजकर सुझाता है।', 
-    onWrongText: 'गलत उत्तर! YouTube में AI होता है। यह आपकी पुरानी पसंद को देखकर नए वीडियो सुझाता है।', 
-    audioPrompt: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?' 
+    onCorrectTextHi: 'सही उत्तर! YouTube AI आपकी पसंद को समझकर वैसे ही नए वीडियो खोजकर सुझाता है।', 
+    onCorrectTextEn: 'Correct! YouTube recommender systems use deep neural networks to match your taste.',
+    onWrongTextHi: 'गलत उत्तर! YouTube में AI होता है। यह आपकी पुरानी पसंद को देखकर नए वीडियो सुझाता है।', 
+    onWrongTextEn: 'Wrong! YouTube heavily relies on machine learning models to suggest videos.',
+    audioPromptHi: 'यूट्यूब वीडियो सुझाव। क्या यह ए आई है?',
+    audioPromptEn: 'YouTube video recommendation. Is this powered by AI?'
   },
   { 
     id: 'lift', 
-    name: 'लिफ्ट का बटन (Elevator / Lift)', 
+    nameHi: 'लिफ्ट का बटन (Elevator / Lift)', 
+    nameEn: 'Elevator Button (Lift)',
     emoji: '🛗', 
     isAi: false, 
-    onCorrectText: 'सही उत्तर! लिफ्ट साधारण इलेक्ट्रिक स्विच और तय नियमों पर चलती है। इसमें AI नहीं होता।', 
-    onWrongText: 'गलत उत्तर! लिफ्ट में AI नहीं होता। यह साधारण स्विच और मोटर से काम करती है।', 
-    audioPrompt: 'लिफ्ट का बटन। क्या इसमें ए आई है?' 
+    onCorrectTextHi: 'सही उत्तर! लिफ्ट साधारण इलेक्ट्रिक स्विच और तय नियमों पर चलती है। इसमें AI नहीं होता।', 
+    onCorrectTextEn: 'Correct! Elevators run on rule-based electrical relay and logic circuits without AI.',
+    onWrongTextHi: 'गलत उत्तर! लिफ्ट में AI नहीं होता। यह साधारण स्विच और मोटर से काम करती है।', 
+    onWrongTextEn: 'Wrong! Elevators simply follow programmed rules; they do not learn or adapt.',
+    audioPromptHi: 'लिफ्ट का बटन। क्या इसमें ए आई है?',
+    audioPromptEn: 'Elevator call button. Does this involve AI?'
   },
   { 
     id: 'faceunlock', 
-    name: 'फोन का Face Unlock', 
+    nameHi: 'फोन का Face Unlock', 
+    nameEn: 'Smartphone Face Unlock',
     emoji: '📱', 
     isAi: true, 
-    onCorrectText: 'सही उत्तर! कैमरा आपके चेहरे के खास पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।', 
-    onWrongText: 'गलत उत्तर! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि आपका चेहरा पहचाना जा सके।', 
-    audioPrompt: 'फोन का फेस अनलॉक। क्या यह ए आई है?' 
+    onCorrectTextHi: 'सही उत्तर! कैमरा आपके चेहरे के खास पैटर्न्स को AI कंप्यूटर विज़न से पहचानता है।', 
+    onCorrectTextEn: 'Correct! Face unlock relies on computer vision and neural networks for recognition.',
+    onWrongTextHi: 'गलत उत्तर! Face Unlock में AI विज़न का इस्तेमाल होता है ताकि आपका चेहरा पहचाना जा सके।', 
+    onWrongTextEn: 'Wrong! Facial recognition is a classic machine learning computer vision application.',
+    audioPromptHi: 'फोन का फेस अनलॉक। क्या यह ए आई है?',
+    audioPromptEn: 'Phone Face Unlock. Is this computer vision AI?'
   }
 ];
 
 interface AnimalItem {
   id: string;
-  name: string;
+  nameHi: string;
+  nameEn: string;
   emoji: string;
   isDomestic: boolean;
 }
 
 const ALL_ANIMALS: AnimalItem[] = [
-  { id: 'dog', name: 'कुत्ता (Dog)', emoji: '🐶', isDomestic: true },
-  { id: 'cat', name: 'बिल्ली (Cat)', emoji: '🐱', isDomestic: true },
-  { id: 'cow', name: 'गाय (Cow)', emoji: '🐄', isDomestic: true },
-  { id: 'tiger', name: 'बाघ (Tiger)', emoji: '🐯', isDomestic: false },
-  { id: 'lion', name: 'शेर (Lion)', emoji: '🦁', isDomestic: false }
+  { id: 'dog', nameHi: 'कुत्ता (Dog)', nameEn: 'Dog', emoji: '🐶', isDomestic: true },
+  { id: 'cat', nameHi: 'बिल्ली (Cat)', nameEn: 'Cat', emoji: '🐱', isDomestic: true },
+  { id: 'cow', nameHi: 'गाय (Cow)', nameEn: 'Cow', emoji: '🐄', isDomestic: true },
+  { id: 'tiger', nameHi: 'बाघ (Tiger)', nameEn: 'Tiger', emoji: '🐯', isDomestic: false },
+  { id: 'lion', nameHi: 'शेर (Lion)', nameEn: 'Lion', emoji: '🦁', isDomestic: false }
 ];
 
 interface CustomClassItem {
@@ -99,6 +124,7 @@ interface CustomClassItem {
 
 export function AiArcadeStudio() {
   const [activeLevel, setActiveLevel] = useState<AiLevel>('level1');
+  const [lang, setLang] = useState<'hi' | 'en'>('hi');
 
   // Level 1 States
   const [currentIdx, setCurrentIdx] = useState<number>(0);
@@ -117,8 +143,8 @@ export function AiArcadeStudio() {
   const [cameraActive, setCameraActive] = useState<boolean>(false);
   
   const [classesList, setClassesList] = useState<CustomClassItem[]>([
-    { id: 'c1', name: 'Class 1: पेन (Pen)', images: [] },
-    { id: 'c2', name: 'Class 2: हाथ (Hand)', images: [] }
+    { id: 'c1', name: 'Class 1: Pen (पेन)', images: [] },
+    { id: 'c2', name: 'Class 2: Hand (हाथ)', images: [] }
   ]);
   
   const [isTrained, setIsTrained] = useState<boolean>(false);
@@ -138,23 +164,16 @@ export function AiArcadeStudio() {
   const classFileInputsRef = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const getSafeSpeechSynthesis = (): SpeechSynthesis | null => {
-    if (typeof window !== 'undefined' && (window as Window).speechSynthesis) {
-      return (window as Window).speechSynthesis;
-    }
-    return null;
-  };
-
   const stopAllAudio = () => {
     try {
-      const ss = getSafeSpeechSynthesis();
-      if (ss) ss.cancel();
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
     } catch (e) {}
   };
 
   const playTone = (type: 'correct' | 'wrong' | 'pop' | 'fanfare') => {
     if (typeof window === 'undefined') return;
-
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -211,22 +230,17 @@ export function AiArcadeStudio() {
     } catch (e) {}
   };
 
-  const speakHindi = (text: string) => {
-    const ss = getSafeSpeechSynthesis();
-    if (!ss || typeof window === 'undefined' || !window.SpeechSynthesisUtterance) return;
-
+  const speak = (text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
-      ss.cancel();
+      window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'hi-IN';
-      u.rate = 0.9;
-      ss.speak(u);
+      u.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+      u.rate = 0.92;
+      window.speechSynthesis.speak(u);
     } catch (e) {}
   };
 
-  // -------------------------------------------------------------
-  // INITIALIZE GOOGLE MOBILENET & KNN ENGINE
-  // -------------------------------------------------------------
   useEffect(() => {
     async function loadGoogleEngine() {
       if (typeof window === 'undefined') return;
@@ -247,15 +261,18 @@ export function AiArcadeStudio() {
 
   useEffect(() => {
     if (activeLevel === 'level1' && !feedback && !roundFinished) {
-      speakHindi(FIVE_QUESTIONS[currentIdx].audioPrompt);
+      const q = FIVE_QUESTIONS[currentIdx];
+      speak(lang === 'hi' ? q.audioPromptHi : q.audioPromptEn);
     }
-  }, [currentIdx, activeLevel, roundFinished, feedback]);
+  }, [currentIdx, activeLevel, roundFinished, feedback, lang]);
 
   const handleSelectAnswer = (userChoseAi: boolean) => {
     stopAllAudio();
     const currentQ = FIVE_QUESTIONS[currentIdx];
     const isAnswerCorrect = (userChoseAi === currentQ.isAi);
-    const feedbackString = isAnswerCorrect ? currentQ.onCorrectText : currentQ.onWrongText;
+    const feedbackString = isAnswerCorrect 
+      ? (lang === 'hi' ? currentQ.onCorrectTextHi : currentQ.onCorrectTextEn)
+      : (lang === 'hi' ? currentQ.onWrongTextHi : currentQ.onWrongTextEn);
 
     if (isAnswerCorrect) {
       playTone('correct');
@@ -270,7 +287,7 @@ export function AiArcadeStudio() {
     });
 
     setTimeout(() => {
-      speakHindi(feedbackString);
+      speak(feedbackString);
     }, 150);
   };
 
@@ -283,7 +300,7 @@ export function AiArcadeStudio() {
       setRoundFinished(true);
       playTone('fanfare');
       setTimeout(() => {
-        speakHindi(`राउंड पूरा हुआ! आपने पाँच में से ${score} अंक प्राप्त किए हैं।`);
+        speak(lang === 'hi' ? `राउंड पूरा हुआ! आपने पाँच में से ${score} अंक प्राप्त किए हैं।` : `Round finished! You scored ${score} out of 5.`);
       }, 250);
     } else {
       setCurrentIdx((prev) => prev + 1);
@@ -305,11 +322,11 @@ export function AiArcadeStudio() {
     if (asDomestic) {
       setTrainedDomestic((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
       setTrainedWild((prev) => prev.filter((id) => id !== animal.id));
-      speakHindi(`${animal.name.split(' ')[0]} को पालतू श्रेणी में जोड़ा गया`);
+      speak(lang === 'hi' ? `${animal.nameHi.split(' ')[0]} को पालतू श्रेणी में जोड़ा गया` : `${animal.nameEn} added to Domestic`);
     } else {
       setTrainedWild((prev) => [...prev.filter((id) => id !== animal.id), animal.id]);
       setTrainedDomestic((prev) => prev.filter((id) => id !== animal.id));
-      speakHindi(`${animal.name.split(' ')[0]} को जंगली श्रेणी में जोड़ा गया`);
+      speak(lang === 'hi' ? `${animal.nameHi.split(' ')[0]} को जंगली श्रेणी में जोड़ा गया` : `${animal.nameEn} added to Wild`);
     }
     setTestPrediction(null);
   };
@@ -320,34 +337,31 @@ export function AiArcadeStudio() {
     const hasWild = trainedWild.length > 0;
 
     if (!hasDomestic && !hasWild) {
-      const msg = 'कृपया पहले AI को ऊपर उदाहरण देकर सिखाएं!';
+      const msg = lang === 'hi' ? 'कृपया पहले AI को ऊपर उदाहरण देकर सिखाएं!' : 'Please train the model with examples first!';
       playTone('wrong');
       setTestPrediction(msg);
-      speakHindi(msg);
+      speak(msg);
       return;
     }
 
     if (trainedDomestic.includes('cow') || trainedDomestic.includes('dog')) {
-      const msg = 'AI का अनुमान: बकरी एक पालतू जानवर है!';
+      const msg = lang === 'hi' ? 'AI का अनुमान: बकरी एक पालतू जानवर है!' : 'AI prediction: Goat is a Domestic animal!';
       playTone('correct');
-      setTestPrediction(`✅ ${msg} (क्योंकि आपने गाय/कुत्ते से सिखाया)`);
-      speakHindi(msg);
+      setTestPrediction(`✅ ${msg} (${lang === 'hi' ? 'गाय/कुत्ते के प्रशिक्षण डेटा के आधार पर' : 'based on cow/dog training data'})`);
+      speak(msg);
     } else {
-      const msg = 'AI का गलत अनुमान: बकरी जंगली जानवर है!';
+      const msg = lang === 'hi' ? 'AI का गलत अनुमान: बकरी जंगली जानवर है!' : 'AI incorrect prediction: Goat is a Wild animal!';
       playTone('wrong');
-      setTestPrediction(`❌ ${msg} (क्योंकि आपने इसे सिर्फ जंगली जानवरों का डेटा दिया था!)`);
-      speakHindi(msg);
+      setTestPrediction(`❌ ${msg} (${lang === 'hi' ? 'क्योंकि इसे केवल जंगली जानवरों का डेटा दिया गया था!' : 'because only wild animal data was provided!'})`);
+      speak(msg);
     }
   };
 
-  // -------------------------------------------------------------
-  // DYNAMIC CLASSES MANAGEMENT (ADD, EDIT, DELETE CLASS & IMAGES)
-  // -------------------------------------------------------------
   const handleAddClass = () => {
     const newIdx = classesList.length + 1;
     const newClass: CustomClassItem = {
       id: `c${Date.now()}`,
-      name: `Class ${newIdx}: नई वस्तु`,
+      name: `Class ${newIdx}: ${lang === 'hi' ? 'नई वस्तु' : 'New Object'}`,
       images: []
     };
     setClassesList((prev) => [...prev, newClass]);
@@ -357,7 +371,7 @@ export function AiArcadeStudio() {
 
   const handleRemoveClass = (classId: string) => {
     if (classesList.length <= 2) {
-      alert('कम से कम २ वर्ग (Classes) होना आवश्यक है!');
+      alert(lang === 'hi' ? 'कम से कम २ वर्ग (Classes) होना आवश्यक है!' : 'At least 2 classes are required!');
       return;
     }
     setClassesList((prev) => prev.filter((c) => c.id !== classId));
@@ -397,7 +411,7 @@ export function AiArcadeStudio() {
         setCameraActive(true);
       }
     } catch (e) {
-      alert('कैमरा शुरू नहीं हो सका। आप फ़ाइल अपलोड (Upload) बटन से भी फोटो जोड़ सकते हैं!');
+      alert(lang === 'hi' ? 'कैमरा शुरू नहीं हो सका। आप फ़ाइल अपलोड से भी फोटो जोड़ सकते हैं!' : 'Could not access camera. You can also upload photos!');
     }
   };
 
@@ -449,18 +463,15 @@ export function AiArcadeStudio() {
     playTone('pop');
   };
 
-  // -------------------------------------------------------------
-  // SOLID PROMISE-BASED MOBILENET KNN TRAINING
-  // -------------------------------------------------------------
   const handleTrainLiveModel = async () => {
     const emptyClass = classesList.find((c) => c.images.length === 0);
     if (emptyClass) {
-      alert(`कृपया "${emptyClass.name}" में कम से कम १ फोटो जोड़ें!`);
+      alert(lang === 'hi' ? `कृपया "${emptyClass.name}" में कम से कम १ फोटो जोड़ें!` : `Please add at least 1 image to "${emptyClass.name}"!`);
       return;
     }
 
     if (!mobilenetModelRef.current) {
-      alert('MobileNet विज़न मॉडल लोड हो रहा है, कृपया २ सेकंड प्रतीक्षा करें...');
+      alert(lang === 'hi' ? 'MobileNet विज़न मॉडल लोड हो रहा है, कृपया २ सेकंड प्रतीक्षा करें...' : 'MobileNet vision model is still initializing, please wait...');
       return;
     }
 
@@ -492,17 +503,14 @@ export function AiArcadeStudio() {
       setIsTraining(false);
       setIsTrained(true);
       playTone('fanfare');
-      speakHindi('मॉडल तैयार है! अब लाइव डिटेक्शन चालू हो गया है।');
+      speak(lang === 'hi' ? 'मॉडल तैयार है! अब लाइव डिटेक्शन चालू हो गया है।' : 'Model trained successfully! Live classification active.');
     } catch (err) {
       console.error(err);
       setIsTraining(false);
-      alert('मॉडल ट्रेनिंग में त्रुटि हुई। कृपया पुनः प्रयास करें।');
+      alert('Training error. Please try again.');
     }
   };
 
-  // -------------------------------------------------------------
-  // REAL-TIME INFERENCE ACROSS N CLASSES + GRAD-CAM
-  // -------------------------------------------------------------
   const runInference = async (element: HTMLVideoElement | HTMLImageElement) => {
     if (!mobilenetModelRef.current || !classifierRef.current || classifierRef.current.getNumClasses() < 2) return;
 
@@ -528,12 +536,10 @@ export function AiArcadeStudio() {
       activation.dispose();
 
       if (showGradCam) {
-        computeAndDrawGradCam(sourceElementOrVideo(element));
+        computeAndDrawGradCam(element);
       }
     } catch (e) {}
   };
-
-  const sourceElementOrVideo = (el: HTMLVideoElement | HTMLImageElement): HTMLVideoElement | HTMLImageElement => el;
 
   useEffect(() => {
     if (!isTrained || testMode !== 'camera' || !cameraActive || !videoRef.current) return;
@@ -600,11 +606,11 @@ export function AiArcadeStudio() {
 
         if (weight > 0.22) {
           if (weight > 0.65) {
-            ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.85, weight)})`; // Red focus
+            ctx.fillStyle = `rgba(239, 68, 68, ${Math.min(0.85, weight)})`;
           } else if (weight > 0.45) {
-            ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.65, weight)})`;  // Yellow
+            ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.65, weight)})`;
           } else {
-            ctx.fillStyle = `rgba(34, 197, 94, ${Math.min(0.4, weight)})`;   // Green
+            ctx.fillStyle = `rgba(34, 197, 94, ${Math.min(0.4, weight)})`;
           }
           ctx.fillRect(x * cellW, y * cellH, cellW + 1, cellH + 1);
         }
@@ -617,8 +623,8 @@ export function AiArcadeStudio() {
       classifierRef.current.clearAllClasses();
     }
     setClassesList([
-      { id: 'c1', name: 'Class 1: पेन (Pen)', images: [] },
-      { id: 'c2', name: 'Class 2: हाथ (Hand)', images: [] }
+      { id: 'c1', name: `Class 1: ${lang === 'hi' ? 'पेन' : 'Pen'}`, images: [] },
+      { id: 'c2', name: `Class 2: ${lang === 'hi' ? 'हाथ' : 'Hand'}`, images: [] }
     ]);
     setIsTrained(false);
     setWinningClassName(null);
@@ -631,7 +637,7 @@ export function AiArcadeStudio() {
   return (
     <div className="max-w-5xl mx-auto p-3 md:p-6 font-sans select-none">
       
-      {/* Top Banner */}
+      {/* Top Banner with Bilingual Toggle */}
       <div className="bg-purple-50/80 p-4 md:p-6 rounded-3xl border border-purple-200 mb-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -639,24 +645,48 @@ export function AiArcadeStudio() {
               🤖
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-purple-950">AI खेलघर (Desi AI Arcade)</h1>
+              <h1 className="text-xl md:text-2xl font-black text-purple-950">
+                {lang === 'hi' ? 'AI खेलघर (Desi AI Arcade)' : 'AI Arcade (Desi AI Studio)'}
+              </h1>
               <p className="text-xs md:text-sm font-semibold text-purple-800">
                 Google MobileNet + Teachable Machine Engine (NEP 2020 Aligned)
               </p>
             </div>
           </div>
 
-          <div className="bg-white px-3 py-1.5 rounded-xl border border-purple-300 text-xs font-bold text-purple-900 shadow-sm flex items-center gap-2">
-            <span>मार्गदर्शक स्तर:</span>
-            <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-black">
-              {activeLevel === 'level1' && 'Level 1: पहचानो (५ प्रश्न)'}
-              {activeLevel === 'level2_tray' && 'Level 2: डेटा व ट्रेनिंग'}
-              {activeLevel === 'level2_trainer' && 'Level 2: कस्टम वर्ग व Grad-CAM'}
-              {activeLevel === 'level3_draw' && 'Level 3: पैटर्न व विज़न (Quick Draw)'}
-              {activeLevel === 'level4_fact' && 'Level 4: सच या कल्पना?'}
-              {activeLevel === 'level5_cluster' && 'Level 5: अनसुपरवाइज्ड क्लस्टरिंग'}
-              {activeLevel === 'level6_doctor' && 'Level 6: डॉक्टर का क्लीनिक (Accuracy)'}
-            </span>
+          <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <div className="flex bg-purple-200/60 p-1 rounded-2xl border border-purple-300">
+              <button
+                onClick={() => { stopAllAudio(); setLang('hi'); }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                  lang === 'hi' ? 'bg-purple-700 text-white shadow-sm' : 'text-purple-950 hover:bg-purple-200'
+                }`}
+              >
+                हिंदी
+              </button>
+              <button
+                onClick={() => { stopAllAudio(); setLang('en'); }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                  lang === 'en' ? 'bg-purple-700 text-white shadow-sm' : 'text-purple-950 hover:bg-purple-200'
+                }`}
+              >
+                English
+              </button>
+            </div>
+
+            <div className="hidden sm:flex bg-white px-3 py-1.5 rounded-xl border border-purple-300 text-xs font-bold text-purple-900 shadow-sm items-center gap-1.5">
+              <span>{lang === 'hi' ? 'स्तर:' : 'Level:'}</span>
+              <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-black">
+                {activeLevel === 'level1' && (lang === 'hi' ? 'Level 1: पहचानो (५ प्रश्न)' : 'Level 1: Spot AI (5 Questions)')}
+                {activeLevel === 'level2_tray' && (lang === 'hi' ? 'Level 2: डेटा व ट्रेनिंग' : 'Level 2: Data Tray')}
+                {activeLevel === 'level2_trainer' && (lang === 'hi' ? 'Level 2: कस्टम विज़न' : 'Level 2: Custom Vision')}
+                {activeLevel === 'level3_draw' && (lang === 'hi' ? 'Level 3: Quick Draw विज़न' : 'Level 3: Quick Draw Vision')}
+                {activeLevel === 'level4_fact' && (lang === 'hi' ? 'Level 4: सच या कल्पना?' : 'Level 4: Fact or Fiction')}
+                {activeLevel === 'level5_cluster' && (lang === 'hi' ? 'Level 5: अनसुपरवाइज्ड क्लस्टरिंग' : 'Level 5: K-Means Clustering')}
+                {activeLevel === 'level6_doctor' && (lang === 'hi' ? 'Level 6: डॉक्टर क्लीनिक (Accuracy)' : 'Level 6: Doctor\'s Clinic (Accuracy)')}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -668,9 +698,9 @@ export function AiArcadeStudio() {
               activeLevel === 'level1' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
           >
-            <span className="text-[10px] font-black opacity-80 block">चरण १ (LEVEL 1)</span>
+            <span className="text-[10px] font-black opacity-80 block">{lang === 'hi' ? 'चरण १ (LEVEL 1)' : 'LEVEL 1'}</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🔍 AI है या नहीं?
+              🔍 {lang === 'hi' ? 'AI है या नहीं?' : 'Is it AI?'}
             </span>
           </button>
 
@@ -682,9 +712,9 @@ export function AiArcadeStudio() {
                 : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
           >
-            <span className="text-[10px] font-black opacity-80 block">चरण २ (LEVEL 2)</span>
+            <span className="text-[10px] font-black opacity-80 block">{lang === 'hi' ? 'चरण २ (LEVEL 2)' : 'LEVEL 2'}</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🧪 AI को सिखाओ
+              🧪 {lang === 'hi' ? 'AI को सिखाओ' : 'Train the AI'}
             </span>
           </button>
 
@@ -694,9 +724,9 @@ export function AiArcadeStudio() {
               activeLevel === 'level3_draw' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
           >
-            <span className="text-[10px] font-black opacity-80 block">चरण ३ (LEVEL 3)</span>
+            <span className="text-[10px] font-black opacity-80 block">{lang === 'hi' ? 'चरण ३ (LEVEL 3)' : 'LEVEL 3'}</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🎨 जल्दी बनाओ AI
+              🎨 {lang === 'hi' ? 'जल्दी बनाओ AI' : 'Quick Draw AI'}
             </span>
           </button>
 
@@ -706,9 +736,9 @@ export function AiArcadeStudio() {
               activeLevel === 'level4_fact' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
           >
-            <span className="text-[10px] font-black opacity-80 block">चरण ४ (LEVEL 4)</span>
+            <span className="text-[10px] font-black opacity-80 block">{lang === 'hi' ? 'चरण ४ (LEVEL 4)' : 'LEVEL 4'}</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🧐 सच या कल्पना?
+              🧐 {lang === 'hi' ? 'सच या कल्पना?' : 'Fact or Fiction'}
             </span>
           </button>
 
@@ -718,9 +748,9 @@ export function AiArcadeStudio() {
               activeLevel === 'level5_cluster' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
           >
-            <span className="text-[10px] font-black opacity-80 block">चरण ५ (LEVEL 5)</span>
+            <span className="text-[10px] font-black opacity-80 block">{lang === 'hi' ? 'चरण ५ (LEVEL 5)' : 'LEVEL 5'}</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🧲 क्लस्टरिंग
+              🧲 {lang === 'hi' ? 'क्लस्टरिंग' : 'Clustering'}
             </span>
           </button>
 
@@ -730,9 +760,9 @@ export function AiArcadeStudio() {
               activeLevel === 'level6_doctor' ? 'bg-purple-600 border-purple-700 text-white shadow-md' : 'bg-white border-purple-100 hover:bg-purple-50/60 text-slate-800'
             }`}
           >
-            <span className="text-[10px] font-black opacity-80 block">चरण ६ (LEVEL 6)</span>
+            <span className="text-[10px] font-black opacity-80 block">{lang === 'hi' ? 'चरण ६ (LEVEL 6)' : 'LEVEL 6'}</span>
             <span className="text-xs md:text-sm font-black flex items-center gap-1 mt-0.5">
-              🩺 डॉक्टर क्लीनिक
+              🩺 {lang === 'hi' ? 'डॉक्टर क्लीनिक' : 'Doctor Clinic'}
             </span>
           </button>
         </div>
@@ -746,12 +776,15 @@ export function AiArcadeStudio() {
           <div className="w-full max-w-lg flex flex-col items-center text-center">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full">
-                प्रश्न {currentIdx + 1} / 5 • स्कोर: {score}
+                {lang === 'hi' ? `प्रश्न ${currentIdx + 1} / 5 • स्कोर: ${score}` : `Question ${currentIdx + 1} / 5 • Score: ${score}`}
               </span>
               <button
-                onClick={() => speakHindi(FIVE_QUESTIONS[currentIdx].audioPrompt)}
+                onClick={() => {
+                  const q = FIVE_QUESTIONS[currentIdx];
+                  speak(lang === 'hi' ? q.audioPromptHi : q.audioPromptEn);
+                }}
                 className="p-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-full transition cursor-pointer"
-                title="आवाज़ सुनें"
+                title={lang === 'hi' ? 'आवाज़ सुनें' : 'Listen'}
               >
                 <Volume2 className="w-4 h-4" />
               </button>
@@ -762,9 +795,11 @@ export function AiArcadeStudio() {
                 {FIVE_QUESTIONS[currentIdx].emoji}
               </span>
               <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-1">
-                {FIVE_QUESTIONS[currentIdx].name}
+                {lang === 'hi' ? FIVE_QUESTIONS[currentIdx].nameHi : FIVE_QUESTIONS[currentIdx].nameEn}
               </h2>
-              <p className="text-xs text-slate-600">क्या यह काम करने के लिए AI (स्मार्ट लर्निंग) का इस्तेमाल करता है?</p>
+              <p className="text-xs text-slate-600">
+                {lang === 'hi' ? 'क्या यह काम करने के लिए AI (स्मार्ट लर्निंग) का इस्तेमाल करता है?' : 'Does this system use AI to learn and make decisions?'}
+              </p>
             </div>
 
             {!feedback ? (
@@ -773,13 +808,13 @@ export function AiArcadeStudio() {
                   onClick={() => handleSelectAnswer(true)}
                   className="py-4 px-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-base rounded-2xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <Bot className="w-5 h-5" /> 🤖 AI है
+                  <Bot className="w-5 h-5" /> 🤖 {lang === 'hi' ? 'AI है' : 'It uses AI'}
                 </button>
                 <button
                   onClick={() => handleSelectAnswer(false)}
                   className="py-4 px-6 bg-stone-700 hover:bg-stone-800 text-white font-black text-base rounded-2xl shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <Cpu className="w-5 h-5" /> ⚙️ साधारण नियम है
+                  <Cpu className="w-5 h-5" /> ⚙️ {lang === 'hi' ? 'साधारण नियम है' : 'Standard Rules'}
                 </button>
               </div>
             ) : (
@@ -791,7 +826,7 @@ export function AiArcadeStudio() {
                     <XCircle className="w-6 h-6 text-rose-600" />
                   )}
                   <span className={`text-base font-black ${feedback.isCorrect ? 'text-emerald-900' : 'text-rose-900'}`}>
-                    {feedback.isCorrect ? 'बिल्कुल सही!' : 'गलत उत्तर!'}
+                    {feedback.isCorrect ? (lang === 'hi' ? 'बिल्कुल सही!' : 'Correct Answer!') : (lang === 'hi' ? 'गलत उत्तर!' : 'Incorrect Answer!')}
                   </span>
                 </div>
                 <p className="text-xs font-bold text-purple-950 mb-4 leading-relaxed">{feedback.message}</p>
@@ -799,7 +834,7 @@ export function AiArcadeStudio() {
                   onClick={handleNextStep}
                   className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  {currentIdx + 1 === 5 ? 'रिजल्ट रिपोर्ट देखें ➔' : 'अगला सवाल ➔'}
+                  {currentIdx + 1 === 5 ? (lang === 'hi' ? 'रिजल्ट रिपोर्ट देखें ➔' : 'View Report Card ➔') : (lang === 'hi' ? 'अगला सवाल ➔' : 'Next Question ➔')}
                 </button>
               </div>
             )}
@@ -813,28 +848,35 @@ export function AiArcadeStudio() {
               🏆
             </div>
             
-            <h2 className="text-2xl font-black text-purple-950 mb-1">राउंड पूरा हुआ!</h2>
-            <p className="text-xs font-bold text-purple-800 mb-6">AI है या नहीं? - आपका रिपोर्ट कार्ड</p>
+            <h2 className="text-2xl font-black text-purple-950 mb-1">
+              {lang === 'hi' ? 'राउंड पूरा हुआ!' : 'Round Complete!'}
+            </h2>
+            <p className="text-xs font-bold text-purple-800 mb-6">
+              {lang === 'hi' ? 'AI है या नहीं? - आपका रिपोर्ट कार्ड' : 'AI Detection - Report Card'}
+            </p>
 
             <div className="bg-white border-2 border-purple-200 rounded-2xl p-4 shadow-sm mb-6 flex justify-around items-center">
               <div>
-                <span className="text-[11px] font-bold text-slate-500 block">कुल प्रश्न</span>
+                <span className="text-[11px] font-bold text-slate-500 block">{lang === 'hi' ? 'कुल प्रश्न' : 'Questions'}</span>
                 <span className="text-2xl font-black text-slate-800">5</span>
               </div>
               <div className="w-px h-10 bg-purple-100" />
               <div>
-                <span className="text-[11px] font-bold text-slate-500 block">सही उत्तर</span>
+                <span className="text-[11px] font-bold text-slate-500 block">{lang === 'hi' ? 'सही उत्तर' : 'Correct'}</span>
                 <span className="text-2xl font-black text-emerald-600">{score} / 5</span>
               </div>
               <div className="w-px h-10 bg-purple-100" />
               <div>
-                <span className="text-[11px] font-bold text-slate-500 block">सटीकता</span>
+                <span className="text-[11px] font-bold text-slate-500 block">{lang === 'hi' ? 'सटीकता' : 'Accuracy'}</span>
                 <span className="text-2xl font-black text-purple-900">{Math.round((score / 5) * 100)}%</span>
               </div>
             </div>
 
             <div className="bg-purple-100/70 p-3.5 rounded-xl text-left text-xs font-bold text-purple-950 mb-6 leading-relaxed">
-              💡 मुख्य निष्कर्ष: हर मशीन में AI नहीं होता! लिफ्ट और वॉशिंग मशीन तय कोड से चलती हैं, जबकि Maps व Face Unlock डेटा से सीखते हैं।
+              💡 {lang === 'hi' 
+                ? 'मुख्य निष्कर्ष: हर मशीन में AI नहीं होता! लिफ्ट और वॉशिंग मशीन तय कोड से चलती हैं, जबकि Maps व Face Unlock डेटा से सीखते हैं।'
+                : 'Key Takeaway: Not every machine uses AI! Elevators and washers run on static code, whereas Maps and Face Unlock learn patterns from data.'
+              }
             </div>
 
             <div className="flex gap-3 justify-center">
@@ -842,13 +884,13 @@ export function AiArcadeStudio() {
                 onClick={handleRestartRound}
                 className="py-2.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
               >
-                <RotateCcw className="w-4 h-4" /> पुनः खेलें
+                <RotateCcw className="w-4 h-4" /> {lang === 'hi' ? 'पुनः खेलें' : 'Play Again'}
               </button>
               <button
                 onClick={() => { stopAllAudio(); setActiveLevel('level2_tray'); playTone('pop'); }}
                 className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
               >
-                लेवल २ पर आगे बढ़ें ➔
+                {lang === 'hi' ? 'लेवल २ पर आगे बढ़ें ➔' : 'Proceed to Level 2 ➔'}
               </button>
             </div>
           </div>
@@ -859,14 +901,18 @@ export function AiArcadeStudio() {
           <div className="w-full max-w-2xl flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-4">
               <div>
-                <h3 className="text-lg font-black text-purple-950">AI को पालतू vs जंगली जानवर सिखाओ</h3>
-                <p className="text-xs text-slate-600">जानवरों को सही ट्रे में डालें। AI आपके दिए डेटा से सीखेगा!</p>
+                <h3 className="text-lg font-black text-purple-950">
+                  {lang === 'hi' ? 'AI को पालतू vs जंगली जानवर सिखाओ' : 'Teach AI: Domestic vs. Wild Animals'}
+                </h3>
+                <p className="text-xs text-slate-600">
+                  {lang === 'hi' ? 'जानवरों को सही ट्रे में डालें। AI आपके दिए डेटा से सीखेगा!' : 'Sort animals into trays. AI learns purely from the data you provide!'}
+                </p>
               </div>
               <button
                 onClick={() => { stopAllAudio(); setActiveLevel('level2_trainer'); playTone('pop'); }}
                 className="text-xs font-black bg-purple-600 text-white hover:bg-purple-700 px-3.5 py-2 rounded-xl transition cursor-pointer shadow flex items-center gap-1.5"
               >
-                <Camera className="w-3.5 h-3.5" /> कस्टम विज़न ट्रेनर ➔
+                <Camera className="w-3.5 h-3.5" /> {lang === 'hi' ? 'कस्टम विज़न ट्रेनर ➔' : 'Custom Vision Trainer ➔'}
               </button>
             </div>
 
@@ -874,7 +920,7 @@ export function AiArcadeStudio() {
               {ALL_ANIMALS.map((a) => (
                 <div key={a.id} className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
                   <span className="text-2xl">{a.emoji}</span>
-                  <span className="text-xs font-bold text-slate-800">{a.name.split(' ')[0]}</span>
+                  <span className="text-xs font-bold text-slate-800">{lang === 'hi' ? a.nameHi.split(' ')[0] : a.nameEn}</span>
                   <div className="flex gap-1 ml-1">
                     <button
                       onClick={() => trainItem(a, true)}
@@ -882,7 +928,7 @@ export function AiArcadeStudio() {
                         trainedDomestic.includes(a.id) ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                       }`}
                     >
-                      पालतू
+                      {lang === 'hi' ? 'पालतू' : 'Domestic'}
                     </button>
                     <button
                       onClick={() => trainItem(a, false)}
@@ -890,7 +936,7 @@ export function AiArcadeStudio() {
                         trainedWild.includes(a.id) ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
                       }`}
                     >
-                      जंगली
+                      {lang === 'hi' ? 'जंगली' : 'Wild'}
                     </button>
                   </div>
                 </div>
@@ -898,17 +944,19 @@ export function AiArcadeStudio() {
             </div>
 
             <div className="w-full bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 text-center mb-4">
-              <span className="text-xs font-bold text-purple-900 block mb-1">अब नए जानवर की परीक्षा लें:</span>
+              <span className="text-xs font-bold text-purple-900 block mb-1">
+                {lang === 'hi' ? 'अब नए जानवर की परीक्षा लें:' : 'Now test with an unseen animal:'}
+              </span>
               <div className="inline-flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-purple-300 shadow-sm mb-3">
                 <span className="text-3xl">🐐</span>
-                <span className="text-sm font-black text-slate-800">नया जानवर: बकरी (Goat)</span>
+                <span className="text-sm font-black text-slate-800">{lang === 'hi' ? 'नया जानवर: बकरी (Goat)' : 'Unseen: Goat'}</span>
               </div>
               <div>
                 <button
                   onClick={testNewAnimal}
                   className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow cursor-pointer inline-flex items-center gap-2"
                 >
-                  <Brain className="w-4 h-4" /> AI से पूछें: बकरी क्या है? ➔
+                  <Brain className="w-4 h-4" /> {lang === 'hi' ? 'AI से पूछें: बकरी क्या है? ➔' : 'Ask AI: What is a Goat? ➔'}
                 </button>
               </div>
               {testPrediction && (
@@ -919,7 +967,7 @@ export function AiArcadeStudio() {
             </div>
 
             <div className="text-[11px] text-slate-500 text-center font-semibold">
-              💡 वैज्ञानिक सबक: गलत या अधूरा डेटा = AI का गलत अनुमान (Garbage In = Garbage Out).
+              💡 {lang === 'hi' ? 'वैज्ञानिक सबक: गलत या अधूरा डेटा = AI का गलत अनुमान (Garbage In = Garbage Out).' : 'Principle: Incomplete training data leads to model bias (Garbage In = Garbage Out).'}
             </div>
           </div>
         )}
@@ -933,10 +981,10 @@ export function AiArcadeStudio() {
                 onClick={() => { stopAllAudio(); setActiveLevel('level2_tray'); playTone('pop'); }}
                 className="text-xs font-black text-purple-800 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-xl cursor-pointer"
               >
-                ⬅ डेटा ट्रे पर लौटें
+                ⬅ {lang === 'hi' ? 'डेटा ट्रे पर लौटें' : 'Back to Data Tray'}
               </button>
               <span className="text-xs font-bold text-purple-900 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
-                Google MobileNet • कस्टमाइज़ेबल क्लास व इमेज डिलीट
+                Google MobileNet • Grad-CAM X-Ray
               </span>
             </div>
 
@@ -953,11 +1001,10 @@ export function AiArcadeStudio() {
               {modelLoading ? (
                 <div className="py-16 flex flex-col items-center gap-3">
                   <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-                  <span className="text-xs font-black text-slate-300">Google MobileNet विज़न मॉडल लोड हो रहा है...</span>
+                  <span className="text-xs font-black text-slate-300">Google MobileNet model loading...</span>
                 </div>
               ) : (
                 <>
-                  {/* Mode Selector */}
                   <div className="w-full flex justify-between items-center mb-3">
                     <div className="flex gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700">
                       <button
@@ -966,7 +1013,7 @@ export function AiArcadeStudio() {
                           testMode === 'camera' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        <Camera className="w-3.5 h-3.5" /> लाइव कैमरा
+                        <Camera className="w-3.5 h-3.5" /> {lang === 'hi' ? 'लाइव कैमरा' : 'Live Camera'}
                       </button>
                       <button
                         onClick={() => testFileInputRef.current?.click()}
@@ -974,18 +1021,17 @@ export function AiArcadeStudio() {
                           testMode === 'upload' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        <Upload className="w-3.5 h-3.5" /> टेस्ट फोटो अपलोड
+                        <Upload className="w-3.5 h-3.5" /> {lang === 'hi' ? 'फोटो अपलोड' : 'Upload Image'}
                       </button>
                     </div>
 
                     {isTrained && (
                       <span className="text-[11px] font-black text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500 flex items-center gap-1">
-                        <Scan className="w-3 h-3 animate-pulse" /> लाइव मॉडल सक्रिय
+                        <Scan className="w-3 h-3 animate-pulse" /> {lang === 'hi' ? 'लाइव मॉडल सक्रिय' : 'Model Active'}
                       </span>
                     )}
                   </div>
 
-                  {/* Visual Test Frame */}
                   <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-700 mb-4 flex items-center justify-center">
                     {testMode === 'camera' ? (
                       <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
@@ -993,7 +1039,6 @@ export function AiArcadeStudio() {
                       <img src={uploadedTestSource || ''} alt="Test" className="w-full h-full object-contain bg-black" />
                     )}
                     
-                    {/* Grad-CAM Canvas */}
                     <canvas 
                       ref={gradCamCanvasRef} 
                       width={320} 
@@ -1006,24 +1051,23 @@ export function AiArcadeStudio() {
                         onClick={startCamera}
                         className="absolute py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer z-20"
                       >
-                        <Camera className="w-4 h-4" /> लाइव कैमरा चालू करें
+                        <Camera className="w-4 h-4" /> {lang === 'hi' ? 'लाइव कैमरा चालू करें' : 'Start Camera'}
                       </button>
                     )}
 
                     {showGradCam && isTrained && (
                       <div className="absolute top-3 left-3 bg-red-600/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 z-20 shadow-md">
-                        <Eye className="w-3 h-3 animate-pulse" /> Grad-CAM सक्रिय
+                        <Eye className="w-3 h-3 animate-pulse" /> Grad-CAM
                       </div>
                     )}
                   </div>
 
-                  {/* Real-time Dynamic Probability Results */}
                   {isTrained && (
                     <div className="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-3.5 mb-4 animate-in fade-in">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-black text-purple-300">डिटेक्शन परिणाम:</span>
+                        <span className="text-xs font-black text-purple-300">{lang === 'hi' ? 'डिटेक्शन परिणाम:' : 'Prediction:'}</span>
                         <span className="text-xs font-black text-emerald-400">
-                          पहचान: {winningClassName}
+                          {winningClassName}
                         </span>
                       </div>
 
@@ -1049,13 +1093,12 @@ export function AiArcadeStudio() {
                     </div>
                   )}
 
-                  {/* Grad-CAM Heatmap Toggle Bar */}
                   <div className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 p-2.5 rounded-2xl mb-4">
                     <div className="flex items-center gap-2">
                       <Layers className="w-4 h-4 text-purple-400" />
                       <div>
-                        <span className="text-xs font-black text-white block">Grad-CAM X-Ray (AI क्या देख रहा है?)</span>
-                        <span className="text-[10px] text-slate-400">निर्णय के लिए किन पिक्सल्स पर मॉडल ने ध्यान दिया</span>
+                        <span className="text-xs font-black text-white block">{lang === 'hi' ? 'Grad-CAM X-Ray (AI क्या देख रहा है?)' : 'Grad-CAM Attention Heatmap'}</span>
+                        <span className="text-[10px] text-slate-400">{lang === 'hi' ? 'निर्णय के लिए किन पिक्सल्स पर मॉडल ने ध्यान दिया' : 'Visualizes image regions influencing the prediction'}</span>
                       </div>
                     </div>
 
@@ -1073,19 +1116,18 @@ export function AiArcadeStudio() {
                             : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
                       }`}
                     >
-                      {showGradCam ? '👁️ Heatmap बंद करें' : '🔍 Grad-CAM चालू करें'}
+                      {showGradCam ? '👁️ Off' : '🔍 Grad-CAM'}
                     </button>
                   </div>
 
-                  {/* DYNAMIC TRAINING CLASSES LIST */}
                   <div className="w-full flex flex-col gap-3 mb-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-purple-300">ट्रेनिंग डेटा क्लास (Training Classes):</span>
+                      <span className="text-xs font-black text-purple-300">{lang === 'hi' ? 'ट्रेनिंग डेटा क्लास:' : 'Training Classes:'}</span>
                       <button
                         onClick={handleAddClass}
                         className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-black rounded-lg transition cursor-pointer flex items-center gap-1 shadow"
                       >
-                        <Plus className="w-3.5 h-3.5" /> नया वर्ग जोड़ें (Add Class)
+                        <Plus className="w-3.5 h-3.5" /> {lang === 'hi' ? 'नया वर्ग जोड़ें' : 'Add Class'}
                       </button>
                     </div>
 
@@ -1102,7 +1144,6 @@ export function AiArcadeStudio() {
                           />
 
                           <div>
-                            {/* Editable Class Header */}
                             <div className="flex justify-between items-center mb-2 gap-1.5">
                               <input
                                 type="text"
@@ -1110,26 +1151,22 @@ export function AiArcadeStudio() {
                                 onChange={(e) => handleUpdateClassName(c.id, e.target.value)}
                                 className="bg-slate-900 border border-slate-700 text-emerald-400 font-black text-xs px-2 py-1 rounded-lg w-full outline-none focus:border-purple-500"
                               />
-                              
                               <span className="text-[10px] font-extrabold bg-slate-950 px-2 py-1 rounded text-slate-400 shrink-0">
                                 {c.images.length}
                               </span>
-
                               {classesList.length > 2 && (
                                 <button
                                   onClick={() => handleRemoveClass(c.id)}
                                   className="p-1 text-slate-500 hover:text-rose-400 rounded transition cursor-pointer shrink-0"
-                                  title="वर्ग हटाएं"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               )}
                             </div>
 
-                            {/* Image Previews with Individual Delete Button (X) */}
                             <div className="flex gap-1.5 overflow-x-auto py-1 h-14 mb-2 bg-slate-900/80 rounded-lg p-1.5">
                               {c.images.length === 0 ? (
-                                <span className="text-[10px] text-slate-500 my-auto mx-auto">कोई फोटो नहीं</span>
+                                <span className="text-[10px] text-slate-500 my-auto mx-auto">{lang === 'hi' ? 'कोई फोटो नहीं' : 'No images'}</span>
                               ) : (
                                 c.images.map((img, i) => (
                                   <div key={i} className="relative group shrink-0 w-11 h-11 rounded overflow-hidden border border-slate-700">
@@ -1137,7 +1174,6 @@ export function AiArcadeStudio() {
                                     <button
                                       onClick={() => handleDeleteImage(c.id, i)}
                                       className="absolute inset-0 bg-rose-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs font-black"
-                                      title="फोटो हटाएं"
                                     >
                                       <X className="w-3.5 h-3.5" />
                                     </button>
@@ -1153,13 +1189,13 @@ export function AiArcadeStudio() {
                               disabled={!cameraActive}
                               className="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
                             >
-                              <Camera className="w-3.5 h-3.5" /> स्नैप लें
+                              <Camera className="w-3.5 h-3.5" /> {lang === 'hi' ? 'स्नैप लें' : 'Snap'}
                             </button>
                             <button
                               onClick={() => classFileInputsRef.current[c.id]?.click()}
                               className="flex-1 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer shadow"
                             >
-                              <Upload className="w-3.5 h-3.5" /> फ़ाइल अपलोड
+                              <Upload className="w-3.5 h-3.5" /> {lang === 'hi' ? 'अपलोड' : 'Upload'}
                             </button>
                           </div>
                         </div>
@@ -1167,7 +1203,6 @@ export function AiArcadeStudio() {
                     </div>
                   </div>
 
-                  {/* Train & Reset Action Buttons */}
                   <div className="flex gap-2 w-full">
                     <button
                       onClick={handleTrainLiveModel}
@@ -1177,19 +1212,18 @@ export function AiArcadeStudio() {
                       {isTraining ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>फीचर्स सीख रहे हैं (Training...)...</span>
+                          <span>{lang === 'hi' ? 'फीचर्स सीख रहे हैं...' : 'Training features...'}</span>
                         </>
                       ) : (
                         <>
                           <Brain className="w-4 h-4" />
-                          <span>मॉडल ट्रेन करें (Train Model)</span>
+                          <span>{lang === 'hi' ? 'मॉडल ट्रेन करें' : 'Train Live Model'}</span>
                         </>
                       )}
                     </button>
                     <button
                       onClick={handleResetTrainer}
                       className="p-3 bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 rounded-xl cursor-pointer transition"
-                      title="रीसेट करें"
                     >
                       <RefreshCw className="w-4 h-4" />
                     </button>
@@ -1198,11 +1232,6 @@ export function AiArcadeStudio() {
               )}
 
             </div>
-
-            <div className="mt-3 text-[11px] text-slate-500 text-center font-semibold">
-              💡 Grad-CAM व्याख्या: गलत या अनचाही तस्वीरों को हटाने के लिए फोटो पर माउस ले जाकर ✕ दबाएं।
-            </div>
-
           </div>
         )}
 
@@ -1219,41 +1248,43 @@ export function AiArcadeStudio() {
             <div className="w-12 h-12 bg-amber-100 text-amber-900 rounded-2xl flex items-center justify-center text-2xl mb-3">
               🧐
             </div>
-            <h3 className="text-lg font-black text-purple-950 mb-1">AI ने कहा — सच या कल्पना? (Fact Check Lab)</h3>
+            <h3 className="text-lg font-black text-purple-950 mb-1">
+              {lang === 'hi' ? 'AI ने कहा — सच या कल्पना? (Fact Check Lab)' : 'AI Fact Check Lab: Hallucinations'}
+            </h3>
             <p className="text-xs text-slate-600 mb-4">
-              AI बहुत आत्मविश्वास से जवाब देता है, लेकिन क्या हर बात सच होती है?
+              {lang === 'hi' ? 'AI बहुत आत्मविश्वास से जवाब देता है, लेकिन क्या हर बात सच होती है?' : 'AI sounds confident, but can make up facts.'}
             </p>
             <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 text-left mb-4 shadow-sm w-full">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[11px] font-black text-amber-950">दावा / Statement:</span>
+                <span className="text-[11px] font-black text-amber-950">{lang === 'hi' ? 'दावा / Statement:' : 'Statement:'}</span>
                 <button
-                  onClick={() => speakHindi("दावा: भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं। सबक: यह गलत है। AI कई बार गलत जानकारी बनाता है।")}
+                  onClick={() => speak(lang === 'hi' ? "दावा: भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं।" : "Claim: Elephants in India can fly by eating tree leaves. This is false AI hallucination.")}
                   className="p-1 text-amber-900 hover:bg-amber-200 rounded cursor-pointer"
                 >
                   <Volume2 className="w-4 h-4" />
                 </button>
               </div>
               <p className="text-sm font-bold text-slate-800 mb-3">
-                "भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं।"
+                {lang === 'hi' ? '"भारत में हाथी केवल पेड़ की पत्तियाँ खाकर उड़ सकते हैं।"' : '"Elephants in India can fly by eating tree leaves."'}
               </p>
               <div className="bg-white p-3 rounded-xl border border-amber-200 text-xs font-bold text-purple-900">
-                🔍 सबक: AI कई बार गलत जानकारियाँ भी आत्मविश्वास से बनाता है (Hallucination)। इसलिए हमेशा जाँच (Fact-Check) करें!
+                🔍 {lang === 'hi' ? 'सबक: AI कई बार गलत जानकारियाँ भी आत्मविश्वास से बनाता है (Hallucination)। हमेशा जाँच करें!' : 'Lesson: Large language models can hallucinate plausible-sounding falsehoods. Always verify!'}
               </div>
             </div>
           </div>
         )}
 
-        {/* LEVEL 5: Unsupervised Clustering (K-Means) */}
+        {/* LEVEL 5: Unsupervised Clustering */}
         {activeLevel === 'level5_cluster' && (
           <div className="w-full">
             <ClusteringLab />
           </div>
         )}
 
-        {/* LEVEL 6: Tara & Bittu Doctor Clinic (Accuracy & Confusion Matrix) */}
+        {/* LEVEL 6: Tara & Bittu Doctor Clinic */}
         {activeLevel === 'level6_doctor' && (
           <div className="w-full">
-            <TaraBittuDoctorLab />
+            <TaraBittuDoctorLab initialLang={lang} />
           </div>
         )}
 
