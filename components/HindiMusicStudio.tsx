@@ -1,405 +1,347 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, RotateCcw, Award, Star, Music2, Sparkles, CheckCircle2, ListMusic } from 'lucide-react';
+import { 
+  Volume2, RotateCcw, Trophy, Sparkles, Star, 
+  Music, Play, CheckCircle2, Award
+} from 'lucide-react';
 
-interface KeyConfig {
+interface SwarKey {
   id: string;
-  swar: string;
-  hindiLabel: string;
-  subText: string;
+  swarHi: string;
+  noteEn: string;
   freq: number;
-  isBlack: boolean;
-  leftPercent?: number;
+  type: 'white' | 'black';
+  keyLabel: string;
 }
 
-// 9 White Keys spanning Mandra Ni to Taar Komal Re
-const WHITE_KEYS: KeyConfig[] = [
-  { id: 'C4', swar: 'Ni', hindiLabel: 'नि', subText: '', freq: 261.63, isBlack: false },
-  { id: 'D4', swar: 'Re_', hindiLabel: 'रे॒', subText: '(komal)', freq: 293.66, isBlack: false },
-  { id: 'E4', swar: 'Ga_', hindiLabel: 'ग॒', subText: '(komal)', freq: 329.63, isBlack: false },
-  { id: 'F4', swar: 'Ga', hindiLabel: 'ग', subText: '', freq: 349.23, isBlack: false },
-  { id: 'G4', swar: 'Ma', hindiLabel: 'म॑', subText: '(Tivra)', freq: 392.00, isBlack: false },
-  { id: 'A4', swar: 'Da_', hindiLabel: 'ध॒', subText: '(komal)', freq: 440.00, isBlack: false },
-  { id: 'B4', swar: 'Ni_', hindiLabel: 'नि॒', subText: '(komal)', freq: 493.88, isBlack: false },
-  { id: 'C5', swar: 'Ni', hindiLabel: 'नि', subText: '', freq: 523.25, isBlack: false },
-  { id: 'D5', swar: 'Re', hindiLabel: 'रें॒', subText: '(komal)', freq: 587.33, isBlack: false }
+const SWAR_KEYS: SwarKey[] = [
+  { id: 'sa', swarHi: 'सा', noteEn: 'C4', freq: 261.63, type: 'white', keyLabel: 'A' },
+  { id: 're_k', swarHi: 'रे॒', noteEn: 'C#4', freq: 277.18, type: 'black', keyLabel: 'W' },
+  { id: 're', swarHi: 'रे', noteEn: 'D4', freq: 293.66, type: 'white', keyLabel: 'S' },
+  { id: 'ga_k', swarHi: 'ग॒', noteEn: 'D#4', freq: 311.13, type: 'black', keyLabel: 'E' },
+  { id: 'ga', swarHi: 'ग', noteEn: 'E4', freq: 329.63, type: 'white', keyLabel: 'D' },
+  { id: 'ma', swarHi: 'म', noteEn: 'F4', freq: 349.23, type: 'white', keyLabel: 'F' },
+  { id: 'ma_t', swarHi: 'म॑', noteEn: 'F#4', freq: 369.99, type: 'black', keyLabel: 'T' },
+  { id: 'pa', swarHi: 'प', noteEn: 'G4', freq: 392.00, type: 'white', keyLabel: 'G' },
+  { id: 'dha_k', swarHi: 'ध॒', noteEn: 'G#4', freq: 415.30, type: 'black', keyLabel: 'Y' },
+  { id: 'dha', swarHi: 'ध', noteEn: 'A4', freq: 440.00, type: 'white', keyLabel: 'H' },
+  { id: 'ni_k', swarHi: 'नि॒', noteEn: 'A#4', freq: 466.16, type: 'black', keyLabel: 'U' },
+  { id: 'ni', swarHi: 'नि', noteEn: 'B4', freq: 493.88, type: 'white', keyLabel: 'J' },
+  { id: 'sa_high', swarHi: 'सां', noteEn: 'C5', freq: 523.25, type: 'white', keyLabel: 'K' }
 ];
 
-// 7 Black Keys spanning Sa to Taar Re
-const BLACK_KEYS: KeyConfig[] = [
-  { id: 'Db4', swar: 'Sa', hindiLabel: 'सा', subText: 'सा', freq: 277.18, isBlack: true, leftPercent: 6.8 },
-  { id: 'Eb4', swar: 'Re', hindiLabel: 'रे', subText: 'रे', freq: 311.13, isBlack: true, leftPercent: 18.0 },
-  { id: 'Fs4', swar: 'Ma', hindiLabel: 'म', subText: 'म', freq: 369.99, isBlack: true, leftPercent: 40.2 },
-  { id: 'Ab4', swar: 'Pa', hindiLabel: 'प', subText: 'प', freq: 415.30, isBlack: true, leftPercent: 51.3 },
-  { id: 'Bb4', swar: 'Da', hindiLabel: 'ध', subText: 'ध', freq: 466.16, isBlack: true, leftPercent: 62.4 },
-  { id: 'Db5', swar: 'Sa.', hindiLabel: 'सां', subText: 'सां', freq: 554.37, isBlack: true, leftPercent: 84.6 },
-  { id: 'Eb5', swar: 'Re.', hindiLabel: 'रें', subText: 'रें', freq: 622.25, isBlack: true, leftPercent: 95.8 }
-];
-
-interface SongTutorial {
+interface SongPattern {
   id: string;
-  title: string;
-  hindiTitle: string;
-  emoji: string;
-  sequence: string[];
-  lyrics: string[];
+  titleHi: string;
+  titleEn: string;
+  notes: string[];
 }
 
-const SONG_LIBRARY: SongTutorial[] = [
+const PRESET_SONGS: SongPattern[] = [
   {
-    id: 'jana_gana_mana',
-    title: 'Jana Gana Mana (National Anthem)',
-    hindiTitle: '🇮🇳 जन गण मन (राष्ट्रगान)',
-    emoji: '🇮🇳',
-    sequence: [
-      // जन गण मन अधिनायक जय हे
-      'Db4', 'Eb4', 'F4', 'F4', 'F4', 'F4', 'F4', 'F4', 'F4', 'F4', 'Eb4', 'F4', 'Fs4',
-      // भारत भाग्य विधाता
-      'F4', 'F4', 'F4', 'Eb4', 'Eb4', 'Eb4', 'C4', 'Eb4', 'Db4',
-      // पंजाब सिन्धु गुजरात मराठा
-      'Db4', 'Ab4', 'Ab4', 'Ab4', 'Ab4', 'Ab4', 'Ab4', 'G4', 'Ab4', 'Fs4',
-      // द्राविड़ उत्कल बंग
-      'F4', 'F4', 'F4', 'Eb4', 'Fs4', 'F4',
-      // जय हे, जय हे, जय हे
-      'Db5', 'Db5', 'C5', 'Bb4', 'C5',
-      // जय जय जय जय हे
-      'Db4', 'Eb4', 'F4', 'F4', 'Eb4', 'F4', 'Fs4'
-    ],
-    lyrics: [
-      'ज', 'न', 'ग', 'ण', 'म', 'न', 'अ', 'धि', 'ना', 'य', 'क', 'ज', 'य',
-      'भा', 'र', 'त', 'भा', 'ग्य', 'वि', 'धा', 'ता',
-      'पं', 'जा', 'ब', 'सि', 'न्धु', 'गु', 'ज', 'रा', 'त', 'म',
-      'द्रा', 'वि', 'ड़', 'उ', 'त्क', 'ल',
-      'ज', 'य', 'हे', 'ज', 'य',
-      'ज', 'य', 'ज', 'य', 'ज', 'य', 'हे'
-    ]
+    id: 'alankar1',
+    titleHi: 'सरल अलंकार (Basic Scale)',
+    titleEn: 'Ascending Scale (C-Major)',
+    notes: ['sa', 're', 'ga', 'ma', 'pa', 'dha', 'ni', 'sa_high']
   },
   {
-    id: 'lakdi_ki_kathi',
-    title: 'Lakdi Ki Kaathi (Full Melody)',
-    hindiTitle: '🐎 लकड़ी की काठी',
-    emoji: '🪵',
-    sequence: [
-      // लकड़ी की काठी
-      'F4', 'F4', 'F4', 'Eb4', 'Db4',
-      // काठी पे घोड़ा
-      'F4', 'F4', 'F4', 'Eb4', 'Db4',
-      // घोड़े की दुम पे जो मारा हथौड़ा
-      'Fs4', 'Fs4', 'Fs4', 'Fs4', 'Fs4', 'F4', 'Eb4', 'Db4', 'Eb4', 'F4',
-      // दौड़ा दौड़ा दौड़ा घोड़ा दुम उठा के दौड़ा
-      'Ab4', 'Ab4', 'Ab4', 'Ab4', 'Fs4', 'F4', 'Eb4', 'Db4', 'Eb4', 'Db4'
-    ],
-    lyrics: [
-      'लक', 'ड़ी', 'की', 'का', 'ठी',
-      'का', 'ठी', 'पे', 'घो', 'ड़ा',
-      'घो', 'ड़े', 'की', 'दुम', 'पे', 'जो', 'मा', 'रा', 'ह', 'थौड़ा',
-      'दौ', 'ड़ा', 'दौ', 'ड़ा', 'घो', 'ड़ा', 'दुम', 'उ', 'ठा', 'के'
-    ]
+    id: 'twinkle',
+    titleHi: 'ट्विंकल ट्विंकल (Twinkle Twinkle)',
+    titleEn: 'Twinkle Twinkle Little Star',
+    notes: ['sa', 'sa', 'pa', 'pa', 'dha', 'dha', 'pa']
   },
   {
-    id: 'saare_jahan',
-    title: 'Saare Jahan Se Achha (Extended)',
-    hindiTitle: '🕊️ सारे जहाँ से अच्छा',
-    emoji: '🇮🇳',
-    sequence: [
-      // सारे जहाँ से अच्छा
-      'Db4', 'Eb4', 'F4', 'Db4', 'Eb4', 'F4', 'Fs4', 'F4',
-      // हिन्दोस्ताँ हमारा
-      'Eb4', 'Db4', 'Eb4', 'Db4', 'C4', 'Db4',
-      // हम बुलबुलें हैं इसकी
-      'F4', 'Fs4', 'Ab4', 'Ab4', 'Bb4', 'Ab4', 'Fs4', 'F4',
-      // ये गुलसितां हमारा हमारा
-      'Fs4', 'F4', 'Eb4', 'Db4', 'Eb4', 'Db4'
-    ],
-    lyrics: [
-      'सा', 'रे', 'ज', 'हाँ', 'से', 'अ', 'च्छा', '...',
-      'हि', 'न्दो', 'स्ताँ', 'ह', 'मा', 'रा',
-      'हम', 'बुल', 'बु', 'लें', 'हैं', 'इस', 'की', '...',
-      'ये', 'गुल', 'सि', 'तां', 'ह', 'मा', 'रा'
-    ]
-  },
-  {
-    id: 'birthday',
-    title: 'Happy Birthday To You (Full Song)',
-    hindiTitle: '🎂 जन्मदिन की बधाई',
-    emoji: '🎉',
-    sequence: [
-      // Happy birthday to you
-      'Db4', 'Db4', 'Eb4', 'Db4', 'Fs4', 'F4',
-      // Happy birthday to you
-      'Db4', 'Db4', 'Eb4', 'Db4', 'Ab4', 'Fs4',
-      // Happy birthday dear child
-      'Db4', 'Db4', 'Db5', 'Bb4', 'Fs4', 'F4', 'Eb4',
-      // Happy birthday to you
-      'B4', 'B4', 'Bb4', 'Fs4', 'Ab4', 'Fs4'
-    ],
-    lyrics: [
-      'Hap-', 'py', 'birth-', 'day', 'to', 'you',
-      'Hap-', 'py', 'birth-', 'day', 'to', 'you',
-      'Hap-', 'py', 'birth-', 'day', 'dear', 'one', '...',
-      'Hap-', 'py', 'birth-', 'day', 'to', 'you'
-    ]
-  },
-  {
-    id: 'sargam_aaroh_avroh',
-    title: 'Sargam Aaroh & Avroh (आरोह-अवरोह)',
-    hindiTitle: '🎵 संपूर्ण सरगम अभ्यास',
-    emoji: '🎼',
-    sequence: [
-      'Db4', 'Eb4', 'F4', 'Fs4', 'Ab4', 'Bb4', 'C5', 'Db5',
-      'Db5', 'C5', 'Bb4', 'Ab4', 'Fs4', 'F4', 'Eb4', 'Db4'
-    ],
-    lyrics: [
-      'सा', 'रे', 'ग', 'म', 'प', 'ध', 'नि', 'सां',
-      'सां', 'नि', 'ध', 'प', 'म', 'ग', 'रे', 'सा'
-    ]
+    id: 'kathi',
+    titleHi: 'लकड़ी की काठी (Lakdi Ki Kathi)',
+    titleEn: 'Folk Rhythm (Lakdi Ki Kathi)',
+    notes: ['sa', 're', 'ga', 'ga', 're', 'ga', 'ma']
   }
 ];
 
 export function HindiMusicStudio() {
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedSong, setSelectedSong] = useState<SongTutorial | null>(null);
-  const [tutorialIndex, setTutorialIndex] = useState<number>(0);
-  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [lang, setLang] = useState<'hi' | 'en'>('hi');
+  const [activeSongIdx, setActiveSongIdx] = useState<number>(0);
+  const [targetStep, setTargetStep] = useState<number>(0);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [songComplete, setSongComplete] = useState<boolean>(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const playTone = (freq: number) => {
+  const stopAllSpeech = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  useEffect(() => {
+    return () => stopAllSpeech();
+  }, []);
+
+  const playSynthNote = (freq: number) => {
+    if (typeof window === 'undefined') return;
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioCtxRef.current;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      if (ctx.state === 'suspended') ctx.resume();
 
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc.type = 'triangle';
+      // Reed/Harmonium-like wave character
+      osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, now);
 
-      gain.gain.setValueAtTime(0.45, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+      gain.gain.setValueAtTime(0.24, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start(now);
-      osc.stop(now + 0.9);
-    } catch (e) {
-      console.log('Audio tone error:', e);
-    }
+      osc.stop(now + 0.55);
+    } catch (e) {}
   };
 
-  const handleKeyPress = (key: KeyConfig) => {
-    playTone(key.freq);
-    setActiveId(key.id);
-    setTimeout(() => setActiveId(null), 200);
+  const speakVoice = (text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      stopAllSpeech();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      u.rate = 0.88;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  };
 
-    if (selectedSong && !isCompleted) {
-      const targetId = selectedSong.sequence[tutorialIndex];
-      if (key.id === targetId) {
-        if (tutorialIndex + 1 >= selectedSong.sequence.length) {
-          setIsCompleted(true);
-        } else {
-          setTutorialIndex((prev) => prev + 1);
-        }
+  const handleKeyPress = (keyObj: SwarKey) => {
+    stopAllSpeech();
+    playSynthNote(keyObj.freq);
+    setActiveKey(keyObj.id);
+    setTimeout(() => setActiveKey(null), 180);
+
+    // Interactive guide match
+    const currentSong = PRESET_SONGS[activeSongIdx];
+    const expectedKeyId = currentSong.notes[targetStep];
+
+    if (keyObj.id === expectedKeyId) {
+      if (targetStep + 1 >= currentSong.notes.length) {
+        setSongComplete(true);
+        setTargetStep(0);
+        speakVoice(lang === 'hi' ? 'बहुत खूब! धुन पूरी हुई!' : 'Fantastic! Melody completed!');
+      } else {
+        setTargetStep(prev => prev + 1);
       }
     }
   };
 
-  const handleSelectSong = (song: SongTutorial) => {
-    setSelectedSong(song);
-    setTutorialIndex(0);
-    setIsCompleted(false);
+  const resetMelody = (idx: number) => {
+    stopAllSpeech();
+    setActiveSongIdx(idx);
+    setTargetStep(0);
+    setSongComplete(false);
   };
 
-  const handleReset = () => {
-    setTutorialIndex(0);
-    setIsCompleted(false);
-  };
-
-  const currentTargetId = selectedSong && !isCompleted ? selectedSong.sequence[tutorialIndex] : null;
-  const currentTargetObj = [...WHITE_KEYS, ...BLACK_KEYS].find((k) => k.id === currentTargetId);
-  const currentLyric = selectedSong && selectedSong.lyrics ? selectedSong.lyrics[tutorialIndex] : '';
+  const currentSong = PRESET_SONGS[activeSongIdx];
+  const targetNoteId = currentSong.notes[targetStep];
 
   return (
-    <div className="max-w-5xl mx-auto p-3 md:p-6 font-sans select-none">
-      {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-purple-50/80 p-4 rounded-2xl border border-purple-200">
+    <div className="max-w-4xl mx-auto p-3 md:p-6 font-sans select-none">
+      
+      {/* Top Banner with Bilingual Switcher */}
+      <div className="bg-amber-50/80 p-4 md:p-5 rounded-3xl border border-amber-200 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-600 text-white rounded-xl flex items-center justify-center text-xl shadow-md">
+          <div className="w-10 h-10 bg-orange-600 text-white rounded-xl flex items-center justify-center text-xl shadow-md">
             🎹
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-purple-950">स्वर हारमोनियम व पियानो (Kids Music &amp; Song Lab)</h1>
-            <p className="text-xs md:text-sm font-semibold text-purple-800">
-              राष्ट्रगान व बाल-गीतों का संपूर्ण स्वर अभ्यास • Complete Song Melodies
+            <h1 className="text-xl md:text-2xl font-black text-amber-950">
+              {lang === 'hi' ? 'स्वर सरगम व संगीत (Kids Harmonium)' : 'Kids Music & Harmonium Studio'}
+            </h1>
+            <p className="text-xs md:text-sm font-semibold text-amber-800">
+              {lang === 'hi' 
+                ? 'शास्त्रीय संगीत सरगम • वेस्टर्न नोट्स • धुन अभ्यास' 
+                : 'Indian Classical Swaras, Western Pitch & Guided Melodies (NEP 2020)'}
             </p>
           </div>
         </div>
 
-        {selectedSong && (
-          <div className="flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-purple-300 shadow-sm">
-            <span className="text-xs font-black text-purple-900">स्वर प्रगति:</span>
-            <span className="text-xs font-extrabold text-purple-700">
-              {tutorialIndex}/{selectedSong.sequence.length}
-            </span>
-          </div>
-        )}
+        {/* BILINGUAL LANGUAGE SWITCHER */}
+        <div className="flex bg-white p-1 rounded-xl border border-amber-300 shadow-sm gap-1">
+          <button
+            onClick={() => {
+              stopAllSpeech();
+              setLang('hi');
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+              lang === 'hi' ? 'bg-orange-600 text-white shadow-sm' : 'text-amber-950 hover:bg-amber-100'
+            }`}
+          >
+            हिंदी (सा-रे-ग)
+          </button>
+          <button
+            onClick={() => {
+              stopAllSpeech();
+              setLang('en');
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+              lang === 'en' ? 'bg-orange-600 text-white shadow-sm' : 'text-amber-950 hover:bg-amber-100'
+            }`}
+          >
+            English (C-D-E)
+          </button>
+        </div>
       </div>
 
       {/* Main Studio Card */}
-      <div className="bg-white rounded-3xl p-4 md:p-8 border-2 border-purple-200 shadow-xl flex flex-col items-center">
+      <div className="bg-white rounded-3xl p-6 md:p-8 border-2 border-amber-200 shadow-xl flex flex-col items-center">
         
-        {/* Song Selector */}
-        <div className="w-full mb-6">
-          <p className="text-center text-xs font-bold text-slate-500 mb-3">
-            बजाने के लिए गीत या सरगम चुनें (Select a complete song):
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              onClick={() => { setSelectedSong(null); setIsCompleted(false); }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition cursor-pointer ${
-                selectedSong === null ? 'bg-purple-600 text-white shadow' : 'bg-purple-50 text-purple-900 hover:bg-purple-100 border border-purple-200'
-              }`}
-            >
-              🎹 स्वतंत्र वादन (Free Play)
-            </button>
-            {SONG_LIBRARY.map((song) => (
+        {/* Guided Melody Selector */}
+        <div className="w-full flex items-center justify-between mb-5 flex-wrap gap-2 pb-3 border-b border-slate-100">
+          <span className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+            <Music className="w-4 h-4 text-orange-600" />
+            {lang === 'hi' ? 'सिखाई जाने वाली धुन चुनें:' : 'Select a Guided Melody:'}
+          </span>
+
+          <div className="flex gap-1.5 flex-wrap">
+            {PRESET_SONGS.map((s, idx) => (
               <button
-                key={song.id}
-                onClick={() => handleSelectSong(song)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer ${
-                  selectedSong?.id === song.id
-                    ? 'bg-purple-600 text-white shadow'
-                    : 'bg-purple-50 text-purple-900 hover:bg-purple-100 border border-purple-200'
+                key={s.id}
+                onClick={() => resetMelody(idx)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                  activeSongIdx === idx
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200'
                 }`}
               >
-                <span>{song.emoji}</span>
-                <span>{song.hindiTitle}</span>
+                {lang === 'hi' ? s.titleHi : s.titleEn}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Dynamic Lyric & Note Guidance Prompt */}
-        {selectedSong && !isCompleted && currentTargetObj && (
-          <div className="w-full max-w-xl bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm animate-in fade-in">
-            <div className="flex items-center gap-3 text-left">
-              <span className="text-3xl">{selectedSong.emoji}</span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-extrabold text-amber-950">गीत के बोल (Lyrics):</span>
-                  {currentLyric && (
-                    <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md text-xs font-black">
-                      "{currentLyric}"
-                    </span>
-                  )}
-                </div>
-                <span className="text-xl md:text-2xl font-black text-amber-900">
-                  दबाएं: {currentTargetObj.swar} ({currentTargetObj.hindiLabel} {currentTargetObj.subText})
+        {/* Guided Target Indicator */}
+        <div className="w-full max-w-lg bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 text-center flex flex-col items-center shadow-inner">
+          <span className="text-xs font-bold text-slate-500 mb-1">
+            {lang === 'hi' ? 'अगला बजने वाला स्वर:' : 'Next Note to Play:'}
+          </span>
+
+          <div className="flex items-center gap-2 my-1">
+            <span className="text-4xl font-black text-orange-600 font-mono">
+              {lang === 'hi' 
+                ? SWAR_KEYS.find(k => k.id === targetNoteId)?.swarHi 
+                : SWAR_KEYS.find(k => k.id === targetNoteId)?.noteEn}
+            </span>
+            <span className="text-xs font-bold text-slate-400">
+              ({lang === 'hi' 
+                ? SWAR_KEYS.find(k => k.id === targetNoteId)?.noteEn 
+                : SWAR_KEYS.find(k => k.id === targetNoteId)?.swarHi})
+            </span>
+          </div>
+
+          <div className="flex gap-1.5 mt-2 flex-wrap justify-center">
+            {currentSong.notes.map((noteId, i) => {
+              const kObj = SWAR_KEYS.find(k => k.id === noteId);
+              const isPlayed = i < targetStep;
+              const isCurrent = i === targetStep;
+
+              return (
+                <span
+                  key={i}
+                  className={`w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center transition-all ${
+                    isCurrent
+                      ? 'bg-orange-500 text-white scale-110 ring-2 ring-orange-300 shadow'
+                      : isPlayed
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  }`}
+                >
+                  {lang === 'hi' ? kObj?.swarHi : kObj?.noteEn}
                 </span>
-              </div>
+              );
+            })}
+          </div>
+
+          {songComplete && (
+            <div className="mt-3 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-black px-4 py-1.5 rounded-full flex items-center gap-1.5 animate-in zoom-in-95">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{lang === 'hi' ? 'शाबाश! आपने यह धुन सफलता से बजाई!' : 'Well done! You completed the melody!'}</span>
             </div>
-            <button
-              onClick={handleReset}
-              className="p-2.5 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-xl text-xs font-bold transition cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Completion Modal Card */}
-        {isCompleted && (
-          <div className="w-full max-w-md bg-gradient-to-b from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-300 p-6 mb-6 text-center shadow-md animate-in zoom-in-95">
-            <span className="text-5xl block mb-2">🏆</span>
-            <h3 className="text-xl font-black text-purple-950 mb-1">अद्भुत प्रदर्शन! पूरा गीत बजा लिया!</h3>
-            <p className="text-xs font-bold text-purple-800 mb-4">
-              You successfully mastered {selectedSong?.title}!
-            </p>
-            <button
-              onClick={handleReset}
-              className="py-2.5 px-6 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer"
-            >
-              पुनः बजाएं (Play Again)
-            </button>
-          </div>
-        )}
-
-        {/* Exact Layout Harmonium & Piano Deck */}
-        <div className="relative bg-gradient-to-b from-stone-900 to-stone-950 p-4 md:p-6 rounded-3xl shadow-2xl border-4 border-stone-800 w-full max-w-4xl select-none overflow-x-auto">
-          
-          {/* Top Bellow Strip */}
-          <div className="w-full h-3.5 bg-amber-950 rounded-t-md mb-2 border-b border-amber-900/80 flex items-center justify-center">
-            <div className="w-full h-0.5 bg-amber-600/40" />
-          </div>
-
-          {/* Key Deck */}
-          <div className="relative flex w-full min-w-[620px] h-60 md:h-68 justify-between bg-stone-950 p-1 rounded-b-xl">
-            
-            {/* 9 White Keys */}
-            {WHITE_KEYS.map((key) => {
-              const isTarget = currentTargetId === key.id;
-              const isPressed = activeId === key.id;
+        {/* Harmonium / Piano Keyboard UI */}
+        <div className="relative flex justify-center bg-slate-900 p-4 md:p-6 rounded-3xl shadow-2xl border-4 border-amber-900/60 overflow-x-auto max-w-full">
+          <div className="flex relative select-none">
+            {SWAR_KEYS.filter(k => k.type === 'white').map((k) => {
+              const isTarget = targetNoteId === k.id;
+              const isPressed = activeKey === k.id;
 
               return (
                 <button
-                  key={key.id}
-                  onClick={() => handleKeyPress(key)}
-                  className={`relative flex-1 h-full mx-0.5 rounded-b-lg flex flex-col justify-end items-center pb-3 transition-all duration-75 cursor-pointer border-t-2 border-stone-300 ${
-                    isPressed
-                      ? 'bg-amber-100 translate-y-1 shadow-inner'
-                      : isTarget
-                      ? 'bg-amber-100 ring-4 ring-amber-400 animate-pulse'
-                      : 'bg-white hover:bg-stone-50 shadow-[0_5px_0_#cbd5e1,0_8px_10px_rgba(0,0,0,0.35)]'
+                  key={k.id}
+                  onClick={() => handleKeyPress(k)}
+                  className={`relative w-12 md:w-16 h-48 md:h-56 rounded-b-2xl border-2 border-slate-300 transition-all flex flex-col justify-end items-center pb-4 cursor-pointer ${
+                    isPressed 
+                      ? 'bg-orange-200 scale-98 shadow-inner' 
+                      : isTarget 
+                      ? 'bg-amber-100 ring-4 ring-orange-400' 
+                      : 'bg-white hover:bg-slate-50 shadow-md'
                   }`}
                 >
-                  <span className="text-xl md:text-2xl font-black text-stone-900 leading-none">
-                    {key.swar}
+                  <span className="text-lg md:text-xl font-black text-slate-800">
+                    {lang === 'hi' ? k.swarHi : k.noteEn}
                   </span>
-                  <span className="text-[11px] md:text-xs font-bold text-stone-600 mt-1">
-                    {key.hindiLabel} {key.subText}
+                  <span className="text-[10px] font-bold text-slate-400 mt-0.5">
+                    {lang === 'hi' ? k.noteEn : k.swarHi}
                   </span>
                 </button>
               );
             })}
 
-            {/* 7 Black Keys */}
-            {BLACK_KEYS.map((key) => {
-              const isTarget = currentTargetId === key.id;
-              const isPressed = activeId === key.id;
+            {/* Black Keys Layer */}
+            {SWAR_KEYS.filter(k => k.type === 'black').map((k) => {
+              const isTarget = targetNoteId === k.id;
+              const isPressed = activeKey === k.id;
+
+              // Absolute pixel positioning corresponding to black piano keys
+              const leftOffsets: { [id: string]: string } = {
+                re_k: '34px',
+                ga_k: '84px',
+                ma_t: '182px',
+                dha_k: '232px',
+                ni_k: '282px'
+              };
 
               return (
                 <button
-                  key={key.id}
-                  onClick={() => handleKeyPress(key)}
-                  style={{ left: `${key.leftPercent}%` }}
-                  className={`absolute top-0 w-10 md:w-13 h-36 md:h-42 rounded-b-md flex flex-col justify-end items-center pb-3 z-20 transition-all duration-75 cursor-pointer border-t border-stone-700 ${
-                    isPressed
-                      ? 'bg-stone-800 translate-y-1 shadow-inner'
-                      : isTarget
-                      ? 'bg-amber-500 ring-4 ring-amber-300 animate-pulse text-stone-950'
-                      : 'bg-gradient-to-b from-stone-900 via-stone-950 to-black shadow-[0_4px_0_#0f172a,0_8px_12px_rgba(0,0,0,0.7)] text-white'
+                  key={k.id}
+                  onClick={() => handleKeyPress(k)}
+                  style={{ left: leftOffsets[k.id] || '0px' }}
+                  className={`absolute top-0 w-8 md:w-10 h-28 md:h-34 rounded-b-xl border border-slate-700 transition-all flex flex-col justify-end items-center pb-2 z-20 cursor-pointer ${
+                    isPressed 
+                      ? 'bg-orange-700 scale-95 shadow-inner' 
+                      : isTarget 
+                      ? 'bg-orange-600 ring-2 ring-yellow-300' 
+                      : 'bg-slate-900 hover:bg-slate-800 shadow-xl'
                   }`}
                 >
-                  <span className={`text-[11px] font-black ${key.swar.includes('.') ? 'text-red-400' : 'text-stone-300'}`}>
-                    {key.hindiLabel}
-                  </span>
-                  <span className={`text-sm md:text-base font-black leading-tight mt-0.5 ${key.swar.includes('.') ? 'text-red-400' : 'text-white'}`}>
-                    {key.swar}
+                  <span className="text-xs font-black text-white">
+                    {lang === 'hi' ? k.swarHi : k.noteEn}
                   </span>
                 </button>
               );
             })}
           </div>
+        </div>
 
-          <div className="w-full h-1 bg-stone-800 rounded-b mt-1" />
+        <div className="mt-4 text-center text-xs font-bold text-slate-400">
+          💡 {lang === 'hi' 
+            ? 'सफेद व काले कीज़ को टैप करके संगीत बजाएं। पीले हाइलाइट वाले स्वर पर ध्यान दें!' 
+            : 'Tap white and black keys to play music. Follow the highlighted notes to practice!'}
         </div>
 
       </div>
