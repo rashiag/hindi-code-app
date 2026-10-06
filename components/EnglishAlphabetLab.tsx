@@ -3,10 +3,70 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Volume2, RotateCcw, Trophy, CheckCircle2, XCircle, 
-  Clock, Play, Sparkles, ArrowRight, ArrowLeft, Pencil, Key, BookOpen, Home
+  Play, ArrowRight, ArrowLeft, Pencil, Key, BookOpen, Home
 } from 'lucide-react';
 
 type LabSection = 'phonic_game' | 'tracing' | 'cvc';
+
+// --- BILINGUAL UI DICTIONARY (INDIAN ENGLISH & HINDI) ---
+const LAB_STRINGS = {
+  hi: {
+    bannerTitle: "नन्हे वैज्ञानिक प्रीस्कूल लैब (Preschool Lab)",
+    bannerSub: "ध्वनि पहचान (ब → b) • ✏️ पेंसिल ट्रेसिंग • 📖 सचित्र CVC शब्दकोश",
+    tabPhonic: "🔊 फोनिक साउंड गेम (10 राउंड)",
+    tabTracing: "✏️ पेंसिल ट्रेसिंग",
+    tabCvc: "📖 सचित्र CVC शब्दकोश",
+    introTitle: "फोनिक साउंड गेम (10 प्रश्न)",
+    introDesc: "स्क्रीन पर केवल हिंदी ध्वनि (जैसे 'ब') दिखेगी और सुनाई देगी। बिना किसी चित्र के, बच्चे को कीबोर्ड पर सही अक्षर (b) दबाना है!",
+    startBtn: "10-प्रश्नों का खेल शुरू करें ➔",
+    voicePrompt: (sound: string) => `ध्वनि सुनो: ${sound}... कीबोर्ड पर सही बटन दबाओ`,
+    soundPromptLabel: "इस ध्वनि का अक्षर कीबोर्ड पर दबाएं:",
+    soundHint: "(आवाज़ सुनें और लैपटॉप या स्क्रीन पर सही बटन दबाएं)",
+    keyboardTitle: "⌨️ QWERTY कीबोर्ड (टच करें या लैपटॉप की दबाएं)",
+    questionCount: "सवाल",
+    scoreLabel: "स्कोर",
+    completedTitle: "खेल पूरा हुआ!",
+    reportTitle: "फोनिक ध्वनि पहचान रिपोर्ट कार्ड (10 प्रश्न)",
+    accuracyLabel: "सटीकता",
+    totalScoreLabel: "कुल स्कोर",
+    reviewTitle: "जिन अक्षरों का पुनः अभ्यास करना है:",
+    playAgainBtn: "नया 10-प्रश्नों का गेम खेलें",
+    tracingHint: "हरे बिंदु से शुरू करके डॉटेड लाइन पर चलाएं",
+    tracingSuccess: "शानदार! आपने पैटर्न बिल्कुल सही ट्रेस किया 🏆",
+    tracingFail: "थोड़ा भटक गए। 'मिटाएं' दबाकर पुनः प्रयास करें 🔄",
+    clearBtn: "मिटाएं",
+    resetBtn: "रीसेट",
+    nextPatternBtn: "अगला पैटर्न"
+  },
+  en: {
+    bannerTitle: "Little Researcher Preschool Lab",
+    bannerSub: "Phonics Sounds (b for Bat) • ✏️ Pencil Tracing • 📖 Illustrated CVC Words",
+    tabPhonic: "🔊 Phonics Sound Game (10 Rounds)",
+    tabTracing: "✏️ Pencil Tracing",
+    tabCvc: "📖 Illustrated CVC Dictionary",
+    introTitle: "Phonics Sound Challenge (10 Questions)",
+    introDesc: "Listen to the letter sound carefully. Without any picture hints, identify and press the matching letter (like 'b' for 'ba') on your keyboard or screen!",
+    startBtn: "Start 10-Question Challenge ➔",
+    voicePrompt: (sound: string, char: string) => `Listen to the sound: ${sound}... Press the letter ${char} on your keyboard!`,
+    soundPromptLabel: "Press the matching letter key on your keyboard:",
+    soundHint: "(Listen to the audio cue and tap or press the matching letter)",
+    keyboardTitle: "⌨️ QWERTY Keyboard (Tap or press your keys)",
+    questionCount: "Question",
+    scoreLabel: "Score",
+    completedTitle: "Challenge Complete!",
+    reportTitle: "Phonics Sound Identification Report (10 Questions)",
+    accuracyLabel: "Accuracy",
+    totalScoreLabel: "Total Score",
+    reviewTitle: "Letters to practice again:",
+    playAgainBtn: "Play 10-Question Game Again",
+    tracingHint: "Start from the green dot and follow the dashed line",
+    tracingSuccess: "Fantastic! You traced the pattern accurately 🏆",
+    tracingFail: "Slightly off track. Click 'Clear' and try once more 🔄",
+    clearBtn: "Clear",
+    resetBtn: "Reset",
+    nextPatternBtn: "Next Pattern"
+  }
+};
 
 // --- DATA: PHONIC SOUND CHALLENGE ---
 interface PhonicQuestion {
@@ -61,7 +121,7 @@ export interface CvcWordItem {
   phonics: string;
   article: 'a' | 'an';
   emoji: string;
-  badgeBg: string; // Vibrant child-friendly card gradient
+  badgeBg: string;
 }
 
 const CVC_DICTIONARY: CvcWordItem[] = [
@@ -88,7 +148,7 @@ const CVC_DICTIONARY: CvcWordItem[] = [
   { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
 
   // --- VOWEL I ---
-  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
+  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
   { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
   { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
   { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
@@ -168,6 +228,7 @@ const PATTERNS: PatternDefinition[] = [
 ];
 
 export default function EnglishAlphabetLab() {
+  const [currentLang, setCurrentLang] = useState<'hi' | 'en'>('hi');
   const [section, setSection] = useState<LabSection>('phonic_game');
 
   // --- PHONIC SOUND GAME STATE ---
@@ -204,6 +265,8 @@ export default function EnglishAlphabetLab() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const isAudioLockedRef = useRef<boolean>(false);
+
+  const t = LAB_STRINGS[currentLang];
 
   // Sound Synth Generator
   const playSoundEffect = (type: 'correct' | 'wrong' | 'victory') => {
@@ -258,8 +321,8 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Web Speech Promise with Timeout Guarantee
-  const speakVoice = (text: string, lang = 'hi-IN', rate = 0.85): Promise<void> => {
+  // Indian English & Hindi Speech Synthesis Engine
+  const speakVoice = (text: string, lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN', rate = 0.86): Promise<void> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !window.speechSynthesis) {
         resolve();
@@ -275,7 +338,7 @@ export default function EnglishAlphabetLab() {
         utterance.pitch = 1.05;
 
         const voices = window.speechSynthesis.getVoices();
-        const preferred = voices.find(v => v.lang === lang || (lang === 'en-US' && v.lang.startsWith('en')));
+        const preferred = voices.find(v => v.lang === 'en-IN' || v.lang === 'hi-IN') || voices.find(v => v.lang.startsWith(lang.slice(0, 2)));
         if (preferred) utterance.voice = preferred;
 
         let finished = false;
@@ -301,7 +364,11 @@ export default function EnglishAlphabetLab() {
   const calloutCurrentPhonic = async (item: PhonicQuestion) => {
     if (!item || !isMountedRef.current) return;
     setWrongPressKey(null);
-    await speakVoice(`ध्वनि सुनो: ${item.spokenSound}... कीबोर्ड पर सही बटन दबाओ`, 'hi-IN', 0.84);
+    if (currentLang === 'hi') {
+      await speakVoice(`ध्वनि सुनो: ${item.spokenSound}... कीबोर्ड पर सही बटन दबाओ`, 'hi-IN', 0.84);
+    } else {
+      await speakVoice(`Sound: ${item.spokenSound}... Press the key for letter ${item.lower}!`, 'en-IN', 0.86);
+    }
   };
 
   const startPhonicGame = () => {
@@ -338,10 +405,16 @@ export default function EnglishAlphabetLab() {
       setScore(prev => prev + 1);
       setPhonicFeedback({
         type: 'correct',
-        text: `सही जवाब, ${currentPhonicItem.lower} ${currentPhonicItem.hindiSound} for ${currentPhonicItem.exampleWord}`
+        text: currentLang === 'hi' 
+          ? `सही जवाब! ${currentPhonicItem.lower} (${currentPhonicItem.hindiSound}) for ${currentPhonicItem.exampleWord}`
+          : `Correct! ${currentPhonicItem.lower} makes the sound "${currentPhonicItem.hindiSound}" as in ${currentPhonicItem.exampleWord}`
       });
 
-      await speakVoice(`सही जवाब! ${currentPhonicItem.lower} ${currentPhonicItem.spokenSound} for ${currentPhonicItem.exampleWord}`, 'hi-IN', 0.9);
+      if (currentLang === 'hi') {
+        await speakVoice(`सही जवाब! ${currentPhonicItem.lower} ${currentPhonicItem.spokenSound} for ${currentPhonicItem.exampleWord}`, 'hi-IN', 0.9);
+      } else {
+        await speakVoice(`Correct! ${currentPhonicItem.lower} is for ${currentPhonicItem.exampleWord}`, 'en-IN', 0.9);
+      }
       await new Promise(r => setTimeout(r, 350));
     } else {
       playSoundEffect('wrong');
@@ -349,10 +422,16 @@ export default function EnglishAlphabetLab() {
       setMissedPhonics(prev => [...prev, { sound: currentPhonicItem.hindiSound, char: currentPhonicItem.lower, word: currentPhonicItem.exampleWord }]);
       setPhonicFeedback({
         type: 'wrong',
-        text: `नहीं! यह ${currentPhonicItem.lower} ${currentPhonicItem.hindiSound} है`
+        text: currentLang === 'hi'
+          ? `नहीं! यह ${currentPhonicItem.lower} (${currentPhonicItem.hindiSound}) है`
+          : `Oops! That sound was for letter ${currentPhonicItem.lower} (${currentPhonicItem.hindiSound})`
       });
 
-      await speakVoice(`नहीं! यह ${currentPhonicItem.lower} ${currentPhonicItem.spokenSound} है`, 'hi-IN', 0.88);
+      if (currentLang === 'hi') {
+        await speakVoice(`नहीं! यह ${currentPhonicItem.lower} ${currentPhonicItem.spokenSound} है`, 'hi-IN', 0.88);
+      } else {
+        await speakVoice(`Oops! That was letter ${currentPhonicItem.lower}`, 'en-IN', 0.88);
+      }
       await new Promise(r => setTimeout(r, 350));
     }
 
@@ -364,7 +443,11 @@ export default function EnglishAlphabetLab() {
       playSoundEffect('victory');
 
       const finalScore = score + (isCorrect ? 1 : 0);
-      await speakVoice(`वाह! खेल पूरा हुआ। आपने 10 में से ${finalScore} सही किए।`, 'hi-IN', 0.86);
+      if (currentLang === 'hi') {
+        await speakVoice(`वाह! खेल पूरा हुआ। आपने 10 में से ${finalScore} सही किए।`, 'hi-IN', 0.86);
+      } else {
+        await speakVoice(`Well done! You scored ${finalScore} out of 10!`, 'en-IN', 0.88);
+      }
       isAudioLockedRef.current = false;
     } else {
       const nextIdx = currentRoundIndex + 1;
@@ -389,7 +472,7 @@ export default function EnglishAlphabetLab() {
 
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-  }, [isPhonicPlaying, isPhonicFinished, currentRoundIndex, gameQuestions, section, score]);
+  }, [isPhonicPlaying, isPhonicFinished, currentRoundIndex, gameQuestions, section, score, currentLang]);
 
   // --- 2. CVC WORDS HANDLERS ---
   const filteredCvcWords = CVC_DICTIONARY.filter(w => w.vowel === selectedVowel);
@@ -433,7 +516,7 @@ export default function EnglishAlphabetLab() {
         text: `Correct! This is ${currentQ.target.article} '${currentQ.target.word}'.`
       });
 
-      await speakVoice(`Correct! This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-US');
+      await speakVoice(`Correct! This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN');
       await new Promise(r => setTimeout(r, 400));
     } else {
       playSoundEffect('wrong');
@@ -443,14 +526,14 @@ export default function EnglishAlphabetLab() {
         text: `Try again! This is ${currentQ.target.article} '${currentQ.target.word}'.`
       });
 
-      await speakVoice(`Try again! This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-US');
+      await speakVoice(`Try again! This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN');
       await new Promise(r => setTimeout(r, 400));
     }
 
     if (cvcQuizIndex + 1 >= 10) {
       setIsCvcQuizFinished(true);
       playSoundEffect('victory');
-      await speakVoice(`Great job! You scored ${cvcQuizScore + (isCorrect ? 1 : 0)} out of 10!`, 'en-US');
+      await speakVoice(`Great job! You scored ${cvcQuizScore + (isCorrect ? 1 : 0)} out of 10!`, 'en-IN');
       isAudioLockedRef.current = false;
     } else {
       setCvcQuizIndex(prev => prev + 1);
@@ -624,42 +707,71 @@ export default function EnglishAlphabetLab() {
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-2xl">🧸</span>
-            <h1 className="text-lg md:text-xl font-black">नन्हे वैज्ञानिक प्रीस्कूल लैब (Preschool Lab)</h1>
+            <h1 className="text-lg md:text-xl font-black">{t.bannerTitle}</h1>
           </div>
           <p className="text-[11px] md:text-xs text-indigo-100 font-semibold">
-            ध्वनि पहचान (ब $\rightarrow$ b) • ✏️ पेंसिल ट्रेसिंग • 📖 सचित्र CVC शब्दकोश
+            {t.bannerSub}
           </p>
         </div>
 
-        {/* 3 Main Functional Sections */}
-        <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md gap-1 flex-wrap">
-          <button
-            onClick={() => setSection('phonic_game')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-              section === 'phonic_game' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
-            }`}
-          >
-            <Key className="w-3.5 h-3.5" /> 🔊 फोनिक साउंड गेम (10 राउंड)
-          </button>
-          <button
-            onClick={() => setSection('tracing')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-              section === 'tracing' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
-            }`}
-          >
-            <Pencil className="w-3.5 h-3.5" /> ✏️ पेंसिल ट्रेसिंग
-          </button>
-          <button
-            onClick={() => {
-              setSection('cvc');
-              setCvcSubTab('menu');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-              section === 'cvc' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5" /> 📖 सचित्र CVC शब्दकोश
-          </button>
+        {/* Controls: Language Toggle & Sections */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* BILINGUAL LANGUAGE SWITCHER */}
+          <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md gap-1">
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+                setCurrentLang('hi');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                currentLang === 'hi' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              हिंदी
+            </button>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+                setCurrentLang('en');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                currentLang === 'en' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              English
+            </button>
+          </div>
+
+          {/* 3 Main Functional Sections */}
+          <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md gap-1 flex-wrap">
+            <button
+              onClick={() => setSection('phonic_game')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                section === 'phonic_game' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Key className="w-3.5 h-3.5" /> {t.tabPhonic}
+            </button>
+            <button
+              onClick={() => setSection('tracing')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                section === 'tracing' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <Pencil className="w-3.5 h-3.5" /> {t.tabTracing}
+            </button>
+            <button
+              onClick={() => {
+                setSection('cvc');
+                setCvcSubTab('menu');
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                section === 'cvc' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" /> {t.tabCvc}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -674,16 +786,16 @@ export default function EnglishAlphabetLab() {
                 🎯
               </div>
               <h2 className="text-xl font-black text-slate-900 mb-1">
-                फोनिक साउंड गेम (10 प्रश्न)
+                {t.introTitle}
               </h2>
               <p className="text-xs text-slate-600 max-w-md mb-6 leading-relaxed">
-                स्क्रीन पर केवल हिंदी ध्वनि (जैसे <strong>"ब"</strong>) दिखेगी और सुनाई देगी। बिना किसी चित्र के, बच्चे को कीबोर्ड पर सही अक्षर (<strong>b</strong>) दबाना है!
+                {t.introDesc}
               </p>
               <button
                 onClick={startPhonicGame}
                 className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-2xl shadow-lg transition cursor-pointer flex items-center gap-1.5"
               >
-                <Play className="w-4 h-4 fill-white" /> 10-प्रश्नों का खेल शुरू करें ➔
+                <Play className="w-4 h-4 fill-white" /> {t.startBtn}
               </button>
             </div>
           )}
@@ -692,10 +804,10 @@ export default function EnglishAlphabetLab() {
             <div className="bg-white border-2 border-indigo-200 rounded-3xl p-4 md:p-5 shadow-xl flex flex-col items-center">
               <div className="w-full flex justify-between items-center mb-3 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl">
                 <span className="text-xs font-black text-indigo-950 bg-indigo-100 px-3 py-1 rounded-full">
-                  सवाल: {currentRoundIndex + 1} / 10
+                  {t.questionCount}: {currentRoundIndex + 1} / 10
                 </span>
                 <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
-                  स्कोर: {score} / 10
+                  {t.scoreLabel}: {score} / 10
                 </span>
               </div>
 
@@ -703,13 +815,13 @@ export default function EnglishAlphabetLab() {
                 <button
                   onClick={() => calloutCurrentPhonic(currentPhonicItem)}
                   className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-2 flex items-center gap-2"
-                  title="फिर से ध्वनि सुनें"
+                  title="Audio prompt"
                 >
                   <Volume2 className="w-6 h-6 animate-pulse" />
                 </button>
 
                 <span className="text-xs font-bold text-indigo-900 block">
-                  इस ध्वनि का अक्षर कीबोर्ड पर दबाएं:
+                  {t.soundPromptLabel}
                 </span>
 
                 <div className="text-6xl md:text-7xl font-black text-indigo-950 my-1 font-mono tracking-wider">
@@ -717,7 +829,7 @@ export default function EnglishAlphabetLab() {
                 </div>
 
                 <span className="text-[11px] text-slate-500 font-semibold mt-1">
-                  (आवाज़ सुनें और लैपटॉप या स्क्रीन पर सही बटन दबाएं)
+                  {t.soundHint}
                 </span>
               </div>
 
@@ -733,7 +845,7 @@ export default function EnglishAlphabetLab() {
               <div className="w-full max-w-2xl bg-slate-100 border-2 border-slate-300 rounded-3xl p-3 shadow-inner">
                 <div className="text-center mb-2">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                    ⌨️ QWERTY कीबोर्ड (टच करें या लैपटॉप की दबाएं)
+                    {t.keyboardTitle}
                   </span>
                 </div>
 
@@ -774,29 +886,29 @@ export default function EnglishAlphabetLab() {
                 🏆
               </div>
 
-              <h2 className="text-2xl font-black text-indigo-950 mb-1">खेल पूरा हुआ!</h2>
+              <h2 className="text-2xl font-black text-indigo-950 mb-1">{t.completedTitle}</h2>
               <p className="text-xs text-slate-600 font-semibold mb-5">
-                फोनिक ध्वनि पहचान रिपोर्ट कार्ड (10 प्रश्न)
+                {t.reportTitle}
               </p>
 
               <div className="w-full max-w-sm bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 mb-5 flex justify-around items-center">
                 <div>
-                  <span className="text-xs font-bold text-slate-500 block">कुल स्कोर</span>
+                  <span className="text-xs font-bold text-slate-500 block">{t.totalScoreLabel}</span>
                   <span className="text-3xl font-black text-emerald-600">{score} / 10</span>
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-500 block">सटीकता</span>
+                  <span className="text-xs font-bold text-slate-500 block">{t.accuracyLabel}</span>
                   <span className="text-3xl font-black text-indigo-950">{Math.round((score / 10) * 100)}%</span>
                 </div>
               </div>
 
               {missedPhonics.length > 0 && (
                 <div className="w-full max-w-md text-left mb-6 bg-rose-50 border border-rose-200 p-3 rounded-2xl">
-                  <h4 className="text-xs font-black text-rose-900 mb-2">जिन अक्षरों का पुनः अभ्यास करना है:</h4>
+                  <h4 className="text-xs font-black text-rose-900 mb-2">{t.reviewTitle}</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {missedPhonics.map((item, idx) => (
                       <span key={idx} className="bg-white border border-rose-300 px-2.5 py-1 rounded-lg text-xs font-black text-rose-800 shadow-sm">
-                        {item.sound} $\rightarrow$ {item.char} ({item.word})
+                        {item.sound} → {item.char} ({item.word})
                       </span>
                     ))}
                   </div>
@@ -807,7 +919,7 @@ export default function EnglishAlphabetLab() {
                 onClick={startPhonicGame}
                 className="py-3 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
               >
-                <RotateCcw className="w-4 h-4" /> नया 10-प्रश्नों का गेम खेलें
+                <RotateCcw className="w-4 h-4" /> {t.playAgainBtn}
               </button>
             </div>
           )}
@@ -835,11 +947,11 @@ export default function EnglishAlphabetLab() {
 
           <div className="w-full flex justify-between items-center mb-3 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-2xl">
             <span className="text-xs font-black text-teal-950">
-              लक्ष्य: {currentPattern.hindiName}
+              {currentLang === 'hi' ? currentPattern.hindiName : currentPattern.name}
             </span>
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                सफल: {traceScore}
+                {currentLang === 'hi' ? `सफल: ${traceScore}` : `Solved: ${traceScore}`}
               </span>
               <button
                 onClick={() => {
@@ -849,7 +961,7 @@ export default function EnglishAlphabetLab() {
                 }}
                 className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
               >
-                <RotateCcw className="w-3 h-3" /> मिटाएं
+                <RotateCcw className="w-3 h-3" /> {t.clearBtn}
               </button>
             </div>
           </div>
@@ -868,21 +980,21 @@ export default function EnglishAlphabetLab() {
             />
             <div className="absolute top-2 left-3 pointer-events-none bg-white/90 border border-teal-300 px-2.5 py-0.5 rounded-full text-[10px] font-black text-teal-800 shadow-sm flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>हरे बिंदु से शुरू करके डॉटेड लाइन पर चलाएं</span>
+              <span>{t.tracingHint}</span>
             </div>
           </div>
 
           {traceResult === 'success' && (
             <div className="w-full max-w-md mt-3 p-2.5 bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl text-center font-black text-xs flex items-center justify-center gap-1.5 animate-in zoom-in-95">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>शानदार! आपने पैटर्न बिल्कुल सही ट्रेस किया 🏆</span>
+              <span>{t.tracingSuccess}</span>
             </div>
           )}
 
           {traceResult === 'fail' && (
             <div className="w-full max-w-md mt-3 p-2.5 bg-rose-50 border-2 border-rose-300 text-rose-950 rounded-2xl text-center font-black text-xs flex items-center justify-center gap-1.5 animate-in fade-in">
               <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>थोड़ा भटक गए। "मिटाएं" दबाकर पुनः प्रयास करें 🔄</span>
+              <span>{t.tracingFail}</span>
             </div>
           )}
 
@@ -895,7 +1007,7 @@ export default function EnglishAlphabetLab() {
               }}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> रीसेट
+              <RotateCcw className="w-3.5 h-3.5" /> {t.resetBtn}
             </button>
             <button
               onClick={() => {
@@ -904,7 +1016,7 @@ export default function EnglishAlphabetLab() {
               }}
               className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1"
             >
-              अगला पैटर्न <ArrowRight className="w-3.5 h-3.5" />
+              {t.nextPatternBtn} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -916,23 +1028,27 @@ export default function EnglishAlphabetLab() {
       {section === 'cvc' && (
         <div className="space-y-4">
           
-          {/* CVC Sub-Menu Choice */}
           {cvcSubTab === 'menu' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Option 1: Learn */}
               <div className="bg-white border-2 border-teal-200 rounded-3xl p-6 text-center shadow-lg flex flex-col justify-between items-center">
                 <div>
                   <div className="w-16 h-16 bg-teal-100 text-teal-700 rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-inner mx-auto">
                     📚
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 mb-1">शब्द सीखो (Learn CVC)</h3>
+                  <h3 className="text-xl font-black text-slate-900 mb-1">
+                    {currentLang === 'hi' ? 'शब्द सीखो (Learn CVC)' : 'Learn CVC Words'}
+                  </h3>
                   <p className="text-xs text-slate-600 mb-5 leading-relaxed">
-                    स्वर (Vowel) चुनें: <strong>A, E, I, O, U</strong>। हर शब्द की स्पष्ट सचित्र पहचान, फोनिक्स स्पेलिंग व उच्चारण एक-एक करके देखें।
+                    {currentLang === 'hi' 
+                      ? 'स्वर (Vowel) चुनें: A, E, I, O, U। हर शब्द की स्पष्ट सचित्र पहचान, फोनिक्स स्पेलिंग व उच्चारण एक-एक करके देखें।' 
+                      : 'Choose a vowel: A, E, I, O, U. Explore crisp illustrated flashcards, phonics blending, and native word pronunciation.'}
                   </p>
                 </div>
 
                 <div className="w-full">
-                  <span className="text-[11px] font-bold text-slate-500 mb-2 block">स्वर चुनें (Select Vowel):</span>
+                  <span className="text-[11px] font-bold text-slate-500 mb-2 block">
+                    {currentLang === 'hi' ? 'स्वर चुनें (Select Vowel):' : 'Select Vowel:'}
+                  </span>
                   <div className="flex justify-center gap-1.5 mb-4">
                     {VOWEL_OPTIONS.map(v => (
                       <button
@@ -957,34 +1073,37 @@ export default function EnglishAlphabetLab() {
                     }}
                     className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <BookOpen className="w-4 h-4" /> सचित्र शब्दकोश खोलें ➔
+                    <BookOpen className="w-4 h-4" /> {currentLang === 'hi' ? 'सचित्र शब्दकोश खोलें ➔' : 'Open Illustrated Dictionary ➔'}
                   </button>
                 </div>
               </div>
 
-              {/* Option 2: Play */}
               <div className="bg-white border-2 border-indigo-200 rounded-3xl p-6 text-center shadow-lg flex flex-col justify-between items-center">
                 <div>
                   <div className="w-16 h-16 bg-indigo-100 text-indigo-700 rounded-2xl flex items-center justify-center text-3xl mb-3 shadow-inner mx-auto">
                     🎮
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 mb-1">क्विज़ खेलो (Play Quiz)</h3>
+                  <h3 className="text-xl font-black text-slate-900 mb-1">
+                    {currentLang === 'hi' ? 'क्विज़ खेलो (Play Quiz)' : 'Play 10-Picture Challenge'}
+                  </h3>
                   <p className="text-xs text-slate-600 mb-5 leading-relaxed">
-                    सभी स्वरों से 10 बिना दोहराव वाले सचित्र सवाल आएंगे। सही 3-अक्षर शब्द चुनें और 10 में से अपना स्कोर देखें!
+                    {currentLang === 'hi'
+                      ? 'सभी स्वरों से 10 बिना दोहराव वाले सचित्र सवाल आएंगे। सही 3-अक्षर शब्द चुनें और 10 में से अपना स्कोर देखें!'
+                      : '10 unique illustrated questions selected randomly across all vowels. Pick the correct 3-letter word and check your accuracy score!'}
                   </p>
                 </div>
 
                 <div className="w-full">
                   <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-4 text-left text-xs font-semibold text-indigo-900 space-y-1">
-                    <div>🏆 सही उत्तर: विजय धुन + <strong>"This is a/an [word]"</strong></div>
-                    <div>🔔 गलत उत्तर: कोमल बीप + सही उत्तर का ऑडियो उच्चारण</div>
+                    <div>🏆 {currentLang === 'hi' ? 'सही उत्तर: विजय धुन + "This is a/an [word]"' : 'Correct: Victory audio chime + pronunciation'}</div>
+                    <div>🔔 {currentLang === 'hi' ? 'गलत उत्तर: कोमल बीप + सही उत्तर का ऑडियो उच्चारण' : 'Wrong: Soft cue + audio learning reinforcement'}</div>
                   </div>
 
                   <button
                     onClick={startCvcPlayGame}
                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <Play className="w-4 h-4 fill-white" /> 10-प्रश्नों का गेम शुरू करें ➔
+                    <Play className="w-4 h-4 fill-white" /> {currentLang === 'hi' ? '10-प्रश्नों का गेम शुरू करें ➔' : 'Start 10-Question Game ➔'}
                   </button>
                 </div>
               </div>
@@ -999,7 +1118,7 @@ export default function EnglishAlphabetLab() {
                   onClick={() => setCvcSubTab('menu')}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" /> मुख्य मेन्यू (Menu)
+                  <ArrowLeft className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'मुख्य मेन्यू (Menu)' : 'Main Menu'}
                 </button>
 
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -1020,7 +1139,7 @@ export default function EnglishAlphabetLab() {
                 </div>
 
                 <span className="text-xs font-black text-teal-800 bg-teal-100 px-3 py-1 rounded-full">
-                  शब्द: {carouselIndex + 1} / {filteredCvcWords.length}
+                  {currentLang === 'hi' ? `शब्द: ${carouselIndex + 1} / ${filteredCvcWords.length}` : `Word: ${carouselIndex + 1} / ${filteredCvcWords.length}`}
                 </span>
               </div>
 
@@ -1041,9 +1160,9 @@ export default function EnglishAlphabetLab() {
                     {currentCvcWord.word}
                   </span>
                   <button
-                    onClick={() => speakVoice(`This is ${currentCvcWord.article} ${currentCvcWord.word}. ${currentCvcWord.phonics}.`, 'en-US')}
+                    onClick={() => speakVoice(`This is ${currentCvcWord.article} ${currentCvcWord.word}. ${currentCvcWord.phonics}.`, 'en-IN')}
                     className="p-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full transition cursor-pointer shadow-md"
-                    title="आवाज़ सुनें"
+                    title="Audio"
                   >
                     <Volume2 className="w-5 h-5 animate-pulse" />
                   </button>
@@ -1051,10 +1170,10 @@ export default function EnglishAlphabetLab() {
 
                 <div className="flex flex-wrap justify-center gap-2 mt-2">
                   <span className="text-xs font-extrabold text-teal-800 bg-teal-100 px-3 py-0.5 rounded-full">
-                    फोनिक्स: {currentCvcWord.phonics}
+                    {currentLang === 'hi' ? `फोनिक्स: ${currentCvcWord.phonics}` : `Phonics: ${currentCvcWord.phonics}`}
                   </span>
                   <span className="text-xs font-extrabold text-slate-800 bg-amber-100 px-3 py-0.5 rounded-full">
-                    अर्थ: {currentCvcWord.hindiMeaning}
+                    {currentLang === 'hi' ? `अर्थ: ${currentCvcWord.hindiMeaning}` : `Meaning: ${currentCvcWord.hindiMeaning}`}
                   </span>
                 </div>
               </div>
@@ -1064,21 +1183,21 @@ export default function EnglishAlphabetLab() {
                   onClick={() => setCarouselIndex(prev => (prev > 0 ? prev - 1 : filteredCvcWords.length - 1))}
                   className="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" /> पिछला शब्द
+                  <ArrowLeft className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'पिछला शब्द' : 'Previous'}
                 </button>
 
                 <button
-                  onClick={() => speakVoice(`This is ${currentCvcWord.article} ${currentCvcWord.word}`, 'en-US')}
+                  onClick={() => speakVoice(`This is ${currentCvcWord.article} ${currentCvcWord.word}`, 'en-IN')}
                   className="py-2.5 px-4 bg-teal-100 hover:bg-teal-200 text-teal-900 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1"
                 >
-                  <Volume2 className="w-3.5 h-3.5" /> दोहराएं
+                  <Volume2 className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'दोहराएं' : 'Repeat'}
                 </button>
 
                 <button
                   onClick={() => setCarouselIndex(prev => (prev < filteredCvcWords.length - 1 ? prev + 1 : 0))}
                   className="flex-1 py-2.5 px-3 bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer flex items-center justify-center gap-1"
                 >
-                  अगला शब्द <ArrowRight className="w-3.5 h-3.5" />
+                  {currentLang === 'hi' ? 'अगला शब्द' : 'Next'} <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -1092,13 +1211,13 @@ export default function EnglishAlphabetLab() {
                   onClick={() => setCvcSubTab('menu')}
                   className="text-xs font-bold text-indigo-700 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <ArrowLeft className="w-3 h-3" /> मेन्यू
+                  <ArrowLeft className="w-3 h-3" /> {currentLang === 'hi' ? 'मेन्यू' : 'Menu'}
                 </button>
                 <span className="text-xs font-black text-indigo-950 bg-white border border-indigo-200 px-3 py-1 rounded-full shadow-sm">
-                  प्रश्न: {cvcQuizIndex + 1} / 10
+                  {currentLang === 'hi' ? `प्रश्न: ${cvcQuizIndex + 1} / 10` : `Question: ${cvcQuizIndex + 1} / 10`}
                 </span>
                 <span className="text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
-                  स्कोर: {cvcQuizScore} / 10
+                  {currentLang === 'hi' ? `स्कोर: ${cvcQuizScore} / 10` : `Score: ${cvcQuizScore} / 10`}
                 </span>
               </div>
 
@@ -1112,10 +1231,10 @@ export default function EnglishAlphabetLab() {
                 </div>
 
                 <span className="text-xs font-black text-indigo-900 block mb-0.5">
-                  चित्र देखकर सही 3-अक्षर शब्द (CVC) चुनें:
+                  {currentLang === 'hi' ? 'चित्र देखकर सही 3-अक्षर शब्द (CVC) चुनें:' : 'Identify the image and select the correct 3-letter CVC word:'}
                 </span>
                 <span className="text-[11px] text-slate-500 font-semibold">
-                  (संकेत: {cvcQuizList[cvcQuizIndex].target.hindiMeaning})
+                  ({currentLang === 'hi' ? 'संकेत' : 'Hint'}: {cvcQuizList[cvcQuizIndex].target.hindiMeaning})
                 </span>
               </div>
 
@@ -1149,25 +1268,33 @@ export default function EnglishAlphabetLab() {
                 🏆
               </div>
 
-              <h2 className="text-2xl font-black text-indigo-950 mb-1">खेल पूरा हुआ! (Quiz Completed)</h2>
+              <h2 className="text-2xl font-black text-indigo-950 mb-1">
+                {currentLang === 'hi' ? 'खेल पूरा हुआ! (Quiz Completed)' : 'Quiz Completed!'}
+              </h2>
               <p className="text-xs text-slate-600 font-semibold mb-5">
                 NEP 2020 CVC Foundational Word Mastery
               </p>
 
               <div className="w-full max-w-sm bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 mb-5 flex justify-around items-center">
                 <div>
-                  <span className="text-xs font-bold text-slate-500 block">कुल स्कोर</span>
+                  <span className="text-xs font-bold text-slate-500 block">
+                    {currentLang === 'hi' ? 'कुल स्कोर' : 'Total Score'}
+                  </span>
                   <span className="text-3xl font-black text-emerald-600">{cvcQuizScore} / 10</span>
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-500 block">सटीकता</span>
+                  <span className="text-xs font-bold text-slate-500 block">
+                    {currentLang === 'hi' ? 'सटीकता' : 'Accuracy'}
+                  </span>
                   <span className="text-3xl font-black text-indigo-950">{Math.round((cvcQuizScore / 10) * 100)}%</span>
                 </div>
               </div>
 
               {missedCvcWords.length > 0 && (
                 <div className="w-full max-w-md text-left mb-6 bg-rose-50 border border-rose-200 p-4 rounded-2xl">
-                  <h4 className="text-xs font-black text-rose-900 mb-2">जिन शब्दों का पुनः अभ्यास करना है:</h4>
+                  <h4 className="text-xs font-black text-rose-900 mb-2">
+                    {currentLang === 'hi' ? 'जिन शब्दों का पुनः अभ्यास करना है:' : 'Words to practice again:'}
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {missedCvcWords.map((item, idx) => (
                       <span key={idx} className="bg-white border border-rose-300 px-3 py-1 rounded-xl text-xs font-black text-rose-800 shadow-sm flex items-center gap-1.5">
@@ -1185,13 +1312,13 @@ export default function EnglishAlphabetLab() {
                   onClick={startCvcPlayGame}
                   className="py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
                 >
-                  <RotateCcw className="w-4 h-4" /> पुनः नया गेम खेलें
+                  <RotateCcw className="w-4 h-4" /> {currentLang === 'hi' ? 'पुनः नया गेम खेलें' : 'Play Again'}
                 </button>
                 <button
                   onClick={() => setCvcSubTab('menu')}
                   className="py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
                 >
-                  <Home className="w-4 h-4" /> मुख्य मेन्यू
+                  <Home className="w-4 h-4" /> {currentLang === 'hi' ? 'मुख्य मेन्यू' : 'Main Menu'}
                 </button>
               </div>
             </div>
