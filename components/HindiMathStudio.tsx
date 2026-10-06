@@ -1,318 +1,511 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, RotateCcw, Award, Sparkles, CheckCircle2, Trophy, Star } from 'lucide-react';
+import { 
+  Volume2, RotateCcw, Trophy, CheckCircle2, XCircle, 
+  Sparkles, Star, ArrowRight, Plus, Minus, Hash, Layers
+} from 'lucide-react';
 
-interface RuralObject {
-  name: string;
-  plural: string;
-  hindi: string;
-  emoji: string;
-}
+type MathMode = 'counting' | 'tenframe' | 'addition' | 'subtraction';
 
-const RURAL_ITEMS: RuralObject[] = [
-  { name: 'Mango', plural: 'Mangoes', hindi: 'आम', emoji: '🥭' },
-  { name: 'Diya', plural: 'Diyas', hindi: 'दीया', emoji: '🪔' },
-  { name: 'Kite', plural: 'Kites', hindi: 'पतंग', emoji: '🪁' },
-  { name: 'Goat', plural: 'Goats', hindi: 'बकरी', emoji: '🐐' },
-  { name: 'Lotus', plural: 'Lotuses', hindi: 'कमल', emoji: '🪷' },
-  { name: 'Peacock', plural: 'Peacocks', hindi: 'मोर', emoji: '🦚' }
-];
-
-const NUMBER_MAP: { [key: number]: { hindiNum: string; hindiWord: string; engWord: string } } = {
-  1: { hindiNum: '१', hindiWord: 'एक', engWord: 'One' },
-  2: { hindiNum: '२', hindiWord: 'दो', engWord: 'Two' },
-  3: { hindiNum: '३', hindiWord: 'तीन', engWord: 'Three' },
-  4: { hindiNum: '४', hindiWord: 'चार', engWord: 'Four' },
-  5: { hindiNum: '५', hindiWord: 'पाँच', engWord: 'Five' },
-  6: { hindiNum: '६', hindiWord: 'छह', engWord: 'Six' },
-  7: { hindiNum: '७', hindiWord: 'सात', engWord: 'Seven' },
-  8: { hindiNum: '८', hindiWord: 'आठ', engWord: 'Eight' },
-  9: { hindiNum: '९', hindiWord: 'नौ', engWord: 'Nine' },
-  10: { hindiNum: '१०', hindiWord: 'दस', engWord: 'Ten' }
+const STRINGS = {
+  hi: {
+    bannerTitle: "गणित वाटिका (Early Numeracy & Maths)",
+    bannerSub: "चित्रों से गिनती • टेन-फ्रेम • जोड़ व घटाना (NEP 2020 Foundational)",
+    tabCounting: "🔢 1. गिनती (Count)",
+    tabTenFrame: "🧮 2. टेन-फ्रेम (Ten-Frame)",
+    tabAddition: "➕ 3. जोड़ (Addition)",
+    tabSubtraction: "➖ 4. घटाना (Subtract)",
+    scoreLabel: "स्कोर",
+    roundLabel: "सवाल",
+    submitBtn: "जाँचें (Check)",
+    nextBtn: "अगला सवाल ➔",
+    playAgainBtn: "दोबारा खेलें",
+    completedTitle: "शाबाश! राउंड पूरा हुआ",
+    reportTitle: "गणित दक्षता रिपोर्ट कार्ड",
+    accuracyLabel: "सटीकता",
+    correctChime: "शाबाश! बिल्कुल सही उत्तर!",
+    wrongChime: "गलत उत्तर, ध्यान से गिनें!",
+    countingPrompt: (num: number, item: string) => `गिनकर बताओ: यहाँ कितने ${item} हैं?`,
+    additionPrompt: (a: number, b: number) => `${a} और ${b} मिलकर कितने होते हैं?`,
+    subtractionPrompt: (a: number, b: number) => `${a} में से ${b} घटाने पर क्या बचेगा?`,
+  },
+  en: {
+    bannerTitle: "Early Numeracy & Math Playground",
+    bannerSub: "Visual Counting • Ten-Frames • Addition & Subtraction (NEP 2020)",
+    tabCounting: "🔢 1. Counting",
+    tabTenFrame: "🧮 2. Ten-Frame",
+    tabAddition: "➕ 3. Addition",
+    tabSubtraction: "➖ 4. Subtraction",
+    scoreLabel: "Score",
+    roundLabel: "Question",
+    submitBtn: "Check Answer",
+    nextBtn: "Next Question ➔",
+    playAgainBtn: "Play Again",
+    completedTitle: "Well Done! Round Complete",
+    reportTitle: "Foundational Numeracy Report Card",
+    accuracyLabel: "Accuracy",
+    correctChime: "Great job! That is correct!",
+    wrongChime: "Try again! Count carefully.",
+    countingPrompt: (num: number, item: string) => `Count and tell: How many ${item} are here?`,
+    additionPrompt: (a: number, b: number) => `How much is ${a} plus ${b}?`,
+    subtractionPrompt: (a: number, b: number) => `How much is ${a} minus ${b}?`,
+  }
 };
 
-const TOTAL_ROUNDS = 5;
+const COUNTING_ITEMS = [
+  { nameHi: 'सेब', nameEn: 'apples', emoji: '🍎' },
+  { nameHi: 'तारे', nameEn: 'stars', emoji: '⭐' },
+  { nameHi: 'केले', nameEn: 'bananas', emoji: '🍌' },
+  { nameHi: 'गुब्बारे', nameEn: 'balloons', emoji: '🎈' },
+  { nameHi: 'कारें', nameEn: 'cars', emoji: '🚗' },
+];
 
 export function HindiMathStudio() {
-  const [tier, setTier] = useState<1 | 2>(1);
-  const [currentRound, setCurrentRound] = useState<number>(1);
-  const [targetCount, setTargetCount] = useState<number>(3);
-  const [activeItem, setActiveItem] = useState<RuralObject>(RURAL_ITEMS[0]);
-  const [options, setOptions] = useState<number[]>([]);
-  const [selectedNum, setSelectedNum] = useState<number | null>(null);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [countingIndex, setCountingIndex] = useState<number>(-1);
-  const [isBusy, setIsBusy] = useState<boolean>(false);
-  const [score, setScore] = useState<number>(0);
-  const [streak, setStreak] = useState<number>(0);
-  const [isGameOver, setIsGameOver] = useState<boolean>(false);
-  const [finalScoreSummary, setFinalScoreSummary] = useState<number>(0);
+  const [lang, setLang] = useState<'hi' | 'en'>('hi');
+  const [mode, setMode] = useState<MathMode>('counting');
+  const [qIndex, setQIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [isGameOver, setIsGameOver] = useState(false);
+
+  // Question parameters
+  const [countTarget, setCountTarget] = useState(4);
+  const [activeItem, setActiveItem] = useState(COUNTING_ITEMS[0]);
+  const [numA, setNumA] = useState(3);
+  const [numB, setNumB] = useState(2);
+  const [userSelected, setUserSelected] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
+  const [tenFrameCount, setTenFrameCount] = useState(4);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const t = STRINGS[lang];
 
-  // Clear timers on unmount or reset
-  const clearActiveTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+  const truncateAudio = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
     }
   };
 
-  useEffect(() => {
-    return () => clearActiveTimeout();
-  }, []);
-
-  const playSuccessChime = () => {
+  const playSoundEffect = (type: 'correct' | 'wrong' | 'victory') => {
+    if (typeof window === 'undefined') return;
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume();
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now);
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.15);
-      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.3);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.6);
-    } catch (e) {
-      console.log('Audio error:', e);
-    }
-  };
 
-  const speakAudio = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN', rate: number = 0.85): Promise<void> => {
-    return new Promise((resolve) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-        resolve();
-        return;
+      if (type === 'correct') {
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.24, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.3);
+        });
+      } else if (type === 'wrong') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(130, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.28);
+      } else {
+        [261.63, 329.63, 392.0, 523.25].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+          gain.gain.setValueAtTime(0.25, now + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.07);
+          osc.stop(now + 1.1);
+        });
       }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = rate;
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      window.speechSynthesis.speak(utterance);
-    });
+    } catch (e) {}
   };
 
-  const generateQuestionForTier = (selectedTier: 1 | 2) => {
-    const maxVal = selectedTier === 1 ? 5 : 10;
-    const minVal = 1;
-    const count = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
-    const randomItem = RURAL_ITEMS[Math.floor(Math.random() * RURAL_ITEMS.length)];
+  const speakAudio = (text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      u.rate = 0.88;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  };
 
-    const opts = new Set<number>([count]);
-    while (opts.size < 3) {
-      const wrong = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
-      opts.add(wrong);
-    }
+  const generateNewQuestion = () => {
+    truncateAudio();
+    setUserSelected(null);
+    setFeedback(null);
 
-    setTargetCount(count);
+    const randomItem = COUNTING_ITEMS[Math.floor(Math.random() * COUNTING_ITEMS.length)];
     setActiveItem(randomItem);
-    setOptions(Array.from(opts).sort(() => Math.random() - 0.5));
-    setSelectedNum(null);
-    setIsCorrect(null);
-    setCountingIndex(-1);
-    setIsBusy(false);
+
+    if (mode === 'counting') {
+      const target = Math.floor(Math.random() * 8) + 2; // 2 to 9
+      setCountTarget(target);
+      setTimeout(() => {
+        speakAudio(t.countingPrompt(target, lang === 'hi' ? randomItem.nameHi : randomItem.nameEn));
+      }, 150);
+    } else if (mode === 'tenframe') {
+      const target = Math.floor(Math.random() * 10) + 1; // 1 to 10
+      setTenFrameCount(target);
+      setTimeout(() => {
+        speakAudio(lang === 'hi' ? `टेन-फ्रेम में ${target} बिंदु गिनें!` : `Count the ${target} dots in the ten-frame!`);
+      }, 150);
+    } else if (mode === 'addition') {
+      const a = Math.floor(Math.random() * 5) + 1;
+      const b = Math.floor(Math.random() * 4) + 1;
+      setNumA(a);
+      setNumB(b);
+      setTimeout(() => {
+        speakAudio(t.additionPrompt(a, b));
+      }, 150);
+    } else {
+      const a = Math.floor(Math.random() * 5) + 4; // 4 to 8
+      const b = Math.floor(Math.random() * (a - 1)) + 1; // 1 to a-1
+      setNumA(a);
+      setNumB(b);
+      setTimeout(() => {
+        speakAudio(t.subtractionPrompt(a, b));
+      }, 150);
+    }
   };
 
-  const startNewGame = (targetTier: 1 | 2 = tier) => {
-    clearActiveTimeout();
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+  const startNewGame = (newMode = mode) => {
+    setQIndex(0);
     setScore(0);
-    setStreak(0);
-    setCurrentRound(1);
     setIsGameOver(false);
-    setFinalScoreSummary(0);
-    generateQuestionForTier(targetTier);
+    setMode(newMode);
+    generateNewQuestion();
   };
 
-  // Initial load
   useEffect(() => {
-    startNewGame(tier);
-  }, []);
+    startNewGame(mode);
+    return () => truncateAudio();
+  }, [mode, lang]);
 
-  const handleTierSwitch = (newTier: 1 | 2) => {
-    if (tier === newTier) return;
-    setTier(newTier);
-    startNewGame(newTier);
-  };
+  const handleSelectOption = (chosen: number) => {
+    if (feedback !== null) return;
+    setUserSelected(chosen);
+    truncateAudio();
 
-  const handleGameOver = async (achievedScore: number) => {
-    setIsGameOver(true);
-    setFinalScoreSummary(achievedScore);
-    setIsBusy(false);
+    let correctVal = countTarget;
+    if (mode === 'tenframe') correctVal = tenFrameCount;
+    if (mode === 'addition') correctVal = numA + numB;
+    if (mode === 'subtraction') correctVal = numA - numB;
 
-    if (achievedScore >= 4) {
-      await speakAudio(`अद्भुत प्रदर्शन! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं!`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Outstanding! You scored ${achievedScore} out of 5!`, 'en-IN', 0.9);
+    const isRight = chosen === correctVal;
+
+    if (isRight) {
+      playSoundEffect('correct');
+      setScore(prev => prev + 1);
+      setFeedback({ isCorrect: true, text: t.correctChime });
+      speakAudio(t.correctChime);
     } else {
-      await speakAudio(`शाबाश प्रयास! आपने पाँच में से ${achievedScore} अंक प्राप्त किए हैं।`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 200));
-      await speakAudio(`Good job! You scored ${achievedScore} out of 5. Keep practicing!`, 'en-IN', 0.9);
+      playSoundEffect('wrong');
+      setFeedback({ isCorrect: false, text: `${t.wrongChime} (${correctVal})` });
+      speakAudio(lang === 'hi' ? `सही उत्तर है: ${correctVal}` : `The correct answer is: ${correctVal}`);
     }
   };
 
-  const handleSelect = async (num: number) => {
-    if (isBusy || isGameOver || isCorrect !== null) return;
-    setIsBusy(true);
-    setSelectedNum(num);
-
-    const itemName = num === 1 ? activeItem.name : activeItem.plural;
-    const isAnswerCorrect = num === targetCount;
-
-    if (isAnswerCorrect) {
-      setIsCorrect(true);
-      const nextScore = score + 1;
-      setScore(nextScore);
-      setStreak((prev) => prev + 1);
-      playSuccessChime();
-
-      await speakAudio(`शाबाश! ${NUMBER_MAP[num].hindiWord} ${activeItem.hindi}!`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 120));
-      await speakAudio(`Great! ${NUMBER_MAP[num].engWord} ${itemName}!`, 'en-IN', 0.9);
-
-      timeoutRef.current = setTimeout(() => {
-        if (currentRound >= TOTAL_ROUNDS) {
-          handleGameOver(nextScore);
-        } else {
-          setCurrentRound((prev) => prev + 1);
-          generateQuestionForTier(tier);
-        }
-      }, 900);
-
+  const handleNext = () => {
+    truncateAudio();
+    if (qIndex + 1 >= 5) {
+      setIsGameOver(true);
+      playSoundEffect('victory');
+      speakAudio(lang === 'hi' ? `बधाई! आपने 5 में से ${score} सही किए!` : `Great job! You scored ${score} out of 5!`);
     } else {
-      setIsCorrect(false);
-      setStreak(0);
-
-      await speakAudio(`आइए मिलकर गिनते हैं...`, 'hi-IN');
-
-      for (let i = 1; i <= targetCount; i++) {
-        setCountingIndex(i - 1);
-        await speakAudio(NUMBER_MAP[i].hindiWord, 'hi-IN', 0.9);
-        await new Promise((r) => setTimeout(r, 220));
-      }
-
-      setCountingIndex(-1);
-      await speakAudio(`यहाँ कुल ${NUMBER_MAP[targetCount].hindiWord} ${activeItem.hindi} हैं।`, 'hi-IN');
-      await new Promise((r) => setTimeout(r, 150));
-      await speakAudio(`There are ${NUMBER_MAP[targetCount].engWord} ${itemName}.`, 'en-IN', 0.9);
-
-      timeoutRef.current = setTimeout(() => {
-        if (currentRound >= TOTAL_ROUNDS) {
-          handleGameOver(score);
-        } else {
-          setCurrentRound((prev) => prev + 1);
-          generateQuestionForTier(tier);
-        }
-      }, 700);
+      setQIndex(prev => prev + 1);
+      generateNewQuestion();
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 font-sans select-none">
-      {/* Top Header & Turn Tracker */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-amber-50/80 p-4 rounded-2xl border border-amber-200">
+    <div className="max-w-4xl mx-auto p-3 md:p-6 font-sans select-none">
+      
+      {/* Top Banner with Bilingual Toggle */}
+      <div className="bg-amber-50/80 p-4 md:p-5 rounded-3xl border border-amber-200 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">🔢</span>
-            <h1 className="text-xl md:text-2xl font-black text-amber-950">गिनती मिलाओ (Counting Match)</h1>
+            <h1 className="text-xl md:text-2xl font-black text-amber-950">
+              {t.bannerTitle}
+            </h1>
           </div>
           <p className="text-xs md:text-sm font-semibold text-amber-800">
-            चित्रों को गिनें और सही संख्या चुनें • Count &amp; Match
+            {t.bannerSub}
           </p>
         </div>
 
-        {/* Round Indicators */}
-        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm">
-          <span className="text-xs font-black text-amber-900 mr-1">राउंड:</span>
-          {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
-            <span
-              key={i}
-              className={`w-3 h-3 rounded-full transition-all ${
-                i + 1 === currentRound && !isGameOver
-                  ? 'bg-amber-600 ring-2 ring-amber-300 scale-110'
-                  : i + 1 < currentRound || isGameOver
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-200'
+        {/* Controls: Language Toggle & Live Score */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex bg-white p-1 rounded-xl border border-amber-300 shadow-sm gap-1">
+            <button
+              onClick={() => {
+                truncateAudio();
+                setLang('hi');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'hi' ? 'bg-amber-600 text-white shadow-sm' : 'text-amber-950 hover:bg-amber-100'
               }`}
-            />
-          ))}
-          <span className="text-xs font-extrabold text-amber-800 ml-1">
-            {Math.min(currentRound, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
-          </span>
-        </div>
-
-        {/* Tier Switcher */}
-        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-amber-300 shadow-sm">
-          <button
-            onClick={() => handleTierSwitch(1)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              tier === 1 ? 'bg-amber-600 text-white shadow' : 'text-amber-900 hover:bg-amber-50'
-            }`}
-          >
-            Tier 1 (१–५)
-          </button>
-          <button
-            onClick={() => handleTierSwitch(2)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              tier === 2 ? 'bg-amber-600 text-white shadow' : 'text-amber-900 hover:bg-amber-50'
-            }`}
-          >
-            Tier 2 (१–१०)
-          </button>
-        </div>
-
-        {/* Live Score Counter */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-xs font-black border border-amber-200">
-            <Award className="w-4 h-4 text-amber-600" /> सही: {score}/{TOTAL_ROUNDS}
+            >
+              हिंदी
+            </button>
+            <button
+              onClick={() => {
+                truncateAudio();
+                setLang('en');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'en' ? 'bg-amber-600 text-white shadow-sm' : 'text-amber-950 hover:bg-amber-100'
+              }`}
+            >
+              English
+            </button>
           </div>
-          {streak > 1 && (
-            <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-orange-200">
-              <Sparkles className="w-3.5 h-3.5 text-orange-600" /> {streak} लगातार!
-            </div>
-          )}
+
+          <div className="bg-amber-100 text-amber-950 px-3 py-1.5 rounded-xl border border-amber-300 text-xs font-black">
+            {t.scoreLabel}: {score} / 5
+          </div>
+        </div>
+
+        {/* 4 Mode Buttons */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mt-2">
+          <button
+            onClick={() => setMode('counting')}
+            className={`py-2 px-3 rounded-xl text-xs font-black cursor-pointer transition ${
+              mode === 'counting' ? 'bg-amber-600 text-white shadow-md' : 'bg-white hover:bg-amber-100/70 border border-amber-200 text-amber-900'
+            }`}
+          >
+            {t.tabCounting}
+          </button>
+          <button
+            onClick={() => setMode('tenframe')}
+            className={`py-2 px-3 rounded-xl text-xs font-black cursor-pointer transition ${
+              mode === 'tenframe' ? 'bg-amber-600 text-white shadow-md' : 'bg-white hover:bg-amber-100/70 border border-amber-200 text-amber-900'
+            }`}
+          >
+            {t.tabTenFrame}
+          </button>
+          <button
+            onClick={() => setMode('addition')}
+            className={`py-2 px-3 rounded-xl text-xs font-black cursor-pointer transition ${
+              mode === 'addition' ? 'bg-amber-600 text-white shadow-md' : 'bg-white hover:bg-amber-100/70 border border-amber-200 text-amber-900'
+            }`}
+          >
+            {t.tabAddition}
+          </button>
+          <button
+            onClick={() => setMode('subtraction')}
+            className={`py-2 px-3 rounded-xl text-xs font-black cursor-pointer transition ${
+              mode === 'subtraction' ? 'bg-amber-600 text-white shadow-md' : 'bg-white hover:bg-amber-100/70 border border-amber-200 text-amber-900'
+            }`}
+          >
+            {t.tabSubtraction}
+          </button>
         </div>
       </div>
 
-      {/* Main Play Area */}
-      <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-amber-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
-        {isGameOver ? (
-          /* End-of-Game Feedback Card */
-          <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg animate-in fade-in zoom-in duration-200">
+      {/* Main Interactive Stage */}
+      <div className="bg-white rounded-3xl p-6 md:p-8 border-2 border-amber-200 shadow-xl flex flex-col items-center justify-between min-h-[440px]">
+        {!isGameOver ? (
+          <div className="w-full flex flex-col items-center text-center">
+            
+            {/* Round info & Voice replay button */}
+            <div className="flex items-center justify-between w-full mb-4">
+              <span className="text-xs font-black bg-amber-100 text-amber-900 px-3 py-1 rounded-full">
+                {t.roundLabel}: {qIndex + 1} / 5
+              </span>
+              <button
+                onClick={() => {
+                  truncateAudio();
+                  if (mode === 'counting') speakAudio(t.countingPrompt(countTarget, lang === 'hi' ? activeItem.nameHi : activeItem.nameEn));
+                  if (mode === 'tenframe') speakAudio(lang === 'hi' ? `टेन-फ्रेम में ${tenFrameCount} बिंदु गिनें!` : `Count the dots!`);
+                  if (mode === 'addition') speakAudio(t.additionPrompt(numA, numB));
+                  if (mode === 'subtraction') speakAudio(t.subtractionPrompt(numA, numB));
+                }}
+                className="p-2 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              >
+                <Volume2 className="w-4 h-4" /> {lang === 'hi' ? 'आवाज़ सुनें' : 'Listen'}
+              </button>
+            </div>
+
+            {/* Visual Canvas Display based on Mode */}
+            {mode === 'counting' && (
+              <div className="w-full max-w-lg bg-amber-50/60 border-2 border-amber-200 rounded-3xl p-6 mb-6 shadow-inner">
+                <span className="text-xs font-bold text-amber-900 block mb-3">
+                  {lang === 'hi' ? 'चित्रों को ध्यान से गिनें:' : 'Count the items on screen:'}
+                </span>
+                <div className="flex flex-wrap justify-center gap-4 py-2">
+                  {Array.from({ length: countTarget }).map((_, i) => (
+                    <span key={i} className="text-5xl animate-bounce" style={{ animationDelay: `${i * 90}ms` }}>
+                      {activeItem.emoji}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {mode === 'tenframe' && (
+              <div className="w-full max-w-md bg-amber-50/60 border-2 border-amber-200 rounded-3xl p-5 mb-6 shadow-inner">
+                <span className="text-xs font-bold text-amber-900 block mb-3">
+                  {lang === 'hi' ? 'टेन-फ्रेम में कितने भरे हुए खाने हैं?' : 'How many filled boxes are in the Ten-Frame?'}
+                </span>
+                <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto bg-white p-3 rounded-2xl border-2 border-amber-300 shadow-sm">
+                  {Array.from({ length: 10 }).map((_, i) => {
+                    const isFilled = i < tenFrameCount;
+                    return (
+                      <div
+                        key={i}
+                        className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
+                          isFilled ? 'bg-amber-500 border-amber-600 shadow-sm' : 'bg-slate-50 border-dashed border-slate-300'
+                        }`}
+                      >
+                        {isFilled && <span className="w-6 h-6 rounded-full bg-white shadow-inner" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {mode === 'addition' && (
+              <div className="w-full max-w-lg bg-amber-50/60 border-2 border-amber-200 rounded-3xl p-6 mb-6 shadow-inner">
+                <div className="flex items-center justify-center gap-4 md:gap-6">
+                  {/* First group */}
+                  <div className="flex flex-col items-center">
+                    <div className="flex flex-wrap justify-center gap-1.5 max-w-[120px] mb-2">
+                      {Array.from({ length: numA }).map((_, i) => (
+                        <span key={i} className="text-3xl">🍎</span>
+                      ))}
+                    </div>
+                    <span className="text-3xl font-black text-amber-950 font-mono">{numA}</span>
+                  </div>
+
+                  <span className="text-3xl font-black text-amber-700">➕</span>
+
+                  {/* Second group */}
+                  <div className="flex flex-col items-center">
+                    <div className="flex flex-wrap justify-center gap-1.5 max-w-[120px] mb-2">
+                      {Array.from({ length: numB }).map((_, i) => (
+                        <span key={i} className="text-3xl">🍏</span>
+                      ))}
+                    </div>
+                    <span className="text-3xl font-black text-amber-950 font-mono">{numB}</span>
+                  </div>
+
+                  <span className="text-3xl font-black text-amber-700">🟰</span>
+                  <span className="text-4xl font-black text-amber-900">❓</span>
+                </div>
+              </div>
+            )}
+
+            {mode === 'subtraction' && (
+              <div className="w-full max-w-lg bg-amber-50/60 border-2 border-amber-200 rounded-3xl p-6 mb-6 shadow-inner">
+                <div className="flex items-center justify-center gap-4 md:gap-6">
+                  <div className="flex flex-col items-center">
+                    <div className="flex flex-wrap justify-center gap-1.5 max-w-[140px] mb-2">
+                      {Array.from({ length: numA }).map((_, i) => (
+                        <span key={i} className={`text-3xl ${i < numB ? 'opacity-30 line-through' : ''}`}>
+                          🎈
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-3xl font-black text-amber-950 font-mono">{numA}</span>
+                  </div>
+
+                  <span className="text-3xl font-black text-rose-600">➖</span>
+
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl font-black text-amber-950 font-mono mb-2">{numB}</span>
+                    <span className="text-xs font-bold text-slate-500">
+                      ({lang === 'hi' ? 'कम करें' : 'take away'})
+                    </span>
+                  </div>
+
+                  <span className="text-3xl font-black text-amber-700">🟰</span>
+                  <span className="text-4xl font-black text-amber-900">❓</span>
+                </div>
+              </div>
+            )}
+
+            {/* Feedback Alert */}
+            {feedback && (
+              <div className={`w-full max-w-md p-3 rounded-2xl border-2 text-center text-xs md:text-sm font-black mb-5 flex items-center justify-center gap-2 animate-in fade-in ${
+                feedback.isCorrect ? 'bg-emerald-50 border-emerald-400 text-emerald-950' : 'bg-rose-50 border-rose-400 text-rose-950'
+              }`}>
+                {feedback.isCorrect ? <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" /> : <XCircle className="w-5 h-5 text-rose-600 shrink-0" />}
+                <span>{feedback.text}</span>
+              </div>
+            )}
+
+            {/* Answer Options Grid (1 to 10) */}
+            <div className="grid grid-cols-5 gap-2.5 max-w-md w-full mb-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                const isSelected = userSelected === num;
+                return (
+                  <button
+                    key={num}
+                    onClick={() => handleSelectOption(num)}
+                    disabled={feedback !== null}
+                    className={`py-3 rounded-2xl font-black text-xl transition-all cursor-pointer font-mono ${
+                      isSelected
+                        ? feedback?.isCorrect
+                          ? 'bg-emerald-600 text-white shadow-lg scale-105'
+                          : 'bg-rose-500 text-white shadow-lg'
+                        : 'bg-white hover:bg-amber-100 border-2 border-amber-300 text-amber-950 shadow-sm active:scale-95'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next Button */}
+            {feedback !== null && (
+              <button
+                onClick={handleNext}
+                className="py-3 px-8 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-lg transition cursor-pointer flex items-center gap-2"
+              >
+                <span>{t.nextBtn}</span>
+              </button>
+            )}
+
+          </div>
+        ) : (
+          /* Final Report Card */
+          <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg my-auto animate-in zoom-in-95">
             <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 text-amber-600 shadow-inner">
               <Trophy className="w-10 h-10" />
             </div>
 
-            <h2 className="text-2xl font-black text-amber-950 mb-1">खेल संपन्न! (Game Complete)</h2>
-            <p className="text-sm font-bold text-amber-800 mb-5">
-              {finalScoreSummary === 5
-                ? '🌟 Excellent! All answers correct!'
-                : finalScoreSummary >= 3
-                ? '👏 Great effort! बहुत बढ़िया प्रयास!'
-                : '💪 Keep practicing! अभ्यास जारी रखें!'}
-            </p>
+            <h2 className="text-2xl font-black text-amber-950 mb-1">{t.completedTitle}</h2>
+            <p className="text-xs font-bold text-amber-800 mb-5">{t.reportTitle}</p>
 
-            {/* Stars Matching Verified Final Score */}
             <div className="flex items-center gap-2 mb-6">
-              {Array.from({ length: TOTAL_ROUNDS }).map((_, idx) => (
+              {Array.from({ length: 5 }).map((_, idx) => (
                 <Star
                   key={idx}
                   className={`w-7 h-7 ${
-                    idx < finalScoreSummary
+                    idx < score
                       ? 'text-amber-500 fill-amber-400 drop-shadow'
                       : 'text-slate-200 fill-slate-100'
                   }`}
@@ -320,110 +513,197 @@ export function HindiMathStudio() {
               ))}
             </div>
 
-            {/* Score Summary */}
             <div className="w-full bg-white rounded-2xl p-4 border border-amber-200 mb-6 flex justify-around shadow-sm">
               <div>
-                <span className="block text-xs font-bold text-slate-500">कुल राउंड</span>
-                <span className="text-xl font-black text-slate-800">{TOTAL_ROUNDS}</span>
+                <span className="block text-xs font-bold text-slate-500">{t.scoreLabel}</span>
+                <span className="text-2xl font-black text-emerald-600">{score} / 5</span>
               </div>
               <div className="w-px bg-slate-200" />
               <div>
-                <span className="block text-xs font-bold text-slate-500">सही उत्तर</span>
-                <span className="text-xl font-black text-emerald-600">{finalScoreSummary}</span>
-              </div>
-              <div className="w-px bg-slate-200" />
-              <div>
-                <span className="block text-xs font-bold text-slate-500">सटीकता</span>
-                <span className="text-xl font-black text-amber-600">
-                  {Math.round((finalScoreSummary / TOTAL_ROUNDS) * 100)}%
-                </span>
-              </div>
-            </div>
+                <span className="block text-Here is a foundational React/Next.js TypeScript template for **`HindiMathStudio.tsx`**. It provides an interactive interface for evaluating mathematical operations using Hindi/Devanagari numerals and keywords, complete with live translation between Devanagari and Western Arabic numerals:
 
-            <button
-              onClick={() => startNewGame(tier)}
-              className="w-full py-3.5 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white rounded-xl font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4" /> पुनः खेलें (Play Again)
-            </button>
-          </div>
-        ) : (
-          /* Active Gameplay Screen */
-          <>
-            <button
-              onClick={() => speakAudio(`चित्रों को गिनें: यहाँ कितने ${activeItem.hindi} हैं? How many ${activeItem.plural}?`, 'hi-IN')}
-              className="flex items-center gap-2 bg-amber-100/70 hover:bg-amber-200 text-amber-900 font-bold px-4 py-2 rounded-full text-xs md:text-sm mb-6 transition cursor-pointer"
-            >
-              <Volume2 className="w-4 h-4 text-amber-700" /> प्रश्न सुनें (Audio Prompt)
-            </button>
+```tsx
+'use client';
 
-            {/* Object Cluster Box */}
-            <div className="w-full min-h-[220px] bg-gradient-to-b from-amber-50/50 to-orange-50/30 rounded-2xl border-2 border-dashed border-amber-200 p-6 mb-8 flex flex-wrap items-center justify-center gap-4 md:gap-6">
-              {Array.from({ length: targetCount }).map((_, idx) => {
-                const isHighlight = countingIndex === idx;
-                return (
-                  <div
-                    key={idx}
-                    className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ${
-                      isCorrect === true
-                        ? 'animate-bounce scale-110'
-                        : isHighlight
-                        ? 'scale-125 bg-amber-200 border-2 border-amber-500 shadow-lg'
-                        : 'hover:scale-105'
-                    }`}
-                  >
-                    <span className="text-5xl md:text-6xl filter drop-shadow-md select-none">{activeItem.emoji}</span>
-                    {isHighlight && (
-                      <span className="absolute -top-3 bg-amber-600 text-white text-xs font-black px-2 py-0.5 rounded-full shadow">
-                        {NUMBER_MAP[idx + 1].hindiWord} / {NUMBER_MAP[idx + 1].engWord}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+import React, { useState } from 'react';
 
-            {/* Selection Options */}
-            <div className="w-full max-w-lg">
-              <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
-                सही संख्या का चयन करें (Choose the correct numeral):
-              </p>
-              <div className="grid grid-cols-3 gap-4">
-                {options.map((num) => {
-                  const isSelected = selectedNum === num;
-                  const isRight = isSelected && isCorrect === true;
-                  const isWrong = isSelected && isCorrect === false;
+// Maps for numeral conversion
+const DEVANAGARI_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+const ARABIC_TO_DEV: Record<string, string> = Object.fromEntries(
+  DEVANAGARI_DIGITS.map((d, i) => [i.toString(), d])
+);
+const DEV_TO_ARABIC: Record<string, string> = Object.fromEntries(
+  DEVANAGARI_DIGITS.map((d, i) => [d, i.toString()])
+);
 
-                  return (
-                    <button
-                      key={num}
-                      disabled={isBusy}
-                      onClick={() => handleSelect(num)}
-                      className={`relative py-4 md:py-6 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md cursor-pointer ${
-                        isRight
-                          ? 'bg-emerald-500 border-emerald-600 text-white scale-105 shadow-emerald-200'
-                          : isWrong
-                          ? 'bg-amber-100 border-amber-400 text-amber-900'
-                          : 'bg-amber-50/50 hover:bg-amber-100 border-amber-200 text-slate-800 hover:border-amber-400 hover:scale-102 active:scale-95'
-                      }`}
-                    >
-                      <span className="text-3xl md:text-4xl font-black">{num}</span>
-                      <span
-                        className={`text-xs md:text-sm font-extrabold mt-1 ${
-                          isRight ? 'text-emerald-100' : 'text-amber-800'
-                        }`}
-                      >
-                        {NUMBER_MAP[num].hindiNum} • {NUMBER_MAP[num].engWord}
-                      </span>
-                      {isRight && <CheckCircle2 className="w-5 h-5 text-white absolute top-2 right-2" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        )}
+// Map common Hindi math terms to JavaScript operators/methods
+const HINDI_OPERATORS: { regex: RegExp; replaceWith: string; label: string }[] = [
+  { regex: /जोड़|धन|\+/gi, replaceWith: '+', label: 'जोड़ (+)' },
+  { regex: /घटाव|ऋण|-/gi, replaceWith: '-', label: 'घटाव (-)' },
+  { regex: /गुणा|\*|×/gi, replaceWith: '*', label: 'गुणा (×)' },
+  { regex: /भाग|\/|÷/gi, replaceWith: '/', label: 'भाग (÷)' },
+  { regex: /घात|\^/gi, replaceWith: '**', label: 'घात (^)' },
+  { regex: /वर्गमूल/gi, replaceWith: 'Math.sqrt', label: 'वर्गमूल (√)' },
+];
+
+export const toDevanagari = (numStr: string | number): string => {
+  return numStr
+    .toString()
+    .replace(/[0-9]/g, (digit) => ARABIC_TO_DEV[digit] ?? digit);
+};
+
+export const toArabic = (devStr: string): string => {
+  return devStr.replace(/[०-९]/g, (char) => DEV_TO_ARABIC[char] ?? char);
+};
+
+export default function HindiMathStudio() {
+  const [expression, setExpression] = useState<string>('२५ जोड़ ७५ गुणा २');
+  const [result, setResult] = useState<{ dev: string; standard: string } | null>(null);
+  const [parsedExpression, setParsedExpression] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+
+  const evaluateExpression = () => {
+    try {
+      setError(null);
+
+      // 1. Convert Devanagari numerals to standard digits
+      let sanitized = toArabic(expression);
+
+      // 2. Replace Hindi keywords with valid math operators
+      HINDI_OPERATORS.forEach(({ regex, replaceWith }) => {
+        sanitized = sanitized.replace(regex, replaceWith);
+      });
+
+      // Simple safety check: allow only numbers, whitespace, and basic arithmetic
+      if (!/^[0-9+\-*/().\s^]|Math\.sqrt/i.test(sanitized)) {
+        throw new Error('अमान्य अभिव्यक्ति (Invalid expression syntax)');
+      }
+
+      setParsedExpression(sanitized);
+
+      // 3. Compute result safely
+      // Note: For production use with arbitrary user input, use a dedicated parser like mathjs
+      const evalResult = Function(`'use strict'; return (${sanitized})`)();
+
+      if (typeof evalResult !== 'number' || Number.isNaN(evalResult)) {
+        throw new Error('गणना त्रुटि (Calculation Error)');
+      }
+
+      setResult({
+        standard: evalResult.toString(),
+        dev: toDevanagari(evalResult.toString()),
+      });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'त्रुटि (An error occurred)');
+      setResult(null);
+    }
+  };
+
+  const insertSymbol = (symbol: string) => {
+    setExpression((prev) => `${prev} ${symbol} `);
+  };
+
+  return (
+    <div style={{ maxWidth: '640px', margin: '2rem auto', padding: '1.5rem', fontFamily: 'sans-serif' }}>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
+        हिंदी गणित स्टूडियो (Hindi Math Studio)
+      </h2>
+
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+          समीकरण दर्ज करें (Enter Expression):
+        </label>
+        <input
+          type="text"
+          value={expression}
+          onChange={(e) => setExpression(e.target.value)}
+          placeholder="उदा. २५ जोड़ ७५"
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            fontSize: '1.1rem',
+            borderRadius: '6px',
+            border: '1px solid #ccc',
+            boxSizing: 'border-box',
+          }}
+        />
       </div>
+
+      {/* Quick Insertion Palette */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+        {DEVANAGARI_DIGITS.map((digit) => (
+          <button
+            key={digit}
+            onClick={() => insertSymbol(digit)}
+            type="button"
+            style={{ padding: '0.4rem 0.8rem', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ddd' }}
+          >
+            {digit}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        {HINDI_OPERATORS.map((op) => (
+          <button
+            key={op.label}
+            onClick={() => insertSymbol(op.label.split(' ')[0])}
+            type="button"
+            style={{
+              padding: '0.4rem 0.8rem',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              border: '1px solid #bbb',
+              backgroundColor: '#f5f5f5',
+            }}
+          >
+            {op.label}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={evaluateExpression}
+        type="button"
+        style={{
+          width: '100%',
+          padding: '0.75rem',
+          fontSize: '1rem',
+          backgroundColor: '#2563eb',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontWeight: 600,
+        }}
+      >
+        गणना करें (Calculate)
+      </button>
+
+      {error && (
+        <div style={{ marginTop: '1rem', color: '#dc2626', fontWeight: 500 }}>
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '1rem',
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: '6px',
+          }}
+        >
+          <div style={{ fontSize: '0.9rem', color: '#555', marginBottom: '0.25rem' }}>
+            व्याख्यायित रूप (Parsed): <code>{parsedExpression}</code>
+          </div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#166534' }}>
+            उत्तर: {result.dev} ({result.standard})
+          </div>
+        </div>
+      )}
     </div>
   );
 }
