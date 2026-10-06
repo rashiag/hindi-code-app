@@ -1,90 +1,99 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as Blockly from 'blockly';
 import { Level } from '../lib/levels';
 
-function initCustomBlocks() {
-  if (!Blockly.Blocks['when_run']) {
-    Blockly.Blocks['when_run'] = {
-      init: function () {
-        this.appendDummyInput().appendField('🚀 जब कोड चलाएं');
-        this.setNextStatement(true, null);
-        this.setColour('#4A90E2');
-      },
-    };
-  }
+function initCustomBlocks(lang: 'hi' | 'en') {
+  // 1. When Run Block
+  Blockly.Blocks['when_run'] = {
+    init: function () {
+      this.appendDummyInput().appendField(
+        lang === 'hi' ? '🚀 जब कोड चलाएं' : '🚀 When Code Runs'
+      );
+      this.setNextStatement(true, null);
+      this.setColour('#4A90E2');
+    },
+  };
 
-  if (!Blockly.Blocks['move_forward']) {
-    Blockly.Blocks['move_forward'] = {
-      init: function () {
-        this.appendDummyInput().appendField('आगे बढ़ो (1)');
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#43A047');
-      },
-    };
-  }
+  // 2. Move Forward Block
+  Blockly.Blocks['move_forward'] = {
+    init: function () {
+      this.appendDummyInput().appendField(
+        lang === 'hi' ? 'आगे बढ़ो (1)' : 'Move Forward (1)'
+      );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour('#43A047');
+    },
+  };
 
-  if (!Blockly.Blocks['turn_left']) {
-    Blockly.Blocks['turn_left'] = {
-      init: function () {
-        this.appendDummyInput().appendField('↶ बाएँ मुड़ो');
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#1E88E5');
-      },
-    };
-  }
+  // 3. Turn Left Block
+  Blockly.Blocks['turn_left'] = {
+    init: function () {
+      this.appendDummyInput().appendField(
+        lang === 'hi' ? '↶ बाएँ मुड़ो' : '↶ Turn Left'
+      );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour('#1E88E5');
+    },
+  };
 
-  if (!Blockly.Blocks['turn_right']) {
-    Blockly.Blocks['turn_right'] = {
-      init: function () {
-        this.appendDummyInput().appendField('↷ दाएँ मुड़ो');
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#1E88E5');
-      },
-    };
-  }
+  // 4. Turn Right Block
+  Blockly.Blocks['turn_right'] = {
+    init: function () {
+      this.appendDummyInput().appendField(
+        lang === 'hi' ? '↷ दाएँ मुड़ो' : '↷ Turn Right'
+      );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour('#1E88E5');
+    },
+  };
 
-  if (!Blockly.Blocks['collect_item']) {
-    Blockly.Blocks['collect_item'] = {
-      init: function () {
-        this.appendDummyInput().appendField('🍌 केला उठाओ');
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#8E24AA');
-      },
-    };
-  }
+  // 5. Collect Item Block
+  Blockly.Blocks['collect_item'] = {
+    init: function () {
+      this.appendDummyInput().appendField(
+        lang === 'hi' ? '🍌 केला उठाओ' : '🍌 Collect Banana'
+      );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour('#8E24AA');
+    },
+  };
 
-  if (!Blockly.Blocks['repeat_times']) {
-    Blockly.Blocks['repeat_times'] = {
-      init: function () {
-        this.appendDummyInput()
-          .appendField('🔁')
-          .appendField(new Blockly.FieldNumber(2, 1, 10), 'TIMES')
-          .appendField('बार दोहराओ');
-        this.appendStatementInput('DO').appendField('करें');
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#FB8C00');
-      },
-    };
-  }
+  // 6. Repeat Block
+  Blockly.Blocks['repeat_times'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField('🔁')
+        .appendField(new Blockly.FieldNumber(2, 1, 10), 'TIMES')
+        .appendField(lang === 'hi' ? 'बार दोहराओ' : 'Times Repeat');
+      this.appendStatementInput('DO').appendField(
+        lang === 'hi' ? 'करें' : 'Do'
+      );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour('#FB8C00');
+    },
+  };
 
-  if (!Blockly.Blocks['if_obstacle_ahead']) {
-    Blockly.Blocks['if_obstacle_ahead'] = {
-      init: function () {
-        this.appendDummyInput().appendField('❓ अगर आगे पत्थर हो');
-        this.appendStatementInput('DO').appendField('तो करें');
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#E53935');
-      },
-    };
-  }
+  // 7. Conditional Block
+  Blockly.Blocks['if_obstacle_ahead'] = {
+    init: function () {
+      this.appendDummyInput().appendField(
+        lang === 'hi' ? '❓ अगर आगे पत्थर हो' : '❓ If Rock Ahead'
+      );
+      this.appendStatementInput('DO').appendField(
+        lang === 'hi' ? 'तो करें' : 'Then Do'
+      );
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour('#E53935');
+    },
+  };
 }
 
 export type ActionItem =
@@ -132,13 +141,11 @@ export default function BlocklyWorkspace({
   isRunning,
   allowedBlocks,
 }: BlocklyWorkspaceProps) {
+  const [lang, setLang] = useState<'hi' | 'en'>('hi');
   const blocklyDivRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
 
-  useEffect(() => {
-    initCustomBlocks();
-    if (!blocklyDivRef.current) return;
-
+  const buildToolboxXml = () => {
     let blocksXml = '';
     if (allowedBlocks?.moveForward) blocksXml += '<block type="move_forward"></block>';
     if (allowedBlocks?.turnLeft) blocksXml += '<block type="turn_left"></block>';
@@ -147,7 +154,14 @@ export default function BlocklyWorkspace({
     if (allowedBlocks?.repeat) blocksXml += '<block type="repeat_times"></block>';
     if (allowedBlocks?.condition) blocksXml += '<block type="if_obstacle_ahead"></block>';
 
-    const toolboxXml = `<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">${blocksXml}</xml>`;
+    return `<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">${blocksXml}</xml>`;
+  };
+
+  useEffect(() => {
+    initCustomBlocks(lang);
+    if (!blocklyDivRef.current) return;
+
+    const toolboxXml = buildToolboxXml();
 
     if (!workspaceRef.current) {
       workspaceRef.current = Blockly.inject(blocklyDivRef.current, {
@@ -166,9 +180,10 @@ export default function BlocklyWorkspace({
       startBlock.setDeletable(false);
       startBlock.moveBy(20, 20);
     } else {
+      // Re-initialize blocks with new language labels and refresh toolbox
       workspaceRef.current.updateToolbox(toolboxXml);
     }
-  }, [allowedBlocks]);
+  }, [allowedBlocks, lang]);
 
   const handleExecute = () => {
     if (!workspaceRef.current || isRunning) return;
@@ -178,7 +193,7 @@ export default function BlocklyWorkspace({
 
     const first = start.getNextBlock();
     if (!first) {
-      alert('कृपया "जब कोड चलाएं" के नीचे ब्लॉक जोड़ें!');
+      alert(lang === 'hi' ? 'कृपया "जब कोड चलाएं" के नीचे ब्लॉक जोड़ें!' : 'Please attach code blocks below "When Code Runs"!');
       return;
     }
 
@@ -200,31 +215,58 @@ export default function BlocklyWorkspace({
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200">
-        <h2 className="font-bold text-slate-800 text-sm md:text-base">💻 ब्लॉक कोडिंग क्षेत्र</h2>
+    <div className="flex flex-col h-full w-full select-none font-sans">
+      <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="font-black text-slate-800 text-sm md:text-base">
+            {lang === 'hi' ? '💻 ब्लॉक कोडिंग क्षेत्र' : '💻 Visual Block Coding'}
+          </h2>
+
+          {/* BILINGUAL LANGUAGE SWITCHER */}
+          <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setLang('hi')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'hi' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              हिंदी
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'en' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              English
+            </button>
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           <button
             onClick={handleReset}
             disabled={isRunning}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition active:scale-95"
+            className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-50"
           >
-            साफ़ करें (Reset)
+            {lang === 'hi' ? 'साफ़ करें (Reset)' : 'Reset'}
           </button>
           <button
             onClick={handleExecute}
             disabled={isRunning}
-            className={`px-5 py-2 rounded-xl font-bold text-white shadow-md transition flex items-center gap-2 ${
-              isRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:scale-95 text-sm'
+            className={`px-5 py-2 rounded-xl font-black text-white shadow-md transition flex items-center gap-2 cursor-pointer ${
+              isRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:scale-95 text-xs md:text-sm'
             }`}
           >
-            {isRunning ? 'चल रहा है...' : 'कोड चलाएं ▶'}
+            {isRunning 
+              ? (lang === 'hi' ? 'चल रहा है...' : 'Running...') 
+              : (lang === 'hi' ? 'कोड चलाएं ▶' : 'Run Code ▶')}
           </button>
         </div>
       </div>
       <div
         ref={blocklyDivRef}
-        className="w-full rounded-xl overflow-hidden border border-slate-200"
+        className="w-full rounded-2xl overflow-hidden border-2 border-slate-200 shadow-inner"
         style={{ height: '440px', minHeight: '440px' }}
       />
     </div>
