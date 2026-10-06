@@ -19,7 +19,6 @@ interface AnimalData {
   soundCue: string;
 }
 
-// Full 14-animal repository aligned directly with Indian Early Primary EVS
 const ANIMAL_REPOSITORY: AnimalData[] = [
   {
     id: 'cow',
@@ -237,6 +236,7 @@ type GameMode = 'homes' | 'babies' | 'sounds';
 const TOTAL_ROUNDS = 5;
 
 export function HindiAnimalStudio() {
+  const [lang, setLang] = useState<'hi' | 'en'>('hi');
   const [mode, setMode] = useState<GameMode>('homes');
   const [currentRound, setCurrentRound] = useState<number>(1);
   const [currentAnimal, setCurrentAnimal] = useState<AnimalData>(ANIMAL_REPOSITORY[0]);
@@ -260,22 +260,26 @@ export function HindiAnimalStudio() {
     }
   };
 
+  const truncateAudio = () => {
+    clearTimer();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
   useEffect(() => {
     return () => {
-      clearTimer();
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      truncateAudio();
     };
   }, []);
 
-  const playSpeech = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN') => {
+  const playSpeech = (text: string, voiceLang: 'hi-IN' | 'en-IN' = lang === 'hi' ? 'hi-IN' : 'en-IN') => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      u.rate = 0.85;
+      u.lang = voiceLang;
+      u.rate = 0.86;
       window.speechSynthesis.speak(u);
     } catch (e) {}
   };
@@ -303,10 +307,7 @@ export function HindiAnimalStudio() {
   };
 
   const generateQuestion = (currentMode: GameMode = mode) => {
-    // Pick random target animal
     const target = ANIMAL_REPOSITORY[Math.floor(Math.random() * ANIMAL_REPOSITORY.length)];
-    
-    // Pick 2 other distinct animals for wrong options
     const others = ANIMAL_REPOSITORY.filter((a) => a.id !== target.id);
     others.sort(() => Math.random() - 0.5);
 
@@ -321,10 +322,7 @@ export function HindiAnimalStudio() {
   };
 
   const startNewGame = (newMode: GameMode = mode) => {
-    clearTimer();
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    truncateAudio();
     setScore(0);
     setStreak(0);
     setCurrentRound(1);
@@ -339,11 +337,12 @@ export function HindiAnimalStudio() {
 
   const handleModeChange = (newMode: GameMode) => {
     if (mode === newMode) return;
+    truncateAudio();
     setMode(newMode);
   };
 
   const handleNextQuestion = () => {
-    clearTimer();
+    truncateAudio();
     if (currentRound >= TOTAL_ROUNDS) {
       setIsGameOver(true);
       setFinalScore(score);
@@ -356,6 +355,7 @@ export function HindiAnimalStudio() {
 
   const handleSelect = (selectedAnimal: AnimalData) => {
     if (isBusy || isGameOver || isCorrect !== null) return;
+    truncateAudio();
     setIsBusy(true);
     setSelectedId(selectedAnimal.id);
 
@@ -368,12 +368,22 @@ export function HindiAnimalStudio() {
       setStreak((prev) => prev + 1);
       playSuccessChime();
 
-      if (mode === 'homes') {
-        playSpeech(`शाबाश! ${currentAnimal.hindiName} का घर ${currentAnimal.hindiHome} है! ${currentAnimal.name} lives in a ${currentAnimal.home}!`);
-      } else if (mode === 'babies') {
-        playSpeech(`शाबाश! ${currentAnimal.hindiName} के बच्चे को ${currentAnimal.hindiBaby} कहते हैं! A baby ${currentAnimal.name} is a ${currentAnimal.baby}!`);
+      if (lang === 'hi') {
+        if (mode === 'homes') {
+          playSpeech(`शाबाश! ${currentAnimal.hindiName} का घर ${currentAnimal.hindiHome} है!`, 'hi-IN');
+        } else if (mode === 'babies') {
+          playSpeech(`शाबाश! ${currentAnimal.hindiName} के बच्चे को ${currentAnimal.hindiBaby} कहते हैं!`, 'hi-IN');
+        } else {
+          playSpeech(`शाबाश! ${currentAnimal.hindiName} की आवाज़: ${currentAnimal.soundCue}!`, 'hi-IN');
+        }
       } else {
-        playSpeech(`शाबाश! ${currentAnimal.hindiName} की आवाज़: ${currentAnimal.soundCue}! A ${currentAnimal.name} ${currentAnimal.sound}!`);
+        if (mode === 'homes') {
+          playSpeech(`Well done! A ${currentAnimal.name} lives in a ${currentAnimal.home}!`, 'en-IN');
+        } else if (mode === 'babies') {
+          playSpeech(`Well done! A baby ${currentAnimal.name} is called a ${currentAnimal.baby}!`, 'en-IN');
+        } else {
+          playSpeech(`Well done! A ${currentAnimal.name} ${currentAnimal.sound}!`, 'en-IN');
+        }
       }
 
       autoAdvanceTimer.current = setTimeout(() => {
@@ -392,48 +402,93 @@ export function HindiAnimalStudio() {
       setStreak(0);
       setShowExplanation(true);
 
-      if (mode === 'homes') {
-        playSpeech(`सही उत्तर: ${currentAnimal.hindiName} का घर ${currentAnimal.hindiHome} है। ${currentAnimal.name} lives in a ${currentAnimal.home}.`);
-      } else if (mode === 'babies') {
-        playSpeech(`सही उत्तर: ${currentAnimal.hindiName} के बच्चे को ${currentAnimal.hindiBaby} कहते हैं। Baby of a ${currentAnimal.name} is a ${currentAnimal.baby}.`);
+      if (lang === 'hi') {
+        if (mode === 'homes') {
+          playSpeech(`सही उत्तर: ${currentAnimal.hindiName} का घर ${currentAnimal.hindiHome} है।`, 'hi-IN');
+        } else if (mode === 'babies') {
+          playSpeech(`सही उत्तर: ${currentAnimal.hindiName} के बच्चे को ${currentAnimal.hindiBaby} कहते हैं।`, 'hi-IN');
+        } else {
+          playSpeech(`सही उत्तर: ${currentAnimal.hindiName} की आवाज़ ${currentAnimal.hindiSound} है।`, 'hi-IN');
+        }
       } else {
-        playSpeech(`सही उत्तर: ${currentAnimal.hindiName} की आवाज़ ${currentAnimal.hindiSound} है।`);
+        if (mode === 'homes') {
+          playSpeech(`Check carefully: A ${currentAnimal.name} lives in a ${currentAnimal.home}.`, 'en-IN');
+        } else if (mode === 'babies') {
+          playSpeech(`Check carefully: The baby of a ${currentAnimal.name} is called a ${currentAnimal.baby}.`, 'en-IN');
+        } else {
+          playSpeech(`Check carefully: A ${currentAnimal.name} makes the sound ${currentAnimal.sound}.`, 'en-IN');
+        }
       }
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 font-sans select-none">
-      {/* Top Header & Turn Tracker */}
+      {/* Top Header & Bilingual Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">🦁</span>
-            <h1 className="text-xl md:text-2xl font-black text-emerald-950">पशु-पक्षी संसार (Animal World)</h1>
+            <h1 className="text-xl md:text-2xl font-black text-emerald-950">
+              {lang === 'hi' ? 'पशु-पक्षी संसार (Animal World)' : 'Animal World & Habitats'}
+            </h1>
           </div>
           <p className="text-xs md:text-sm font-semibold text-emerald-800">
-            घर, बच्चे और ध्वनियाँ पहचानें • Homes, Babies &amp; Sounds
+            {lang === 'hi' 
+              ? 'घर, बच्चे और ध्वनियाँ पहचानें • Homes, Babies & Sounds' 
+              : 'Identify Homes, Babies & Animal Sounds (NEP 2020 EVS)'}
           </p>
         </div>
 
-        {/* Round Progress */}
-        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-emerald-300 shadow-sm">
-          <span className="text-xs font-black text-emerald-900 mr-1">राउंड:</span>
-          {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
-            <span
-              key={i}
-              className={`w-3 h-3 rounded-full transition-all ${
-                i + 1 === currentRound && !isGameOver
-                  ? 'bg-emerald-600 ring-2 ring-emerald-300 scale-110'
-                  : i + 1 < currentRound || isGameOver
-                  ? 'bg-teal-500'
-                  : 'bg-slate-200'
+        {/* Controls: Language Toggle, Modes, Round */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* BILINGUAL LANGUAGE SWITCHER */}
+          <div className="flex bg-white p-1 rounded-xl border border-emerald-300 shadow-sm gap-1">
+            <button
+              onClick={() => {
+                truncateAudio();
+                setLang('hi');
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'hi' ? 'bg-emerald-600 text-white shadow' : 'text-emerald-900 hover:bg-emerald-50'
               }`}
-            />
-          ))}
-          <span className="text-xs font-extrabold text-emerald-800 ml-1">
-            {Math.min(currentRound, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
-          </span>
+            >
+              हिंदी
+            </button>
+            <button
+              onClick={() => {
+                truncateAudio();
+                setLang('en');
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'en' ? 'bg-emerald-600 text-white shadow' : 'text-emerald-900 hover:bg-emerald-50'
+              }`}
+            >
+              English
+            </button>
+          </div>
+
+          {/* Round Progress */}
+          <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-emerald-300 shadow-sm">
+            <span className="text-xs font-black text-emerald-900 mr-1">
+              {lang === 'hi' ? 'राउंड:' : 'Round:'}
+            </span>
+            {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
+              <span
+                key={i}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  i + 1 === currentRound && !isGameOver
+                    ? 'bg-emerald-600 ring-2 ring-emerald-300 scale-110'
+                    : i + 1 < currentRound || isGameOver
+                    ? 'bg-teal-500'
+                    : 'bg-slate-200'
+                }`}
+              />
+            ))}
+            <span className="text-xs font-extrabold text-emerald-800 ml-1">
+              {Math.min(currentRound, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
+            </span>
+          </div>
         </div>
 
         {/* 3 Sub-Modes Selector */}
@@ -444,7 +499,7 @@ export function HindiAnimalStudio() {
               mode === 'homes' ? 'bg-emerald-600 text-white shadow' : 'text-emerald-900 hover:bg-emerald-50'
             }`}
           >
-            <Home className="w-3.5 h-3.5" /> घर (Homes)
+            <Home className="w-3.5 h-3.5" /> {lang === 'hi' ? 'घर (Homes)' : 'Homes'}
           </button>
           <button
             onClick={() => handleModeChange('babies')}
@@ -452,7 +507,7 @@ export function HindiAnimalStudio() {
               mode === 'babies' ? 'bg-emerald-600 text-white shadow' : 'text-emerald-900 hover:bg-emerald-50'
             }`}
           >
-            <Baby className="w-3.5 h-3.5" /> बच्चे (Babies)
+            <Baby className="w-3.5 h-3.5" /> {lang === 'hi' ? 'बच्चे (Babies)' : 'Babies'}
           </button>
           <button
             onClick={() => handleModeChange('sounds')}
@@ -460,18 +515,18 @@ export function HindiAnimalStudio() {
               mode === 'sounds' ? 'bg-emerald-600 text-white shadow' : 'text-emerald-900 hover:bg-emerald-50'
             }`}
           >
-            <Music className="w-3.5 h-3.5" /> आवाज़ (Sounds)
+            <Music className="w-3.5 h-3.5" /> {lang === 'hi' ? 'आवाज़ (Sounds)' : 'Sounds'}
           </button>
         </div>
 
         {/* Live Score */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-emerald-100 text-emerald-900 px-3 py-1.5 rounded-lg text-xs font-black border border-emerald-200">
-            <Award className="w-4 h-4 text-emerald-600" /> सही: {score}/{TOTAL_ROUNDS}
+            <Award className="w-4 h-4 text-emerald-600" /> {lang === 'hi' ? 'सही:' : 'Score:'} {score}/{TOTAL_ROUNDS}
           </div>
           {streak > 1 && (
             <div className="flex items-center gap-1 bg-teal-100 text-teal-800 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-teal-200">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" /> {streak} लगातार!
+              <Sparkles className="w-3.5 h-3.5 text-teal-600" /> {streak} {lang === 'hi' ? 'लगातार!' : 'Streak!'}
             </div>
           )}
         </div>
@@ -480,22 +535,22 @@ export function HindiAnimalStudio() {
       {/* Main Play Container */}
       <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-emerald-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
         {isGameOver ? (
-          /* End Game Performance Card */
           <div className="w-full max-w-md bg-gradient-to-b from-emerald-50 to-teal-50/50 rounded-3xl border-2 border-emerald-300 p-8 text-center flex flex-col items-center shadow-lg">
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 shadow-inner">
               <Trophy className="w-10 h-10" />
             </div>
 
-            <h2 className="text-2xl font-black text-emerald-950 mb-1">खेल संपन्न! (Game Complete)</h2>
+            <h2 className="text-2xl font-black text-emerald-950 mb-1">
+              {lang === 'hi' ? 'खेल संपन्न! (Game Complete)' : 'Challenge Complete!'}
+            </h2>
             <p className="text-sm font-bold text-emerald-800 mb-5">
               {finalScore === 5
-                ? '🌟 Fantastic Naturalist! All answers correct!'
+                ? (lang === 'hi' ? '🌟 शानदार! सभी उत्तर सही!' : '🌟 Fantastic Naturalist! All answers correct!')
                 : finalScore >= 3
-                ? '👏 Great knowledge! बहुत बढ़िया प्रयास!'
-                : '💪 Keep exploring nature! अभ्यास जारी रखें!'}
+                ? (lang === 'hi' ? '👏 बहुत बढ़िया ज्ञान!' : '👏 Great knowledge of nature!')
+                : (lang === 'hi' ? '💪 अभ्यास जारी रखें!' : '💪 Keep exploring nature!')}
             </p>
 
-            {/* Stars */}
             <div className="flex items-center gap-2 mb-6">
               {Array.from({ length: TOTAL_ROUNDS }).map((_, idx) => (
                 <Star
@@ -509,20 +564,19 @@ export function HindiAnimalStudio() {
               ))}
             </div>
 
-            {/* Score Summary */}
             <div className="w-full bg-white rounded-2xl p-4 border border-emerald-200 mb-6 flex justify-around shadow-sm">
               <div>
-                <span className="block text-xs font-bold text-slate-500">कुल प्रश्न</span>
+                <span className="block text-xs font-bold text-slate-500">{lang === 'hi' ? 'कुल प्रश्न' : 'Total'}</span>
                 <span className="text-xl font-black text-slate-800">{TOTAL_ROUNDS}</span>
               </div>
               <div className="w-px bg-slate-200" />
               <div>
-                <span className="block text-xs font-bold text-slate-500">सही उत्तर</span>
+                <span className="block text-xs font-bold text-slate-500">{lang === 'hi' ? 'सही उत्तर' : 'Correct'}</span>
                 <span className="text-xl font-black text-emerald-600">{finalScore}</span>
               </div>
               <div className="w-px bg-slate-200" />
               <div>
-                <span className="block text-xs font-bold text-slate-500">सटीकता</span>
+                <span className="block text-xs font-bold text-slate-500">{lang === 'hi' ? 'सटीकता' : 'Accuracy'}</span>
                 <span className="text-xl font-black text-emerald-600">
                   {Math.round((finalScore / TOTAL_ROUNDS) * 100)}%
                 </span>
@@ -533,40 +587,50 @@ export function HindiAnimalStudio() {
               onClick={() => startNewGame(mode)}
               className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" /> पुनः खेलें (Play Again)
+              <RotateCcw className="w-4 h-4" /> {lang === 'hi' ? 'पुनः खेलें (Play Again)' : 'Play Again'}
             </button>
           </div>
         ) : (
-          /* Active Interactive Screen */
           <>
             {/* Audio Prompt */}
             <button
               onClick={() => {
-                if (mode === 'homes') {
-                  playSpeech(`${currentAnimal.hindiName} कहाँ रहती है? Where does a ${currentAnimal.name} live?`);
-                } else if (mode === 'babies') {
-                  playSpeech(`${currentAnimal.hindiName} के बच्चे को क्या कहते हैं? What is a baby ${currentAnimal.name} called?`);
+                truncateAudio();
+                if (lang === 'hi') {
+                  if (mode === 'homes') {
+                    playSpeech(`${currentAnimal.hindiName} कहाँ रहती है?`, 'hi-IN');
+                  } else if (mode === 'babies') {
+                    playSpeech(`${currentAnimal.hindiName} के बच्चे को क्या कहते हैं?`, 'hi-IN');
+                  } else {
+                    playSpeech(`${currentAnimal.hindiName} की आवाज़ क्या है?`, 'hi-IN');
+                  }
                 } else {
-                  playSpeech(`${currentAnimal.hindiName} की आवाज़ क्या है? What sound does a ${currentAnimal.name} make?`);
+                  if (mode === 'homes') {
+                    playSpeech(`Where does a ${currentAnimal.name} live?`, 'en-IN');
+                  } else if (mode === 'babies') {
+                    playSpeech(`What is a baby ${currentAnimal.name} called?`, 'en-IN');
+                  } else {
+                    playSpeech(`What sound does a ${currentAnimal.name} make?`, 'en-IN');
+                  }
                 }
               }}
               className="flex items-center gap-2 bg-emerald-100/70 hover:bg-emerald-200 text-emerald-950 font-bold px-4 py-2 rounded-full text-xs md:text-sm mb-6 transition cursor-pointer"
             >
-              <Volume2 className="w-4 h-4 text-emerald-700" /> प्रश्न सुनें (Audio Prompt)
+              <Volume2 className="w-4 h-4 text-emerald-700" /> {lang === 'hi' ? 'प्रश्न सुनें (Audio Prompt)' : 'Listen to Question'}
             </button>
 
             {/* Target Animal Showcase */}
             <div className="flex flex-col items-center bg-gradient-to-b from-emerald-50 to-teal-50/40 border-2 border-emerald-200 px-10 py-6 rounded-3xl mb-6 shadow-sm">
               <span className="text-6xl md:text-7xl filter drop-shadow-md mb-2">{currentAnimal.emoji}</span>
               <h3 className="text-xl md:text-2xl font-black text-emerald-950">
-                {currentAnimal.hindiName} ({currentAnimal.name})
+                {lang === 'hi' ? `${currentAnimal.hindiName} (${currentAnimal.name})` : currentAnimal.name}
               </h3>
               <p className="text-xs font-bold text-emerald-700 mt-1">
                 {mode === 'homes'
-                  ? 'का घर कौन सा है? (Where is the home?)'
+                  ? (lang === 'hi' ? 'का घर कौन सा है? (Where is the home?)' : 'Where does it live?')
                   : mode === 'babies'
-                  ? 'का बच्चा कौन सा है? (Which is the baby?)'
-                  : 'की आवाज़ कौन सी है? (Which is the sound?)'}
+                  ? (lang === 'hi' ? 'का बच्चा कौन सा है? (Which is the baby?)' : 'What is its baby called?')
+                  : (lang === 'hi' ? 'की आवाज़ कौन सी है? (Which is the sound?)' : 'Which sound does it make?')}
               </p>
             </div>
 
@@ -574,7 +638,7 @@ export function HindiAnimalStudio() {
             {showExplanation && (
               <div className="w-full max-w-md bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
                 <span className="text-xs font-black text-emerald-950 mb-3 text-center">
-                  💡 समझिए: {currentAnimal.hindiName} ({currentAnimal.name})
+                  💡 {lang === 'hi' ? `समझिए: ${currentAnimal.hindiName} (${currentAnimal.name})` : `Learn: ${currentAnimal.name}`}
                 </span>
                 
                 <div className="flex items-center justify-center gap-4 mb-4 bg-white px-5 py-3 rounded-2xl border border-emerald-200 shadow-sm">
@@ -610,17 +674,17 @@ export function HindiAnimalStudio() {
                   onClick={handleNextQuestion}
                   className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>आगे बढ़ें (Next Question)</span>
+                  <span>{lang === 'hi' ? 'आगे बढ़ें (Next Question)' : 'Next Question'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}
 
-            {/* 3 Large Option Cards */}
+            {/* 3 Option Cards */}
             {!showExplanation && (
               <div className="w-full max-w-lg">
                 <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
-                  सही विकल्प पर स्पर्श करें (Tap the correct match):
+                  {lang === 'hi' ? 'सही विकल्प पर स्पर्श करें (Tap the correct match):' : 'Tap the correct matching card:'}
                 </p>
                 <div className="grid grid-cols-3 gap-3 md:gap-4">
                   {options.map((opt) => {
@@ -645,11 +709,13 @@ export function HindiAnimalStudio() {
                           <>
                             <span className="text-4xl mb-1.5">{opt.homeEmoji}</span>
                             <span className={`text-xs font-black text-center ${isRight ? 'text-white' : 'text-emerald-950'}`}>
-                              {opt.hindiHome}
+                              {lang === 'hi' ? opt.hindiHome : opt.home}
                             </span>
-                            <span className={`text-[10px] font-bold ${isRight ? 'text-emerald-100' : 'text-emerald-700'}`}>
-                              {opt.home}
-                            </span>
+                            {lang === 'hi' && (
+                              <span className={`text-[10px] font-bold ${isRight ? 'text-emerald-100' : 'text-emerald-700'}`}>
+                                {opt.home}
+                              </span>
+                            )}
                           </>
                         )}
 
@@ -657,11 +723,13 @@ export function HindiAnimalStudio() {
                           <>
                             <span className="text-4xl mb-1.5">{opt.babyEmoji}</span>
                             <span className={`text-xs font-black text-center ${isRight ? 'text-white' : 'text-emerald-950'}`}>
-                              {opt.hindiBaby}
+                              {lang === 'hi' ? opt.hindiBaby : opt.baby}
                             </span>
-                            <span className={`text-[10px] font-bold ${isRight ? 'text-emerald-100' : 'text-emerald-700'}`}>
-                              {opt.baby}
-                            </span>
+                            {lang === 'hi' && (
+                              <span className={`text-[10px] font-bold ${isRight ? 'text-emerald-100' : 'text-emerald-700'}`}>
+                                {opt.baby}
+                              </span>
+                            )}
                           </>
                         )}
 
