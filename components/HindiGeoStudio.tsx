@@ -312,8 +312,9 @@ const INDIA_STATES_DATA: StateData[] = [
 ];
 
 export function HindiGeoStudio() {
+  const [lang, setLang] = useState<'hi' | 'en'>('hi');
   const [activeMode, setActiveMode] = useState<'explore' | 'quiz'>('explore');
-  const [selectedState, setSelectedState] = useState<StateData>(INDIA_STATES_DATA[6]); // UP default
+  const [selectedState, setSelectedState] = useState<StateData>(INDIA_STATES_DATA[6]);
   const [filterZone, setFilterZone] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFullMapModal, setShowFullMapModal] = useState<boolean>(false);
@@ -329,28 +330,24 @@ export function HindiGeoStudio() {
     }
   };
 
-  const speakIndianEnglish = (stateName: string, capitalName: string) => {
+  const speakVoice = (primaryText: string, secondaryText = '') => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       stopAudio();
 
-      const voices = window.speechSynthesis.getVoices();
-      const inVoice = voices.find(v => v.lang === 'en-IN' || v.lang.includes('hi') || v.name.includes('India'));
-
-      const u1 = new SpeechSynthesisUtterance(stateName);
-      u1.lang = 'en-IN';
+      const voiceLang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      const u1 = new SpeechSynthesisUtterance(primaryText);
+      u1.lang = voiceLang;
       u1.rate = 0.88;
-      if (inVoice) u1.voice = inVoice;
 
       u1.onend = () => {
-        if (capitalName) {
+        if (secondaryText) {
           speechTimeoutRef.current = setTimeout(() => {
-            const u2 = new SpeechSynthesisUtterance(`Capital is ${capitalName}`);
-            u2.lang = 'en-IN';
+            const u2 = new SpeechSynthesisUtterance(secondaryText);
+            u2.lang = voiceLang;
             u2.rate = 0.88;
-            if (inVoice) u2.voice = inVoice;
             window.speechSynthesis.speak(u2);
-          }, 400);
+          }, 350);
         }
       };
 
@@ -359,13 +356,16 @@ export function HindiGeoStudio() {
   };
 
   const handleStateSelect = (st: StateData) => {
+    stopAudio();
     setSelectedState(st);
-    speakIndianEnglish(st.nameEn, st.capitalEn);
+    if (lang === 'hi') {
+      speakVoice(st.nameHi, `राजधानी है ${st.capitalHi}`);
+    } else {
+      speakVoice(st.nameEn, `Capital is ${st.capitalEn}`);
+    }
   };
 
-  // -------------------------------------------------------------
   // QUIZ ENGINE
-  // -------------------------------------------------------------
   const [quizList, setQuizList] = useState<StateData[]>([]);
   const [qIdx, setQIdx] = useState(0);
   const [quizScore, setQuizScore] = useState(0);
@@ -390,9 +390,13 @@ export function HindiGeoStudio() {
   useEffect(() => {
     if (activeMode === 'quiz' && quizList.length > 0 && !quizComplete) {
       const currentTarget = quizList[qIdx];
-      speakIndianEnglish(`Find the state whose capital is ${currentTarget.capitalEn}`, '');
+      if (lang === 'hi') {
+        speakVoice(`उस राज्य को चुनें जिसकी राजधानी ${currentTarget.capitalHi} है`, '');
+      } else {
+        speakVoice(`Find the state whose capital is ${currentTarget.capitalEn}`, '');
+      }
     }
-  }, [activeMode, qIdx, quizList, quizComplete]);
+  }, [activeMode, qIdx, quizList, quizComplete, lang]);
 
   const handleQuizAnswer = (st: StateData) => {
     if (quizFeedback !== null) return;
@@ -401,10 +405,18 @@ export function HindiGeoStudio() {
     if (st.id === target.id) {
       setQuizFeedback('correct');
       setQuizScore((s) => s + 1);
-      speakIndianEnglish(`Correct! It is ${st.nameEn}`, `Capital is ${st.capitalEn}`);
+      if (lang === 'hi') {
+        speakVoice(`सही उत्तर! यह है ${st.nameHi}`, `राजधानी है ${st.capitalHi}`);
+      } else {
+        speakVoice(`Correct! It is ${st.nameEn}`, `Capital is ${st.capitalEn}`);
+      }
     } else {
       setQuizFeedback('wrong');
-      speakIndianEnglish(`That is ${st.nameEn}`, `The correct answer is ${target.nameEn}`);
+      if (lang === 'hi') {
+        speakVoice(`यह है ${st.nameHi}`, `सही राज्य था ${target.nameHi}`);
+      } else {
+        speakVoice(`That is ${st.nameEn}`, `The correct state is ${target.nameEn}`);
+      }
     }
   };
 
@@ -415,69 +427,110 @@ export function HindiGeoStudio() {
       setQuizFeedback(null);
     } else {
       setQuizComplete(true);
-      speakIndianEnglish('Great job! You finished the geography challenge!', '');
+      if (lang === 'hi') {
+        speakVoice('शाबाश! आपने भूगोल क्विज़ पूरा कर लिया!', '');
+      } else {
+        speakVoice('Great job! You finished the geography challenge!', '');
+      }
     }
   };
 
   const filteredStates = INDIA_STATES_DATA.filter((s) => {
     const matchZone = filterZone === 'All' || s.zone === filterZone;
     const matchSearch = s.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        s.nameHi.includes(searchQuery) ||
                         s.capitalEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        s.capitalHi.includes(searchQuery) ||
                         s.id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchZone && matchSearch;
   });
 
   return (
-    <div className="flex flex-col gap-4 max-w-6xl mx-auto">
+    <div className="flex flex-col gap-4 max-w-6xl mx-auto font-sans select-none">
       
-      {/* Top Header Mode Selector */}
-      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2 flex-wrap">
+      {/* Top Header Mode Selector with Bilingual Switcher */}
+      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🗺️</span>
           <div>
             <h2 className="text-sm md:text-base font-black text-slate-900 leading-tight">
-              भारत दर्शन व भूगोल (Interactive India Map &amp; Capitals)
+              {lang === 'hi' ? 'भारत दर्शन व भूगोल (Interactive India Map)' : 'India Geography & Capitals'}
             </h2>
-            <span className="text-[11px] font-bold text-sky-600">Indian English Voice • States, Capitals &amp; Reference Map</span>
+            <span className="text-[11px] font-bold text-sky-600">
+              {lang === 'hi' ? 'राज्यों, राजधानियों व धरोहरों का मानचित्र' : 'States, Capitals & Cultural Landmarks (NEP 2020)'}
+            </span>
           </div>
         </div>
 
-        <div className="flex gap-1.5 flex-wrap">
-          <button
-            onClick={() => setShowFullMapModal(true)}
-            className="px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1"
-          >
-            <Eye className="w-3.5 h-3.5" /> पूरा नक्शा देखें (Full Map)
-          </button>
-          <button
-            onClick={() => { stopAudio(); setActiveMode('explore'); }}
-            className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
-              activeMode === 'explore' ? 'bg-sky-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-            }`}
-          >
-            🧭 1. भारत दर्शन (Explore Map)
-          </button>
-          <button
-            onClick={() => { stopAudio(); setActiveMode('quiz'); initGeoQuiz(); }}
-            className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
-              activeMode === 'quiz' ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-            }`}
-          >
-            🎯 2. राजधानी खोजो (Map Quiz)
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* BILINGUAL LANGUAGE SWITCHER */}
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 shadow-xs">
+            <button
+              onClick={() => {
+                stopAudio();
+                setLang('hi');
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'hi' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              हिंदी
+            </button>
+            <button
+              onClick={() => {
+                stopAudio();
+                setLang('en');
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                lang === 'en' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              English
+            </button>
+          </div>
+
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => {
+                stopAudio();
+                setShowFullMapModal(true);
+              }}
+              className="px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1"
+            >
+              <Eye className="w-3.5 h-3.5" /> {lang === 'hi' ? 'पूरा नक्शा (Full Map)' : 'Full Map'}
+            </button>
+            <button
+              onClick={() => { stopAudio(); setActiveMode('explore'); }}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
+                activeMode === 'explore' ? 'bg-sky-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🧭 {lang === 'hi' ? '1. भारत दर्शन (Explore)' : '1. Explore Map'}
+            </button>
+            <button
+              onClick={() => { stopAudio(); setActiveMode('quiz'); initGeoQuiz(); }}
+              className={`px-3 py-1.5 rounded-xl font-extrabold text-xs cursor-pointer transition ${
+                activeMode === 'quiz' ? 'bg-amber-600 text-white shadow' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              🎯 {lang === 'hi' ? '2. राजधानी खोजो (Quiz)' : '2. Map Quiz'}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
-        {/* Left Column: Interactive Map Canvas with Clickable Pins */}
+        {/* Left Column: Interactive Map Canvas */}
         <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between min-h-[580px]">
           
           <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
             <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
               <Compass className="w-4 h-4 text-sky-600 animate-spin [animation-duration:8s]" />
-              {activeMode === 'explore' ? 'नक्शे पर दिए गए पिन पर टैप करें (Tap any State Pin)' : `प्रश्न ${qIdx + 1} / 5`}
+              {activeMode === 'explore' 
+                ? (lang === 'hi' ? 'नक्शे पर दिए गए पिन पर टैप करें:' : 'Tap any State Pin on the map:') 
+                : (lang === 'hi' ? `प्रश्न ${qIdx + 1} / 5` : `Question ${qIdx + 1} / 5`)}
             </span>
 
             {/* Region Filter */}
@@ -486,7 +539,7 @@ export function HindiGeoStudio() {
                 {['All', 'North', 'South', 'West', 'East', 'Central', 'Northeast'].map((z) => (
                   <button
                     key={z}
-                    onClick={() => setFilterZone(z)}
+                    onClick={() => { stopAudio(); setFilterZone(z); }}
                     className={`px-2 py-0.5 rounded-md cursor-pointer transition ${
                       filterZone === z ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
@@ -500,9 +553,7 @@ export function HindiGeoStudio() {
 
           {/* Clean Vector Base Map Canvas */}
           <div className="w-full flex items-center justify-center relative p-3 bg-[#faf7ee] rounded-2xl border-2 border-amber-300 shadow-inner overflow-hidden">
-            
             <div className="relative w-full max-w-[420px] aspect-[4/5] select-none rounded-xl overflow-hidden shadow-md bg-white">
-              
               <svg viewBox="0 0 400 500" className="w-full h-full">
                 <rect width="400" height="500" fill="#e0f2fe" />
                 
@@ -557,7 +608,7 @@ export function HindiGeoStudio() {
                     className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 z-10 flex flex-col items-center group ${
                       isSelected && activeMode === 'explore' ? 'scale-125 z-30' : 'hover:scale-110'
                     }`}
-                    title={`${st.nameEn} (Capital: ${st.capitalEn})`}
+                    title={`${lang === 'hi' ? st.nameHi : st.nameEn} (${lang === 'hi' ? st.capitalHi : st.capitalEn})`}
                   >
                     <div
                       className="px-1.5 py-0.5 rounded-full text-[10px] font-black text-white shadow-lg border-2 border-white flex items-center gap-0.5"
@@ -569,9 +620,7 @@ export function HindiGeoStudio() {
                   </button>
                 );
               })}
-
             </div>
-
           </div>
 
           {/* Quick Search & State Filter List */}
@@ -580,7 +629,7 @@ export function HindiGeoStudio() {
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search State or Capital (e.g. Uttar Pradesh, Jaipur, Lucknow)..."
+                placeholder={lang === 'hi' ? 'राज्य या राजधानी खोजें (जैसे: उत्तर प्रदेश, लखनऊ, Jaipur)...' : 'Search State or Capital (e.g. Uttar Pradesh, Jaipur, Lucknow)...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-xs font-bold p-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-sky-500"
@@ -599,7 +648,7 @@ export function HindiGeoStudio() {
                   }`}
                 >
                   <span className="font-black text-sky-700">{st.id}</span>
-                  <span>{st.nameEn.split(' ')[0]}</span>
+                  <span>{lang === 'hi' ? st.nameHi.split(' ')[0] : st.nameEn.split(' ')[0]}</span>
                 </button>
               ))}
             </div>
@@ -618,43 +667,46 @@ export function HindiGeoStudio() {
                     {selectedState.zone} India • Code {selectedState.id}
                   </span>
                   <button
-                    onClick={() => speakIndianEnglish(selectedState.nameEn, selectedState.capitalEn)}
+                    onClick={() => {
+                      if (lang === 'hi') speakVoice(selectedState.nameHi, `राजधानी है ${selectedState.capitalHi}`);
+                      else speakVoice(selectedState.nameEn, `Capital is ${selectedState.capitalEn}`);
+                    }}
                     className="p-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                   >
-                    <Volume2 className="w-4 h-4" /> Listen Audio
+                    <Volume2 className="w-4 h-4" /> {lang === 'hi' ? 'आवाज़ सुनें' : 'Listen Audio'}
                   </button>
                 </div>
 
                 {/* State Name */}
                 <div className="mb-3 pb-2.5 border-b border-slate-100">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                    State Name (राज्य का नाम)
+                    {lang === 'hi' ? 'राज्य का नाम (State Name)' : 'State Name'}
                   </span>
                   <h3 className="text-xl md:text-2xl font-black text-slate-900 leading-tight">
-                    {selectedState.nameEn}
+                    {lang === 'hi' ? selectedState.nameHi : selectedState.nameEn}
                   </h3>
                   <p className="text-sm font-bold text-sky-700 mt-0.5">
-                    {selectedState.nameHi}
+                    {lang === 'hi' ? selectedState.nameEn : selectedState.nameHi}
                   </p>
                 </div>
 
                 {/* Capital City */}
                 <div className="mb-3 pb-2.5 border-b border-slate-100">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                    Capital City (राजधानी)
+                    {lang === 'hi' ? 'राजधानी (Capital City)' : 'Capital City'}
                   </span>
                   <h4 className="text-lg md:text-xl font-black text-emerald-700 leading-tight">
-                    {selectedState.capitalEn}
+                    {lang === 'hi' ? selectedState.capitalHi : selectedState.capitalEn}
                   </h4>
                   <p className="text-xs font-bold text-slate-600 mt-0.5">
-                    {selectedState.capitalHi}
+                    {lang === 'hi' ? selectedState.capitalEn : selectedState.capitalHi}
                   </p>
                 </div>
 
                 {/* Famous Landmark */}
                 <div className="mb-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                    Famous Heritage &amp; Landmark (धरोहर)
+                    {lang === 'hi' ? 'प्रसिद्ध धरोहर (Famous Heritage & Landmark)' : 'Famous Landmark & Heritage'}
                   </span>
                   <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 p-2.5 rounded-2xl">
                     <span className="text-2xl">{selectedState.landmarkEmoji}</span>
@@ -663,30 +715,29 @@ export function HindiGeoStudio() {
                         {selectedState.landmark}
                       </span>
                       <span className="text-[10px] font-bold text-amber-800">
-                        Pride of {selectedState.nameEn}
+                        {lang === 'hi' ? `${selectedState.nameHi} का गौरव` : `Pride of ${selectedState.nameEn}`}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* EMBEDDED WORDPRESS MEDIA REAL ILLUSTRATED REFERENCE MAP IMAGE */}
+                {/* Visual Reference Map Image Frame */}
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col items-center">
                   <div className="w-full flex items-center justify-between mb-1.5">
                     <span className="text-[11px] font-black text-slate-700 flex items-center gap-1">
-                      🗺️ संदर्भ मानचित्र (Real Illustrated Map)
+                      🗺️ {lang === 'hi' ? 'संदर्भ मानचित्र (Illustrated Map)' : 'Illustrated Reference Map'}
                     </span>
                     <button
                       onClick={() => setShowFullMapModal(true)}
                       className="text-[10px] font-bold text-sky-600 hover:text-sky-800 flex items-center gap-0.5 cursor-pointer"
                     >
-                      <Maximize2 className="w-3 h-3" /> बड़ा देखें (Enlarge)
+                      <Maximize2 className="w-3 h-3" /> {lang === 'hi' ? 'बड़ा देखें' : 'Enlarge'}
                     </button>
                   </div>
                   
-                  {/* Visual Reference Map Image Frame */}
                   <div 
                     onClick={() => setShowFullMapModal(true)}
-                    className="w-full h-48 bg-[#fdfaf2] rounded-xl border border-amber-300 overflow-hidden cursor-pointer relative shadow-sm group flex items-center justify-center p-1"
+                    className="w-full h-44 bg-[#fdfaf2] rounded-xl border border-amber-300 overflow-hidden cursor-pointer relative shadow-sm group flex items-center justify-center p-1"
                   >
                     <img
                       src={REAL_MAP_URL}
@@ -696,16 +747,12 @@ export function HindiGeoStudio() {
                     
                     <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors flex items-center justify-center">
                       <span className="bg-white/95 text-slate-800 text-[10px] font-black px-2.5 py-1 rounded-md shadow opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> पूरा देखें (Click to Enlarge)
+                        <Eye className="w-3 h-3" /> {lang === 'hi' ? 'पूरा देखें' : 'Click to Enlarge'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-              </div>
-
-              <div className="bg-slate-50 p-2.5 rounded-xl text-center text-[11px] font-bold text-slate-600 mt-2 border border-slate-100">
-                🔊 Spoken: &quot;{selectedState.nameEn}. Capital is {selectedState.capitalEn}.&quot;
               </div>
             </div>
           ) : (
@@ -715,31 +762,33 @@ export function HindiGeoStudio() {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="bg-amber-100 text-amber-900 text-xs font-black px-3 py-1 rounded-full">
-                      Question {qIdx + 1} / 5
+                      {lang === 'hi' ? `प्रश्न ${qIdx + 1} / 5` : `Question ${qIdx + 1} / 5`}
                     </span>
                     <button
-                      onClick={() => speakIndianEnglish(
-                        `Find the state whose capital is ${quizList[qIdx].capitalEn}`,
-                        ''
-                      )}
+                      onClick={() => {
+                        if (lang === 'hi') speakVoice(`उस राज्य को चुनें जिसकी राजधानी ${quizList[qIdx].capitalHi} है`);
+                        else speakVoice(`Find the state whose capital is ${quizList[qIdx].capitalEn}`);
+                      }}
                       className="p-2 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                     >
-                      <Volume2 className="w-4 h-4" /> Listen
+                      <Volume2 className="w-4 h-4" /> {lang === 'hi' ? 'सुनें' : 'Listen'}
                     </button>
                   </div>
 
                   <div className="text-center my-6">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      Capital to Find
+                      {lang === 'hi' ? 'यह किस राज्य की राजधानी है?' : 'Capital to Find'}
                     </span>
                     <h3 className="text-3xl font-black text-amber-600 mb-1">
-                      {quizList[qIdx].capitalEn}
+                      {lang === 'hi' ? quizList[qIdx].capitalHi : quizList[qIdx].capitalEn}
                     </h3>
                     <p className="text-sm font-bold text-slate-500">
-                      ({quizList[qIdx].capitalHi})
+                      ({lang === 'hi' ? quizList[qIdx].capitalEn : quizList[qIdx].capitalHi})
                     </p>
                     <p className="text-xs font-bold text-slate-600 mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                      👉 नक्शे पर उस राज्य के पिन पर टैप करें जिसकी राजधानी <strong>{quizList[qIdx].capitalEn}</strong> है!
+                      👉 {lang === 'hi' 
+                        ? `नक्शे पर उस राज्य के पिन पर टैप करें जिसकी राजधानी ${quizList[qIdx].capitalHi} है!` 
+                        : `Tap the matching state pin whose capital is ${quizList[qIdx].capitalEn}!`}
                     </p>
                   </div>
 
@@ -751,12 +800,12 @@ export function HindiGeoStudio() {
                         {quizFeedback === 'correct' ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <span>Correct! It is {quizList[qIdx].nameEn}!</span>
+                            <span>{lang === 'hi' ? `शाबाश! सही उत्तर है ${quizList[qIdx].nameHi}!` : `Correct! It is ${quizList[qIdx].nameEn}!`}</span>
                           </>
                         ) : (
                           <>
                             <XCircle className="w-4 h-4 text-rose-600" />
-                            <span>Correct State is {quizList[qIdx].nameEn}!</span>
+                            <span>{lang === 'hi' ? `सही राज्य था: ${quizList[qIdx].nameHi}!` : `Correct state was ${quizList[qIdx].nameEn}!`}</span>
                           </>
                         )}
                       </div>
@@ -765,7 +814,7 @@ export function HindiGeoStudio() {
                         onClick={nextQuizQuestion}
                         className="py-3 px-8 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow-lg transition cursor-pointer inline-flex items-center gap-2"
                       >
-                        Next Question <ArrowRight className="w-4 h-4" />
+                        {lang === 'hi' ? 'अगला सवाल ➔' : 'Next Question ➔'} <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
                   )}
@@ -776,8 +825,12 @@ export function HindiGeoStudio() {
                   <div className="w-16 h-16 bg-amber-500 text-white rounded-3xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg">
                     🏆
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 mb-1">Geography Challenge Finished!</h3>
-                  <p className="text-xs font-bold text-amber-700 mb-3">Score: {quizScore} / 5 Correct</p>
+                  <h3 className="text-xl font-black text-slate-900 mb-1">
+                    {lang === 'hi' ? 'भूगोल क्विज़ पूरा हुआ!' : 'Geography Challenge Complete!'}
+                  </h3>
+                  <p className="text-xs font-bold text-amber-700 mb-3">
+                    {lang === 'hi' ? `स्कोर: 5 में से ${quizScore} सही` : `Score: ${quizScore} / 5 Correct`}
+                  </p>
 
                   <div className="flex justify-center gap-1.5 mb-4">
                     <Star className="w-6 h-6 text-amber-400 fill-amber-400" />
@@ -789,7 +842,7 @@ export function HindiGeoStudio() {
                     onClick={initGeoQuiz}
                     className="py-2.5 px-6 bg-amber-600 hover:bg-amber-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer inline-flex items-center gap-2"
                   >
-                    <RotateCcw className="w-4 h-4" /> Play Again
+                    <RotateCcw className="w-4 h-4" /> {lang === 'hi' ? 'दोबारा खेलें' : 'Play Again'}
                   </button>
                 </div>
               )}
@@ -806,13 +859,13 @@ export function HindiGeoStudio() {
           <div className="bg-white rounded-3xl max-w-3xl w-full p-5 text-center relative shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
               <h3 className="text-base font-black text-slate-900">
-                भारत का राजनीतिक व भौगोलिक मानचित्र (Official Illustrated Map of India)
+                {lang === 'hi' ? 'भारत का राजनीतिक व भौगोलिक मानचित्र' : 'Illustrated Political & Geographic Map of India'}
               </h3>
               <button
                 onClick={() => setShowFullMapModal(false)}
                 className="p-1.5 bg-slate-100 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs cursor-pointer"
               >
-                ✕ बंद करें (Close)
+                ✕ {lang === 'hi' ? 'बंद करें (Close)' : 'Close'}
               </button>
             </div>
             
