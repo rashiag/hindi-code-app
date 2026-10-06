@@ -8,28 +8,27 @@ import {
 
 type LabSection = 'phonic_game' | 'tracing' | 'cvc';
 
-// --- BILINGUAL UI DICTIONARY (INDIAN ENGLISH & HINDI) ---
+// --- BILINGUAL UI DICTIONARY ---
 const LAB_STRINGS = {
   hi: {
     bannerTitle: "नन्हे वैज्ञानिक प्रीस्कूल लैब (Preschool Lab)",
-    bannerSub: "ध्वनि पहचान (ब → b) • ✏️ पेंसिल ट्रेसिंग • 📖 सचित्र CVC शब्दकोश",
+    bannerSub: "ध्वनि पहचान (ब → b) • ✏️️ पेंसिल ट्रेसिंग • 📖 सचित्र CVC शब्दकोश",
     tabPhonic: "🔊 फोनिक साउंड गेम (10 राउंड)",
     tabTracing: "✏️ पेंसिल ट्रेसिंग",
     tabCvc: "📖 सचित्र CVC शब्दकोश",
     introTitle: "फोनिक साउंड गेम (10 प्रश्न)",
-    introDesc: "स्क्रीन पर केवल हिंदी ध्वनि (जैसे 'ब') दिखेगी और सुनाई देगी। बिना किसी चित्र के, बच्चे को कीबोर्ड पर सही अक्षर (b) दबाना है!",
+    introDesc: "केवल अक्षर की ध्वनि (जैसे 'ब') सुनाई देगी। ध्वनि को पहचानकर कीबोर्ड या स्क्रीन पर उसका छोटा अक्षर (b) दबाएं!",
     startBtn: "10-प्रश्नों का खेल शुरू करें ➔",
-    voicePrompt: (sound: string) => `ध्वनि सुनो: ${sound}... कीबोर्ड पर सही बटन दबाओ`,
-    soundPromptLabel: "इस ध्वनि का अक्षर कीबोर्ड पर दबाएं:",
-    soundHint: "(आवाज़ सुनें और लैपटॉप या स्क्रीन पर सही बटन दबाएं)",
-    keyboardTitle: "⌨️ QWERTY कीबोर्ड (टच करें या लैपटॉप की दबाएं)",
+    soundPromptLabel: "इस ध्वनि का अंग्रेजी अक्षर दबाएं:",
+    soundHint: "(ध्वनि सुनें और कीबोर्ड पर सही छोटा अक्षर चुनें)",
+    keyboardTitle: "⌨️ QWERTY कीबोर्ड (टच करें या कीबोर्ड दबाएं)",
     questionCount: "सवाल",
     scoreLabel: "स्कोर",
     completedTitle: "खेल पूरा हुआ!",
     reportTitle: "फोनिक ध्वनि पहचान रिपोर्ट कार्ड (10 प्रश्न)",
     accuracyLabel: "सटीकता",
     totalScoreLabel: "कुल स्कोर",
-    reviewTitle: "जिन अक्षरों का पुनः अभ्यास करना है:",
+    reviewTitle: "जिन ध्वनियों का पुनः अभ्यास करना है:",
     playAgainBtn: "नया 10-प्रश्नों का गेम खेलें",
     tracingHint: "हरे बिंदु से शुरू करके डॉटेड लाइन पर चलाएं",
     tracingSuccess: "शानदार! आपने पैटर्न बिल्कुल सही ट्रेस किया 🏆",
@@ -40,24 +39,23 @@ const LAB_STRINGS = {
   },
   en: {
     bannerTitle: "Little Researcher Preschool Lab",
-    bannerSub: "Phonics Sounds (b for Bat) • ✏️ Pencil Tracing • 📖 Illustrated CVC Words",
+    bannerSub: "Phonics Sounds (ब → b) • ✏️ Pencil Tracing • 📖 Illustrated CVC Words",
     tabPhonic: "🔊 Phonics Sound Game (10 Rounds)",
     tabTracing: "✏️ Pencil Tracing",
     tabCvc: "📖 Illustrated CVC Dictionary",
     introTitle: "Phonics Sound Challenge (10 Questions)",
-    introDesc: "Listen to the letter sound carefully. Without any picture hints, identify and press the matching letter (like 'b' for 'ba') on your keyboard or screen!",
+    introDesc: "You will hear the pure phonics sound (like 'ब'). Listen carefully and press the matching lowercase English letter (b) on the keyboard!",
     startBtn: "Start 10-Question Challenge ➔",
-    voicePrompt: (sound: string, char: string) => `Listen to the sound: ${sound}... Press the letter ${char} on your keyboard!`,
-    soundPromptLabel: "Press the matching letter key on your keyboard:",
-    soundHint: "(Listen to the audio cue and tap or press the matching letter)",
-    keyboardTitle: "⌨️ QWERTY Keyboard (Tap or press your keys)",
+    soundPromptLabel: "Press the English letter for this sound:",
+    soundHint: "(Listen to the phonics sound and press the matching lowercase letter)",
+    keyboardTitle: "⌨️️ QWERTY Keyboard (Tap or press keys)",
     questionCount: "Question",
     scoreLabel: "Score",
     completedTitle: "Challenge Complete!",
     reportTitle: "Phonics Sound Identification Report (10 Questions)",
     accuracyLabel: "Accuracy",
     totalScoreLabel: "Total Score",
-    reviewTitle: "Letters to practice again:",
+    reviewTitle: "Sounds to practice again:",
     playAgainBtn: "Play 10-Question Game Again",
     tracingHint: "Start from the green dot and follow the dashed line",
     tracingSuccess: "Fantastic! You traced the pattern accurately 🏆",
@@ -69,11 +67,12 @@ const LAB_STRINGS = {
 };
 
 // --- DATA: PHONIC SOUND CHALLENGE ---
+// Phonics pure sounds mapped to Devanagari representation for crisp pronunciation
 interface PhonicQuestion {
   char: string;
   lower: string;
   hindiSound: string;
-  spokenSound: string;
+  spokenSound: string; // The exact acoustic phonetic sound spoken aloud
   exampleWord: string;
 }
 
@@ -107,9 +106,9 @@ const PHONIC_BANK: PhonicQuestion[] = [
 ];
 
 const QWERTY_ROWS = [
-  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-  ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
+  ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+  ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+  ['z', 'x', 'c', 'v', 'b', 'n', 'm']
 ];
 
 // --- DATA: CVC FLASHCARDS WITH HIGH-CONTRAST VECTOR ART ---
@@ -148,7 +147,7 @@ const CVC_DICTIONARY: CvcWordItem[] = [
   { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
 
   // --- VOWEL I ---
-  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
+  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
   { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
   { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
   { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
@@ -321,8 +320,8 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Indian English & Hindi Speech Synthesis Engine
-  const speakVoice = (text: string, lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN', rate = 0.86): Promise<void> => {
+  // Indian Speech Engine (Always speaks pure Hindi sounds with hi-IN engine for maximum acoustic accuracy)
+  const speakVoice = (text: string, lang = 'hi-IN', rate = 0.82): Promise<void> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !window.speechSynthesis) {
         resolve();
@@ -338,7 +337,7 @@ export default function EnglishAlphabetLab() {
         utterance.pitch = 1.05;
 
         const voices = window.speechSynthesis.getVoices();
-        const preferred = voices.find(v => v.lang === 'en-IN' || v.lang === 'hi-IN') || voices.find(v => v.lang.startsWith(lang.slice(0, 2)));
+        const preferred = voices.find(v => v.lang === lang || (lang === 'en-IN' && v.lang.startsWith('en')));
         if (preferred) utterance.voice = preferred;
 
         let finished = false;
@@ -351,7 +350,7 @@ export default function EnglishAlphabetLab() {
 
         utterance.onend = done;
         utterance.onerror = done;
-        setTimeout(done, Math.max(1200, text.length * 110));
+        setTimeout(done, Math.max(1200, text.length * 120));
 
         window.speechSynthesis.speak(utterance);
       } catch (e) {
@@ -361,14 +360,12 @@ export default function EnglishAlphabetLab() {
   };
 
   // --- 1. PHONIC SOUND GAME HANDLERS ---
+  // SPEAKS ONLY THE PURE HINDI SOUND (e.g., "ब" or "क"), NEVER ENGLISH ALPHABET NAME
   const calloutCurrentPhonic = async (item: PhonicQuestion) => {
     if (!item || !isMountedRef.current) return;
     setWrongPressKey(null);
-    if (currentLang === 'hi') {
-      await speakVoice(`ध्वनि सुनो: ${item.spokenSound}... कीबोर्ड पर सही बटन दबाओ`, 'hi-IN', 0.84);
-    } else {
-      await speakVoice(`Sound: ${item.spokenSound}... Press the key for letter ${item.lower}!`, 'en-IN', 0.86);
-    }
+    // Speaks the pure acoustic sound in Hindi TTS: "ब ... ब"
+    await speakVoice(`${item.spokenSound} ... ${item.spokenSound}`, 'hi-IN', 0.8);
   };
 
   const startPhonicGame = () => {
@@ -385,7 +382,7 @@ export default function EnglishAlphabetLab() {
 
     setTimeout(() => {
       calloutCurrentPhonic(shuffled[0]);
-    }, 200);
+    }, 250);
   };
 
   const currentPhonicItem = gameQuestions[currentRoundIndex];
@@ -394,8 +391,8 @@ export default function EnglishAlphabetLab() {
     if (!isPhonicPlaying || isPhonicFinished || isAudioLockedRef.current || !currentPhonicItem) return;
     isAudioLockedRef.current = true;
 
-    const normalized = pressedChar.toUpperCase();
-    const isCorrect = normalized === currentPhonicItem.char;
+    const normalized = pressedChar.toLowerCase();
+    const isCorrect = normalized === currentPhonicItem.lower;
 
     setPressedAnimationKey(normalized);
     setTimeout(() => setPressedAnimationKey(null), 180);
@@ -406,14 +403,15 @@ export default function EnglishAlphabetLab() {
       setPhonicFeedback({
         type: 'correct',
         text: currentLang === 'hi' 
-          ? `सही जवाब! ${currentPhonicItem.lower} (${currentPhonicItem.hindiSound}) for ${currentPhonicItem.exampleWord}`
-          : `Correct! ${currentPhonicItem.lower} makes the sound "${currentPhonicItem.hindiSound}" as in ${currentPhonicItem.exampleWord}`
+          ? `शाबाश! '${currentPhonicItem.hindiSound}' ध्वनि है अक्षर '${currentPhonicItem.lower}' की!`
+          : `Correct! The sound '${currentPhonicItem.hindiSound}' belongs to letter '${currentPhonicItem.lower}'!`
       });
 
+      // Reinforce the link: "ब ... b"
       if (currentLang === 'hi') {
-        await speakVoice(`सही जवाब! ${currentPhonicItem.lower} ${currentPhonicItem.spokenSound} for ${currentPhonicItem.exampleWord}`, 'hi-IN', 0.9);
+        await speakVoice(`शाबाश! ${currentPhonicItem.spokenSound} ... ${currentPhonicItem.lower}`, 'hi-IN', 0.86);
       } else {
-        await speakVoice(`Correct! ${currentPhonicItem.lower} is for ${currentPhonicItem.exampleWord}`, 'en-IN', 0.9);
+        await speakVoice(`Correct! ${currentPhonicItem.spokenSound} is letter ${currentPhonicItem.lower}`, 'hi-IN', 0.86);
       }
       await new Promise(r => setTimeout(r, 350));
     } else {
@@ -423,15 +421,11 @@ export default function EnglishAlphabetLab() {
       setPhonicFeedback({
         type: 'wrong',
         text: currentLang === 'hi'
-          ? `नहीं! यह ${currentPhonicItem.lower} (${currentPhonicItem.hindiSound}) है`
-          : `Oops! That sound was for letter ${currentPhonicItem.lower} (${currentPhonicItem.hindiSound})`
+          ? `गलत! '${currentPhonicItem.hindiSound}' ध्वनि के लिए '${currentPhonicItem.lower}' दबाएं`
+          : `Oops! For '${currentPhonicItem.hindiSound}', press the letter '${currentPhonicItem.lower}'`
       });
 
-      if (currentLang === 'hi') {
-        await speakVoice(`नहीं! यह ${currentPhonicItem.lower} ${currentPhonicItem.spokenSound} है`, 'hi-IN', 0.88);
-      } else {
-        await speakVoice(`Oops! That was letter ${currentPhonicItem.lower}`, 'en-IN', 0.88);
-      }
+      await speakVoice(`नहीं! यह ध्वनि है ${currentPhonicItem.spokenSound}`, 'hi-IN', 0.85);
       await new Promise(r => setTimeout(r, 350));
     }
 
@@ -458,12 +452,12 @@ export default function EnglishAlphabetLab() {
     }
   };
 
-  // Keyboard capture for Phonic Game
+  // Keyboard capture for Phonic Game (lowercase matches)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat || section !== 'phonic_game' || !isPhonicPlaying || isPhonicFinished) return;
-      const key = e.key.toUpperCase();
-      if (/^[A-Z]$/.test(key)) {
+      const key = e.key.toLowerCase();
+      if (/^[a-z]$/.test(key)) {
         e.preventDefault();
         e.stopPropagation();
         handlePhonicKeyAnswer(key);
@@ -516,7 +510,7 @@ export default function EnglishAlphabetLab() {
         text: `Correct! This is ${currentQ.target.article} '${currentQ.target.word}'.`
       });
 
-      await speakVoice(`Correct! This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN');
+      await speakVoice(`This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN', 0.88);
       await new Promise(r => setTimeout(r, 400));
     } else {
       playSoundEffect('wrong');
@@ -526,14 +520,14 @@ export default function EnglishAlphabetLab() {
         text: `Try again! This is ${currentQ.target.article} '${currentQ.target.word}'.`
       });
 
-      await speakVoice(`Try again! This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN');
+      await speakVoice(`This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN', 0.88);
       await new Promise(r => setTimeout(r, 400));
     }
 
     if (cvcQuizIndex + 1 >= 10) {
       setIsCvcQuizFinished(true);
       playSoundEffect('victory');
-      await speakVoice(`Great job! You scored ${cvcQuizScore + (isCorrect ? 1 : 0)} out of 10!`, 'en-IN');
+      await speakVoice(`Great job! You scored ${cvcQuizScore + (isCorrect ? 1 : 0)} out of 10!`, 'en-IN', 0.88);
       isAudioLockedRef.current = false;
     } else {
       setCvcQuizIndex(prev => prev + 1);
@@ -811,11 +805,12 @@ export default function EnglishAlphabetLab() {
                 </span>
               </div>
 
+              {/* Central Phonics Card: Visual Devanagari Akshar & Repeat Button */}
               <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-5 text-center shadow-inner mb-4 flex flex-col items-center">
                 <button
                   onClick={() => calloutCurrentPhonic(currentPhonicItem)}
                   className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition cursor-pointer shadow-md mb-2 flex items-center gap-2"
-                  title="Audio prompt"
+                  title="ध्वनि दोबारा सुनें"
                 >
                   <Volume2 className="w-6 h-6 animate-pulse" />
                 </button>
@@ -824,6 +819,7 @@ export default function EnglishAlphabetLab() {
                   {t.soundPromptLabel}
                 </span>
 
+                {/* Big Clean Devanagari Sound */}
                 <div className="text-6xl md:text-7xl font-black text-indigo-950 my-1 font-mono tracking-wider">
                   {currentPhonicItem.hindiSound}
                 </div>
@@ -842,6 +838,7 @@ export default function EnglishAlphabetLab() {
                 </div>
               )}
 
+              {/* Lowercase QWERTY Keyboard */}
               <div className="w-full max-w-2xl bg-slate-100 border-2 border-slate-300 rounded-3xl p-3 shadow-inner">
                 <div className="text-center mb-2">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
@@ -861,7 +858,7 @@ export default function EnglishAlphabetLab() {
                             key={letter}
                             onClick={() => handlePhonicKeyAnswer(letter)}
                             className={`
-                              h-11 md:h-13 w-8 sm:w-11 md:w-13 rounded-xl font-black text-base md:text-lg transition-transform shadow-sm cursor-pointer flex flex-col items-center justify-center
+                              h-11 md:h-13 w-8 sm:w-11 md:w-13 rounded-xl font-black text-base md:text-lg transition-transform shadow-sm cursor-pointer flex flex-col items-center justify-center font-mono
                               ${isCurrentlyPressed ? 'scale-90 ring-4 ring-indigo-300' : 'active:scale-95'}
                               ${isWrongJustPressed 
                                 ? 'bg-rose-500 text-white border-2 border-rose-700 animate-shake' 
@@ -869,7 +866,7 @@ export default function EnglishAlphabetLab() {
                               }
                             `}
                           >
-                            <span>{letter.toLowerCase()}</span>
+                            <span>{letter}</span>
                           </button>
                         );
                       })}
