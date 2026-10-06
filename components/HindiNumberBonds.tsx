@@ -32,7 +32,7 @@ const QUESTION_POOL = [
   { base: 2, sum: 6, correct: 4, opts: [4, 3, 5] }
 ];
 
-export function HindiNumberBonds() {
+export function HindiNumberBonds({ lang = 'hi' }: { lang?: 'hi' | 'en' }) {
   const [currentRound, setCurrentRound] = useState<number>(1);
   const [questionIndex, setQuestionIndex] = useState<number>(0);
   const [selectedNum, setSelectedNum] = useState<number | null>(null);
@@ -65,12 +65,12 @@ export function HindiNumberBonds() {
     };
   }, []);
 
-  const playSpeech = (text: string, lang: 'hi-IN' | 'en-IN' = 'hi-IN') => {
+  const playSpeech = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
+      u.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
       u.rate = 0.85;
       window.speechSynthesis.speak(u);
     } catch (e) {}
@@ -117,7 +117,7 @@ export function HindiNumberBonds() {
 
   useEffect(() => {
     startNewGame();
-  }, []);
+  }, [lang]);
 
   const handleNextQuestion = () => {
     clearTimer();
@@ -148,9 +148,13 @@ export function HindiNumberBonds() {
       setScore(nextScore);
       setStreak((prev) => prev + 1);
       playSuccessChime();
-      playSpeech(`शाबाश! ${NUMBER_MAP[currentQ.base].word} और ${NUMBER_MAP[num].word} मिलकर बनते हैं ${NUMBER_MAP[currentQ.sum].word}!`);
 
-      // Gentle auto-advance ONLY on correct answers
+      if (lang === 'hi') {
+        playSpeech(`शाबाश! ${NUMBER_MAP[currentQ.base].word} और ${NUMBER_MAP[num].word} मिलकर बनते हैं ${NUMBER_MAP[currentQ.sum].word}!`);
+      } else {
+        playSpeech(`Correct! ${NUMBER_MAP[currentQ.base].eng} plus ${NUMBER_MAP[num].eng} equals ${NUMBER_MAP[currentQ.sum].eng}!`);
+      }
+
       autoAdvanceTimer.current = setTimeout(() => {
         if (currentRound >= TOTAL_ROUNDS) {
           setIsGameOver(true);
@@ -167,31 +171,34 @@ export function HindiNumberBonds() {
       }, 1600);
 
     } else {
-      // Incorrect -> Stays visible permanently until user clicks Next
       setIsCorrect(false);
       setStreak(0);
       setShowBeadVisual(true);
-      playSpeech(`यहाँ ${NUMBER_MAP[currentQ.correct].word} और मनके चाहिए! ${NUMBER_MAP[currentQ.base].eng} plus ${NUMBER_MAP[currentQ.correct].eng} equals ${NUMBER_MAP[currentQ.sum].eng}!`);
+      if (lang === 'hi') {
+        playSpeech(`यहाँ ${NUMBER_MAP[currentQ.correct].word} और मनके चाहिए! ${NUMBER_MAP[currentQ.base].word} और ${NUMBER_MAP[currentQ.correct].word} मिलकर बनते हैं ${NUMBER_MAP[currentQ.sum].word}!`);
+      } else {
+        playSpeech(`Try again! ${NUMBER_MAP[currentQ.base].eng} plus ${NUMBER_MAP[currentQ.correct].eng} equals ${NUMBER_MAP[currentQ.sum].eng}!`);
+      }
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 font-sans select-none">
-      {/* Top Header & Turn Tracker */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-amber-50/80 p-4 rounded-2xl border border-amber-200">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">🎯</span>
-            <h1 className="text-xl md:text-2xl font-black text-amber-950">अंक जोड़ (Missing Number Bond)</h1>
+            <h1 className="text-xl md:text-2xl font-black text-amber-950">
+              {lang === 'hi' ? 'अंक जोड़ (Missing Number Bond)' : 'Missing Number Addition'}
+            </h1>
           </div>
           <p className="text-xs md:text-sm font-semibold text-amber-800">
-            समीकरण पूरा करने के लिए सही संख्या चुनें • Complete the equation
+            {lang === 'hi' ? 'समीकरण पूरा करने के लिए सही संख्या चुनें' : 'Choose the correct number to complete the equation'}
           </p>
         </div>
 
-        {/* Round Indicators */}
         <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm">
-          <span className="text-xs font-black text-amber-900 mr-1">राउंड:</span>
+          <span className="text-xs font-black text-amber-900 mr-1">{lang === 'hi' ? 'राउंड:' : 'Round:'}</span>
           {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
             <span
               key={i}
@@ -209,98 +216,57 @@ export function HindiNumberBonds() {
           </span>
         </div>
 
-        {/* Live Score */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg text-xs font-black border border-amber-200">
-            <Award className="w-4 h-4 text-amber-600" /> सही: {score}/{TOTAL_ROUNDS}
+            <Award className="w-4 h-4 text-amber-600" /> {lang === 'hi' ? 'सही:' : 'Score:'} {score}/{TOTAL_ROUNDS}
           </div>
-          {streak > 1 && (
-            <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-orange-200">
-              <Sparkles className="w-3.5 h-3.5 text-orange-600" /> {streak} लगातार!
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Main Play Area */}
       <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-amber-200 shadow-xl flex flex-col items-center min-h-[460px] justify-center">
         {isGameOver ? (
-          /* End Game Modal */
           <div className="w-full max-w-md bg-gradient-to-b from-amber-50 to-orange-50/50 rounded-3xl border-2 border-amber-300 p-8 text-center flex flex-col items-center shadow-lg">
             <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-4 text-amber-600 shadow-inner">
               <Trophy className="w-10 h-10" />
             </div>
 
-            <h2 className="text-2xl font-black text-amber-950 mb-1">खेल संपन्न! (Game Complete)</h2>
+            <h2 className="text-2xl font-black text-amber-950 mb-1">
+              {lang === 'hi' ? 'खेल संपन्न!' : 'Game Complete!'}
+            </h2>
             <p className="text-sm font-bold text-amber-800 mb-5">
               {finalScore === 5
                 ? '🌟 Excellent! All equations solved!'
                 : finalScore >= 3
-                ? '👏 Great math skills! बहुत बढ़िया!'
-                : '💪 Keep practicing! अभ्यास जारी रखें!'}
+                ? '👏 Great math skills!'
+                : '💪 Keep practicing!'}
             </p>
-
-            {/* Stars */}
-            <div className="flex items-center gap-2 mb-6">
-              {Array.from({ length: TOTAL_ROUNDS }).map((_, idx) => (
-                <Star
-                  key={idx}
-                  className={`w-7 h-7 ${
-                    idx < finalScore
-                      ? 'text-amber-500 fill-amber-400 drop-shadow'
-                      : 'text-slate-200 fill-slate-100'
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Score Summary */}
-            <div className="w-full bg-white rounded-2xl p-4 border border-amber-200 mb-6 flex justify-around shadow-sm">
-              <div>
-                <span className="block text-xs font-bold text-slate-500">कुल प्रश्न</span>
-                <span className="text-xl font-black text-slate-800">{TOTAL_ROUNDS}</span>
-              </div>
-              <div className="w-px bg-slate-200" />
-              <div>
-                <span className="block text-xs font-bold text-slate-500">सही उत्तर</span>
-                <span className="text-xl font-black text-emerald-600">{finalScore}</span>
-              </div>
-              <div className="w-px bg-slate-200" />
-              <div>
-                <span className="block text-xs font-bold text-slate-500">सटीकता</span>
-                <span className="text-xl font-black text-amber-600">
-                  {Math.round((finalScore / TOTAL_ROUNDS) * 100)}%
-                </span>
-              </div>
-            </div>
 
             <button
               onClick={startNewGame}
               className="w-full py-3.5 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white rounded-xl font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" /> पुनः खेलें (Play Again)
+              <RotateCcw className="w-4 h-4" /> {lang === 'hi' ? 'पुनः खेलें' : 'Play Again'}
             </button>
           </div>
         ) : (
-          /* Active Gameplay Screen */
           <>
-            {/* Audio Prompt Button */}
             <button
-              onClick={() =>
-                playSpeech(
-                  `${NUMBER_MAP[currentQ.base].word} में कितना जोड़ें कि ${NUMBER_MAP[currentQ.sum].word} बन जाए?`
-                )
-              }
+              onClick={() => {
+                if (lang === 'hi') {
+                  playSpeech(`${NUMBER_MAP[currentQ.base].word} में कितना जोड़ें कि ${NUMBER_MAP[currentQ.sum].word} बन जाए?`);
+                } else {
+                  playSpeech(`How much to add to ${NUMBER_MAP[currentQ.base].eng} to make ${NUMBER_MAP[currentQ.sum].eng}?`);
+                }
+              }}
               className="flex items-center gap-2 bg-amber-100/70 hover:bg-amber-200 text-amber-900 font-bold px-4 py-2 rounded-full text-xs md:text-sm mb-6 transition cursor-pointer"
             >
-              <Volume2 className="w-4 h-4 text-amber-700" /> प्रश्न सुनें (Audio Prompt)
+              <Volume2 className="w-4 h-4 text-amber-700" /> {lang === 'hi' ? 'प्रश्न सुनें (Audio Prompt)' : 'Listen to Prompt'}
             </button>
 
-            {/* Equation Display Box */}
             <div className="flex items-center justify-center gap-3 md:gap-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border-2 border-amber-200 px-8 py-5 rounded-3xl mb-6 shadow-sm">
               <div className="flex flex-col items-center bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
                 <span className="text-3xl md:text-4xl font-black">{currentQ.base}</span>
-                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[currentQ.base].hi} ({NUMBER_MAP[currentQ.base].word})</span>
+                <span className="text-[11px] font-bold opacity-90">{lang === 'hi' ? NUMBER_MAP[currentQ.base].word : NUMBER_MAP[currentQ.base].eng}</span>
               </div>
 
               <span className="text-3xl md:text-4xl font-black text-amber-900">+</span>
@@ -318,9 +284,7 @@ export function HindiNumberBonds() {
                   {selectedNum !== null ? selectedNum : '?'}
                 </span>
                 <span className="text-[11px] font-bold">
-                  {selectedNum !== null
-                    ? `${NUMBER_MAP[selectedNum].hi} (${NUMBER_MAP[selectedNum].word})`
-                    : 'खाली स्थान'}
+                  {selectedNum !== null ? (lang === 'hi' ? NUMBER_MAP[selectedNum].word : NUMBER_MAP[selectedNum].eng) : (lang === 'hi' ? 'खाली स्थान' : 'Missing')}
                 </span>
               </div>
 
@@ -328,15 +292,16 @@ export function HindiNumberBonds() {
 
               <div className="flex flex-col items-center bg-amber-700 text-white px-5 py-3 rounded-2xl shadow-md min-w-[70px]">
                 <span className="text-3xl md:text-4xl font-black">{currentQ.sum}</span>
-                <span className="text-[11px] font-bold opacity-90">{NUMBER_MAP[currentQ.sum].hi} ({NUMBER_MAP[currentQ.sum].word})</span>
+                <span className="text-[11px] font-bold opacity-90">{lang === 'hi' ? NUMBER_MAP[currentQ.sum].word : NUMBER_MAP[currentQ.sum].eng}</span>
               </div>
             </div>
 
-            {/* Visual Bead Explanation with Explicit "Next" Button */}
             {showBeadVisual && (
               <div className="w-full max-w-md bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 mb-6 flex flex-col items-center animate-in fade-in zoom-in duration-150">
                 <span className="text-xs font-black text-amber-900 mb-3">
-                  💡 समझिए: {NUMBER_MAP[currentQ.base].word} मनके + {NUMBER_MAP[currentQ.correct].word} मनके = कुल {NUMBER_MAP[currentQ.sum].word} मनके
+                  💡 {lang === 'hi' 
+                    ? `समझिए: ${NUMBER_MAP[currentQ.base].word} मनके + ${NUMBER_MAP[currentQ.correct].word} मनके = कुल ${NUMBER_MAP[currentQ.sum].word} मनके`
+                    : `Learn: ${NUMBER_MAP[currentQ.base].eng} beads + ${NUMBER_MAP[currentQ.correct].eng} beads = ${NUMBER_MAP[currentQ.sum].eng} beads`}
                 </span>
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-4 bg-white px-4 py-2.5 rounded-xl border border-amber-200">
                   {Array.from({ length: currentQ.base }).map((_, i) => (
@@ -354,17 +319,16 @@ export function HindiNumberBonds() {
                   onClick={handleNextQuestion}
                   className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>आगे बढ़ें (Next Question)</span>
+                  <span>{lang === 'hi' ? 'आगे बढ़ें (Next Question)' : 'Next Question'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}
 
-            {/* Numeral Selection Buttons */}
             {!showBeadVisual && (
               <div className="w-full max-w-lg">
                 <p className="text-center text-xs md:text-sm font-bold text-slate-500 mb-3">
-                  समीकरण पूरा करने के लिए सही संख्या चुनें (Choose missing number):
+                  {lang === 'hi' ? 'समीकरण पूरा करने के लिए सही संख्या चुनें:' : 'Choose the missing number:'}
                 </p>
                 <div className="grid grid-cols-3 gap-4">
                   {currentQ.opts.map((num) => {
@@ -386,12 +350,8 @@ export function HindiNumberBonds() {
                         }`}
                       >
                         <span className="text-3xl md:text-4xl font-black">{num}</span>
-                        <span
-                          className={`text-xs md:text-sm font-extrabold mt-1 ${
-                            isRight ? 'text-emerald-100' : 'text-amber-800'
-                          }`}
-                        >
-                          {NUMBER_MAP[num].hi} • {NUMBER_MAP[num].eng}
+                        <span className={`text-xs md:text-sm font-extrabold mt-1 ${isRight ? 'text-emerald-100' : 'text-amber-800'}`}>
+                          {lang === 'hi' ? `${NUMBER_MAP[num].hi} • ${NUMBER_MAP[num].word}` : NUMBER_MAP[num].eng}
                         </span>
                         {isRight && <CheckCircle2 className="w-5 h-5 text-white absolute top-2 right-2" />}
                       </button>
