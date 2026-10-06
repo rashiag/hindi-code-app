@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as Blockly from 'blockly';
 import { Level } from '../lib/levels';
 
 function initCustomBlocks(lang: 'hi' | 'en') {
-  // 1. When Run Block
   Blockly.Blocks['when_run'] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -16,7 +15,6 @@ function initCustomBlocks(lang: 'hi' | 'en') {
     },
   };
 
-  // 2. Move Forward Block
   Blockly.Blocks['move_forward'] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -28,7 +26,6 @@ function initCustomBlocks(lang: 'hi' | 'en') {
     },
   };
 
-  // 3. Turn Left Block
   Blockly.Blocks['turn_left'] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -40,7 +37,6 @@ function initCustomBlocks(lang: 'hi' | 'en') {
     },
   };
 
-  // 4. Turn Right Block
   Blockly.Blocks['turn_right'] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -52,7 +48,6 @@ function initCustomBlocks(lang: 'hi' | 'en') {
     },
   };
 
-  // 5. Collect Item Block
   Blockly.Blocks['collect_item'] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -64,7 +59,6 @@ function initCustomBlocks(lang: 'hi' | 'en') {
     },
   };
 
-  // 6. Repeat Block
   Blockly.Blocks['repeat_times'] = {
     init: function () {
       this.appendDummyInput()
@@ -80,7 +74,6 @@ function initCustomBlocks(lang: 'hi' | 'en') {
     },
   };
 
-  // 7. Conditional Block
   Blockly.Blocks['if_obstacle_ahead'] = {
     init: function () {
       this.appendDummyInput().appendField(
@@ -133,6 +126,8 @@ interface BlocklyWorkspaceProps {
   onReset: () => void;
   isRunning: boolean;
   allowedBlocks: Level['allowedBlocks'];
+  lang: 'hi' | 'en';
+  onToggleLang?: (newLang: 'hi' | 'en') => void;
 }
 
 export default function BlocklyWorkspace({
@@ -140,8 +135,9 @@ export default function BlocklyWorkspace({
   onReset,
   isRunning,
   allowedBlocks,
+  lang,
+  onToggleLang,
 }: BlocklyWorkspaceProps) {
-  const [lang, setLang] = useState<'hi' | 'en'>('hi');
   const blocklyDivRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
 
@@ -155,6 +151,45 @@ export default function BlocklyWorkspace({
     if (allowedBlocks?.condition) blocksXml += '<block type="if_obstacle_ahead"></block>';
 
     return `<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">${blocksXml}</xml>`;
+  };
+
+  // Re-label every block already placed on the grid whenever language changes
+  const updateExistingBlocksOnGrid = (ws: Blockly.WorkspaceSvg, currentLang: 'hi' | 'en') => {
+    const all = ws.getAllBlocks(false);
+    all.forEach((b) => {
+      try {
+        if (b.type === 'when_run') {
+          const field = b.inputList[0]?.fieldRow[0];
+          if (field) field.setValue(currentLang === 'hi' ? '🚀 जब कोड चलाएं' : '🚀 When Code Runs');
+        } else if (b.type === 'move_forward') {
+          const field = b.inputList[0]?.fieldRow[0];
+          if (field) field.setValue(currentLang === 'hi' ? 'आगे बढ़ो (1)' : 'Move Forward (1)');
+        } else if (b.type === 'turn_left') {
+          const field = b.inputList[0]?.fieldRow[0];
+          if (field) field.setValue(currentLang === 'hi' ? '↶ बाएँ मुड़ो' : '↶ Turn Left');
+        } else if (b.type === 'turn_right') {
+          const field = b.inputList[0]?.fieldRow[0];
+          if (field) field.setValue(currentLang === 'hi' ? '↷ दाएँ मुड़ो' : '↷ Turn Right');
+        } else if (b.type === 'collect_item') {
+          const field = b.inputList[0]?.fieldRow[0];
+          if (field) field.setValue(currentLang === 'hi' ? '🍌 केला उठाओ' : '🍌 Collect Banana');
+        } else if (b.type === 'repeat_times') {
+          if (b.inputList[0]?.fieldRow[2]) {
+            b.inputList[0].fieldRow[2].setValue(currentLang === 'hi' ? 'बार दोहराओ' : 'Times Repeat');
+          }
+          if (b.inputList[1]?.fieldRow[0]) {
+            b.inputList[1].fieldRow[0].setValue(currentLang === 'hi' ? 'करें' : 'Do');
+          }
+        } else if (b.type === 'if_obstacle_ahead') {
+          if (b.inputList[0]?.fieldRow[0]) {
+            b.inputList[0].fieldRow[0].setValue(currentLang === 'hi' ? '❓ अगर आगे पत्थर हो' : '❓ If Rock Ahead');
+          }
+          if (b.inputList[1]?.fieldRow[0]) {
+            b.inputList[1].fieldRow[0].setValue(currentLang === 'hi' ? 'तो करें' : 'Then Do');
+          }
+        }
+      } catch (e) {}
+    });
   };
 
   useEffect(() => {
@@ -180,8 +215,8 @@ export default function BlocklyWorkspace({
       startBlock.setDeletable(false);
       startBlock.moveBy(20, 20);
     } else {
-      // Re-initialize blocks with new language labels and refresh toolbox
       workspaceRef.current.updateToolbox(toolboxXml);
+      updateExistingBlocksOnGrid(workspaceRef.current, lang);
     }
   }, [allowedBlocks, lang]);
 
@@ -216,7 +251,7 @@ export default function BlocklyWorkspace({
 
   return (
     <div className="flex flex-col h-full w-full select-none font-sans">
-      <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 flex-wrap gap-2">
+      <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 flex-wrap gap-2 px-3 pt-2">
         <div className="flex items-center gap-2">
           <h2 className="font-black text-slate-800 text-sm md:text-base">
             {lang === 'hi' ? '💻 ब्लॉक कोडिंग क्षेत्र' : '💻 Visual Block Coding'}
@@ -225,7 +260,7 @@ export default function BlocklyWorkspace({
           {/* BILINGUAL LANGUAGE SWITCHER */}
           <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200">
             <button
-              onClick={() => setLang('hi')}
+              onClick={() => onToggleLang && onToggleLang('hi')}
               className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
                 lang === 'hi' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-200'
               }`}
@@ -233,7 +268,7 @@ export default function BlocklyWorkspace({
               हिंदी
             </button>
             <button
-              onClick={() => setLang('en')}
+              onClick={() => onToggleLang && onToggleLang('en')}
               className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
                 lang === 'en' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-200'
               }`}
