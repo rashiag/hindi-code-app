@@ -8,13 +8,12 @@ import {
 
 type LabSection = 'phonic_game' | 'tracing' | 'cvc';
 
-// --- BILINGUAL UI DICTIONARY ---
 const LAB_STRINGS = {
   hi: {
     bannerTitle: "नन्हे वैज्ञानिक प्रीस्कूल लैब (Preschool Lab)",
-    bannerSub: "ध्वनि पहचान (ब → b) • ✏️️ पेंसिल ट्रेसिंग • 📖 सचित्र CVC शब्दकोश",
+    bannerSub: "ध्वनि पहचान (ब → b) • ✏️ पेंसिल ट्रेसिंग • 📖 सचित्र CVC शब्दकोश",
     tabPhonic: "🔊 फोनिक साउंड गेम (10 राउंड)",
-    tabTracing: "✏️ पेंसिल ट्रेसिंग",
+    tabTracing: "✏️ अक्षर ट्रेसिंग (A–Z)",
     tabCvc: "📖 सचित्र CVC शब्दकोश",
     introTitle: "फोनिक साउंड गेम (10 प्रश्न)",
     introDesc: "केवल अक्षर की ध्वनि (जैसे 'ब') सुनाई देगी। ध्वनि को पहचानकर कीबोर्ड या स्क्रीन पर उसका छोटा अक्षर (b) दबाएं!",
@@ -31,24 +30,24 @@ const LAB_STRINGS = {
     reviewTitle: "जिन ध्वनियों का पुनः अभ्यास करना है:",
     playAgainBtn: "नया 10-प्रश्नों का गेम खेलें",
     tracingHint: "हरे बिंदु से शुरू करके डॉटेड लाइन पर चलाएं",
-    tracingSuccess: "शानदार! आपने पैटर्न बिल्कुल सही ट्रेस किया 🏆",
+    tracingSuccess: "शानदार! आपने अक्षर बिल्कुल सही ट्रेस किया 🏆",
     tracingFail: "थोड़ा भटक गए। 'मिटाएं' दबाकर पुनः प्रयास करें 🔄",
     clearBtn: "मिटाएं",
     resetBtn: "रीसेट",
-    nextPatternBtn: "अगला पैटर्न"
+    nextPatternBtn: "अगला अक्षर"
   },
   en: {
     bannerTitle: "Little Researcher Preschool Lab",
-    bannerSub: "Phonics Sounds (ब → b) • ✏️ Pencil Tracing • 📖 Illustrated CVC Words",
+    bannerSub: "Phonics Sounds (ब → b) • ✏️ Letter Tracing (A–Z) • 📖 Illustrated CVC Words",
     tabPhonic: "🔊 Phonics Sound Game (10 Rounds)",
-    tabTracing: "✏️ Pencil Tracing",
+    tabTracing: "✏️ Alphabet Tracing (A–Z)",
     tabCvc: "📖 Illustrated CVC Dictionary",
     introTitle: "Phonics Sound Challenge (10 Questions)",
     introDesc: "You will hear the pure phonics sound (like 'ब'). Listen carefully and press the matching lowercase English letter (b) on the keyboard!",
     startBtn: "Start 10-Question Challenge ➔",
     soundPromptLabel: "Press the English letter for this sound:",
     soundHint: "(Listen to the phonics sound and press the matching lowercase letter)",
-    keyboardTitle: "⌨️️ QWERTY Keyboard (Tap or press keys)",
+    keyboardTitle: "⌨️ QWERTY Keyboard (Tap or press keys)",
     questionCount: "Question",
     scoreLabel: "Score",
     completedTitle: "Challenge Complete!",
@@ -58,21 +57,19 @@ const LAB_STRINGS = {
     reviewTitle: "Sounds to practice again:",
     playAgainBtn: "Play 10-Question Game Again",
     tracingHint: "Start from the green dot and follow the dashed line",
-    tracingSuccess: "Fantastic! You traced the pattern accurately 🏆",
+    tracingSuccess: "Fantastic! You traced the letter accurately 🏆",
     tracingFail: "Slightly off track. Click 'Clear' and try once more 🔄",
     clearBtn: "Clear",
     resetBtn: "Reset",
-    nextPatternBtn: "Next Pattern"
+    nextPatternBtn: "Next Letter"
   }
 };
 
-// --- DATA: PHONIC SOUND CHALLENGE ---
-// Phonics pure sounds mapped to Devanagari representation for crisp pronunciation
 interface PhonicQuestion {
   char: string;
   lower: string;
   hindiSound: string;
-  spokenSound: string; // The exact acoustic phonetic sound spoken aloud
+  spokenSound: string;
   exampleWord: string;
 }
 
@@ -111,13 +108,13 @@ const QWERTY_ROWS = [
   ['z', 'x', 'c', 'v', 'b', 'n', 'm']
 ];
 
-// --- DATA: CVC FLASHCARDS WITH HIGH-CONTRAST VECTOR ART ---
 export interface CvcWordItem {
   id: string;
   word: string;
   vowel: 'A' | 'E' | 'I' | 'O' | 'U';
   hindiMeaning: string;
   phonics: string;
+  phonicSoundsHindi: string; // e.g. "क ... ऐ ... ट"
   article: 'a' | 'an';
   emoji: string;
   badgeBg: string;
@@ -125,66 +122,66 @@ export interface CvcWordItem {
 
 const CVC_DICTIONARY: CvcWordItem[] = [
   // --- VOWEL A ---
-  { id: 'cat', word: 'cat', vowel: 'A', hindiMeaning: 'बिल्ली', phonics: 'c - a - t', article: 'a', emoji: '🐱', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'bat', word: 'bat', vowel: 'A', hindiMeaning: 'बल्ला', phonics: 'b - a - t', article: 'a', emoji: '🏏', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
-  { id: 'hat', word: 'hat', vowel: 'A', hindiMeaning: 'टोपी', phonics: 'h - a - t', article: 'a', emoji: '👒', badgeBg: 'from-emerald-100 to-teal-100 border-emerald-300' },
-  { id: 'mat', word: 'mat', vowel: 'A', hindiMeaning: 'चटाई', phonics: 'm - a - t', article: 'a', emoji: '🧘', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
-  { id: 'fan', word: 'fan', vowel: 'A', hindiMeaning: 'पंखा', phonics: 'f - a - n', article: 'a', emoji: '🪭', badgeBg: 'from-sky-100 to-blue-100 border-sky-300' },
-  { id: 'pan', word: 'pan', vowel: 'A', hindiMeaning: 'कड़ाही / पैन', phonics: 'p - a - n', article: 'a', emoji: '🍳', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'van', word: 'van', vowel: 'A', hindiMeaning: 'वैन गाड़ी', phonics: 'v - a - n', article: 'a', emoji: '🚐', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
-  { id: 'cap', word: 'cap', vowel: 'A', hindiMeaning: 'कैप', phonics: 'c - a - p', article: 'a', emoji: '🧢', badgeBg: 'from-cyan-100 to-teal-100 border-cyan-300' },
-  { id: 'map', word: 'map', vowel: 'A', hindiMeaning: 'नक्शा', phonics: 'm - a - p', article: 'a', emoji: '🗺️', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
-  { id: 'bag', word: 'bag', vowel: 'A', hindiMeaning: 'बस्ता', phonics: 'b - a - g', article: 'a', emoji: '🎒', badgeBg: 'from-rose-100 to-pink-100 border-rose-300' },
+  { id: 'cat', word: 'cat', vowel: 'A', hindiMeaning: 'बिल्ली', phonics: 'c - a - t', phonicSoundsHindi: 'क ... ऐ ... ट', article: 'a', emoji: '🐱', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'bat', word: 'bat', vowel: 'A', hindiMeaning: 'बल्ला', phonics: 'b - a - t', phonicSoundsHindi: 'ब ... ऐ ... ट', article: 'a', emoji: '🏏', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
+  { id: 'hat', word: 'hat', vowel: 'A', hindiMeaning: 'टोपी', phonics: 'h - a - t', phonicSoundsHindi: 'ह ... ऐ ... ट', article: 'a', emoji: '👒', badgeBg: 'from-emerald-100 to-teal-100 border-emerald-300' },
+  { id: 'mat', word: 'mat', vowel: 'A', hindiMeaning: 'चटाई', phonics: 'm - a - t', phonicSoundsHindi: 'म ... ऐ ... ट', article: 'a', emoji: '🧘', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
+  { id: 'fan', word: 'fan', vowel: 'A', hindiMeaning: 'पंखा', phonics: 'f - a - n', phonicSoundsHindi: 'फ़ ... ऐ ... न', article: 'a', emoji: '🪭', badgeBg: 'from-sky-100 to-blue-100 border-sky-300' },
+  { id: 'pan', word: 'pan', vowel: 'A', hindiMeaning: 'कड़ाही / पैन', phonics: 'p - a - n', phonicSoundsHindi: 'प ... ऐ ... न', article: 'a', emoji: '🍳', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'van', word: 'van', vowel: 'A', hindiMeaning: 'वैन गाड़ी', phonics: 'v - a - n', phonicSoundsHindi: 'व ... ऐ ... न', article: 'a', emoji: '🚐', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'cap', word: 'cap', vowel: 'A', hindiMeaning: 'कैप', phonics: 'c - a - p', phonicSoundsHindi: 'क ... ऐ ... प', article: 'a', emoji: '🧢', badgeBg: 'from-cyan-100 to-teal-100 border-cyan-300' },
+  { id: 'map', word: 'map', vowel: 'A', hindiMeaning: 'नक्शा', phonics: 'm - a - p', phonicSoundsHindi: 'म ... ऐ ... प', article: 'a', emoji: '🗺️', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
+  { id: 'bag', word: 'bag', vowel: 'A', hindiMeaning: 'बस्ता', phonics: 'b - a - g', phonicSoundsHindi: 'ब ... ऐ ... ग', article: 'a', emoji: '🎒', badgeBg: 'from-rose-100 to-pink-100 border-rose-300' },
 
   // --- VOWEL E ---
-  { id: 'bed', word: 'bed', vowel: 'E', hindiMeaning: 'बिस्तर', phonics: 'b - e - d', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
-  { id: 'red', word: 'red', vowel: 'E', hindiMeaning: 'लाल रंग', phonics: 'r - e - d', article: 'a', emoji: '🔴', badgeBg: 'from-red-100 to-rose-100 border-red-300' },
-  { id: 'pen', word: 'pen', vowel: 'E', hindiMeaning: 'कलम', phonics: 'p - e - n', article: 'a', emoji: '🖊️', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
-  { id: 'hen', word: 'hen', vowel: 'E', hindiMeaning: 'मुर्गी', phonics: 'h - e - n', article: 'a', emoji: '🐔', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
-  { id: 'net', word: 'net', vowel: 'E', hindiMeaning: 'जाल', phonics: 'n - e - t', article: 'a', emoji: '🥅', badgeBg: 'from-teal-100 to-emerald-100 border-teal-300' },
-  { id: 'jet', word: 'jet', vowel: 'E', hindiMeaning: 'जेट विमान', phonics: 'j - e - t', article: 'a', emoji: '✈️', badgeBg: 'from-sky-100 to-indigo-100 border-sky-300' },
-  { id: 'leg', word: 'leg', vowel: 'E', hindiMeaning: 'टांग / पैर', phonics: 'l - e - g', article: 'a', emoji: '🦵', badgeBg: 'from-orange-100 to-amber-100 border-orange-300' },
-  { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
+  { id: 'bed', word: 'bed', vowel: 'E', hindiMeaning: 'बिस्तर', phonics: 'b - e - d', phonicSoundsHindi: 'ब ... ए ... ड', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'red', word: 'red', vowel: 'E', hindiMeaning: 'लाल रंग', phonics: 'r - e - d', phonicSoundsHindi: 'र ... ए ... ड', article: 'a', emoji: '🔴', badgeBg: 'from-red-100 to-rose-100 border-red-300' },
+  { id: 'pen', word: 'pen', vowel: 'E', hindiMeaning: 'कलम', phonics: 'p - e - n', phonicSoundsHindi: 'प ... ए ... न', article: 'a', emoji: '🖊️', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
+  { id: 'hen', word: 'hen', vowel: 'E', hindiMeaning: 'मुर्गी', phonics: 'h - e - n', phonicSoundsHindi: 'ह ... ए ... न', article: 'a', emoji: '🐔', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'net', word: 'net', vowel: 'E', hindiMeaning: 'जाल', phonics: 'n - e - t', phonicSoundsHindi: 'न ... ए ... ट', article: 'a', emoji: '🥅', badgeBg: 'from-teal-100 to-emerald-100 border-teal-300' },
+  { id: 'jet', word: 'jet', vowel: 'E', hindiMeaning: 'जेट विमान', phonics: 'j - e - t', phonicSoundsHindi: 'ज ... ए ... ट', article: 'a', emoji: '✈️', badgeBg: 'from-sky-100 to-indigo-100 border-sky-300' },
+  { id: 'leg', word: 'leg', vowel: 'E', hindiMeaning: 'टांग / पैर', phonics: 'l - e - g', phonicSoundsHindi: 'ल ... ए ... ग', article: 'a', emoji: '🦵', badgeBg: 'from-orange-100 to-amber-100 border-orange-300' },
+  { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', phonicSoundsHindi: 'व ... ए ... ब', article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
 
   // --- VOWEL I ---
-  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
-  { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
-  { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
-  { id: 'zip', word: 'zip', vowel: 'I', hindiMeaning: 'चेन / ज़िप', phonics: 'z - i - p', article: 'a', emoji: '🤐', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'pig', word: 'pig', vowel: 'I', hindiMeaning: 'सुअर', phonics: 'p - i - g', article: 'a', emoji: '🐷', badgeBg: 'from-pink-100 to-purple-100 border-pink-300' },
-  { id: 'wig', word: 'wig', vowel: 'I', hindiMeaning: 'नकली बाल', phonics: 'w - i - g', article: 'a', emoji: '💇', badgeBg: 'from-purple-100 to-indigo-100 border-purple-300' },
-  { id: 'lid', word: 'lid', vowel: 'I', hindiMeaning: 'ढक्कन', phonics: 'l - i - d', article: 'a', emoji: '🫙', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
-  { id: 'six', word: 'six', vowel: 'I', hindiMeaning: 'छह (६)', phonics: 's - i - x', article: 'a', emoji: '6️⃣', badgeBg: 'from-blue-100 to-sky-100 border-blue-300' },
+  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', phonicSoundsHindi: 'ब ... इ ... न', article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
+  { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', phonicSoundsHindi: 'प ... इ ... न', article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
+  { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', phonicSoundsHindi: 'ट ... इ ... न', article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', phonicSoundsHindi: 'ल ... इ ... प', article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
+  { id: 'zip', word: 'zip', vowel: 'I', hindiMeaning: 'चेन / ज़िप', phonics: 'z - i - p', phonicSoundsHindi: 'ज़ ... इ ... प', article: 'a', emoji: '🤐', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'pig', word: 'pig', vowel: 'I', hindiMeaning: 'सुअर', phonics: 'p - i - g', phonicSoundsHindi: 'प ... इ ... ग', article: 'a', emoji: '🐷', badgeBg: 'from-pink-100 to-purple-100 border-pink-300' },
+  { id: 'wig', word: 'wig', vowel: 'I', hindiMeaning: 'नकली बाल', phonics: 'w - i - g', phonicSoundsHindi: 'व ... इ ... ग', article: 'a', emoji: '💇', badgeBg: 'from-purple-100 to-indigo-100 border-purple-300' },
+  { id: 'lid', word: 'lid', vowel: 'I', hindiMeaning: 'ढक्कन', phonics: 'l - i - d', phonicSoundsHindi: 'ल ... इ ... ड', article: 'a', emoji: '🫙', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
+  { id: 'six', word: 'six', vowel: 'I', hindiMeaning: 'छह (६)', phonics: 's - i - x', phonicSoundsHindi: 'स ... इ ... क्स', article: 'a', emoji: '6️⃣', badgeBg: 'from-blue-100 to-sky-100 border-blue-300' },
 
   // --- VOWEL O ---
-  { id: 'dog', word: 'dog', vowel: 'O', hindiMeaning: 'कुत्ता', phonics: 'd - o - g', article: 'a', emoji: '🐶', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
-  { id: 'log', word: 'log', vowel: 'O', hindiMeaning: 'लकड़ी का लट्ठा', phonics: 'l - o - g', article: 'a', emoji: '🪵', badgeBg: 'from-amber-100 to-stone-100 border-amber-300' },
-  { id: 'pot', word: 'pot', vowel: 'O', hindiMeaning: 'गमला / बर्तन', phonics: 'p - o - t', article: 'a', emoji: '🪴', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
-  { id: 'cot', word: 'cot', vowel: 'O', hindiMeaning: 'खटिया / पालना', phonics: 'c - o - t', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
-  { id: 'box', word: 'box', vowel: 'O', hindiMeaning: 'डिब्बा', phonics: 'b - o - x', article: 'a', emoji: '📦', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'fox', word: 'fox', vowel: 'O', hindiMeaning: 'लोमड़ी', phonics: 'f - o - x', article: 'a', emoji: '🦊', badgeBg: 'from-orange-100 to-red-100 border-orange-300' },
-  { id: 'top', word: 'top', vowel: 'O', hindiMeaning: 'लट्टू', phonics: 't - o - p', article: 'a', emoji: '🪀', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
-  { id: 'mop', word: 'mop', vowel: 'O', hindiMeaning: 'पोछा', phonics: 'm - o - p', article: 'a', emoji: '🧹', badgeBg: 'from-cyan-100 to-blue-100 border-cyan-300' },
-  { id: 'toy', word: 'toy', vowel: 'O', hindiMeaning: 'खिलौना', phonics: 't - o - y', article: 'a', emoji: '🧸', badgeBg: 'from-rose-100 to-amber-100 border-rose-300' },
+  { id: 'dog', word: 'dog', vowel: 'O', hindiMeaning: 'कुत्ता', phonics: 'd - o - g', phonicSoundsHindi: 'ड ... ओ ... ग', article: 'a', emoji: '🐶', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'log', word: 'log', vowel: 'O', hindiMeaning: 'लकड़ी का लट्ठा', phonics: 'l - o - g', phonicSoundsHindi: 'ल ... ओ ... ग', article: 'a', emoji: '🪵', badgeBg: 'from-amber-100 to-stone-100 border-amber-300' },
+  { id: 'pot', word: 'pot', vowel: 'O', hindiMeaning: 'गमला / बर्तन', phonics: 'p - o - t', phonicSoundsHindi: 'प ... ओ ... ट', article: 'a', emoji: '🪴', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
+  { id: 'cot', word: 'cot', vowel: 'O', hindiMeaning: 'खटिया / पालना', phonics: 'c - o - t', phonicSoundsHindi: 'क ... ओ ... ट', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'box', word: 'box', vowel: 'O', hindiMeaning: 'डिब्बा', phonics: 'b - o - x', phonicSoundsHindi: 'ब ... ओ ... क्स', article: 'a', emoji: '📦', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'fox', word: 'fox', vowel: 'O', hindiMeaning: 'लोमड़ी', phonics: 'f - o - x', phonicSoundsHindi: 'फ़ ... ओ ... क्स', article: 'a', emoji: '🦊', badgeBg: 'from-orange-100 to-red-100 border-orange-300' },
+  { id: 'top', word: 'top', vowel: 'O', hindiMeaning: 'लट्टू', phonics: 't - o - p', phonicSoundsHindi: 'ट ... ओ ... प', article: 'a', emoji: '🪀', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
+  { id: 'mop', word: 'mop', vowel: 'O', hindiMeaning: 'पोछा', phonics: 'm - o - p', phonicSoundsHindi: 'म ... ओ ... प', article: 'a', emoji: '🧹', badgeBg: 'from-cyan-100 to-blue-100 border-cyan-300' },
+  { id: 'toy', word: 'toy', vowel: 'O', hindiMeaning: 'खिलौना', phonics: 't - o - y', phonicSoundsHindi: 'ट ... ओ ... य', article: 'a', emoji: '🧸', badgeBg: 'from-rose-100 to-amber-100 border-rose-300' },
 
   // --- VOWEL U ---
-  { id: 'sun', word: 'sun', vowel: 'U', hindiMeaning: 'सूरज', phonics: 's - u - n', article: 'a', emoji: '☀️', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'bun', word: 'bun', vowel: 'U', hindiMeaning: 'बन रोटी', phonics: 'b - u - n', article: 'a', emoji: '🍔', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'cup', word: 'cup', vowel: 'U', hindiMeaning: 'प्याला / कप', phonics: 'c - u - p', article: 'a', emoji: '☕', badgeBg: 'from-orange-100 to-yellow-100 border-orange-300' },
-  { id: 'pup', word: 'pup', vowel: 'U', hindiMeaning: 'कुत्ते का पिल्ला', phonics: 'p - u - p', article: 'a', emoji: '🐶', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'tub', word: 'tub', vowel: 'U', hindiMeaning: 'टब', phonics: 't - u - b', article: 'a', emoji: '🛁', badgeBg: 'from-sky-100 to-cyan-100 border-sky-300' },
-  { id: 'bus', word: 'bus', vowel: 'U', hindiMeaning: 'बस', phonics: 'b - u - s', article: 'a', emoji: '🚌', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
-  { id: 'hut', word: 'hut', vowel: 'U', hindiMeaning: 'झोपड़ी', phonics: 'h - u - t', article: 'a', emoji: '🛖', badgeBg: 'from-stone-100 to-amber-100 border-stone-300' },
-  { id: 'nut', word: 'nut', vowel: 'U', hindiMeaning: 'अखरोट / मूंगफली', phonics: 'n - u - t', article: 'a', emoji: '🥜', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'bug', word: 'bug', vowel: 'U', hindiMeaning: 'कीड़ा (लेडीबग)', phonics: 'b - u - g', article: 'a', emoji: '🐞', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
-  { id: 'jug', word: 'jug', vowel: 'U', hindiMeaning: 'जग', phonics: 'j - u - g', article: 'a', emoji: '🫖', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
-  { id: 'mug', word: 'mug', vowel: 'U', hindiMeaning: 'मग / प्याला', phonics: 'm - u - g', article: 'a', emoji: '☕', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' }
+  { id: 'sun', word: 'sun', vowel: 'U', hindiMeaning: 'सूरज', phonics: 's - u - n', phonicSoundsHindi: 'स ... अ ... न', article: 'a', emoji: '☀️', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'bun', word: 'bun', vowel: 'U', hindiMeaning: 'बन रोटी', phonics: 'b - u - n', phonicSoundsHindi: 'ब ... अ ... न', article: 'a', emoji: '🍔', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'cup', word: 'cup', vowel: 'U', hindiMeaning: 'प्याला / कप', phonics: 'c - u - p', phonicSoundsHindi: 'क ... अ ... प', article: 'a', emoji: '☕', badgeBg: 'from-orange-100 to-yellow-100 border-orange-300' },
+  { id: 'pup', word: 'pup', vowel: 'U', hindiMeaning: 'कुत्ते का पिल्ला', phonics: 'p - u - p', phonicSoundsHindi: 'प ... अ ... प', article: 'a', emoji: '🐶', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'tub', word: 'tub', vowel: 'U', hindiMeaning: 'टब', phonics: 't - u - b', phonicSoundsHindi: 'ट ... अ ... ब', article: 'a', emoji: '🛁', badgeBg: 'from-sky-100 to-cyan-100 border-sky-300' },
+  { id: 'bus', word: 'bus', vowel: 'U', hindiMeaning: 'बस', phonics: 'b - u - s', phonicSoundsHindi: 'ब ... अ ... स', article: 'a', emoji: '🚌', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'hut', word: 'hut', vowel: 'U', hindiMeaning: 'झोपड़ी', phonics: 'h - u - t', phonicSoundsHindi: 'ह ... अ ... ट', article: 'a', emoji: '🛖', badgeBg: 'from-stone-100 to-amber-100 border-stone-300' },
+  { id: 'nut', word: 'nut', vowel: 'U', hindiMeaning: 'अखरोट / मूंगफली', phonics: 'n - u - t', phonicSoundsHindi: 'न ... अ ... ट', article: 'a', emoji: '🥜', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'bug', word: 'bug', vowel: 'U', hindiMeaning: 'कीड़ा (लेडीबग)', phonics: 'b - u - g', phonicSoundsHindi: 'ब ... अ ... ग', article: 'a', emoji: '🐞', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
+  { id: 'jug', word: 'jug', vowel: 'U', hindiMeaning: 'जग', phonics: 'j - u - g', phonicSoundsHindi: 'ज ... अ ... ग', article: 'a', emoji: '🫖', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
+  { id: 'mug', word: 'mug', vowel: 'U', hindiMeaning: 'मग / प्याला', phonics: 'm - u - g', phonicSoundsHindi: 'म ... अ ... ग', article: 'a', emoji: '☕', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' }
 ];
 
 const VOWEL_OPTIONS: Array<'A' | 'E' | 'I' | 'O' | 'U'> = ['A', 'E', 'I', 'O', 'U'];
 
-// --- DATA: TRACING PATTERNS ---
+// --- COMPREHENSIVE 26-ALPHABET + 2-LINE TRACING DEFINITIONS ---
 interface PatternDefinition {
   id: string;
   name: string;
@@ -192,38 +189,35 @@ interface PatternDefinition {
   segments: Array<Array<[number, number]>>;
 }
 
-const PATTERNS: PatternDefinition[] = [
-  { id: 'standing-line', name: 'Standing Line', hindiName: 'सीधी खड़ी रेखा (|)', segments: [[[0.5, 0.15], [0.5, 0.85]]] },
-  { id: 'sleeping-line', name: 'Sleeping Line', hindiName: 'सीधी लेटी रेखा (—)', segments: [[[0.15, 0.5], [0.85, 0.5]]] },
-  { id: 'slanting-line', name: 'Slanting Line', hindiName: 'तिरछी रेखा (/)', segments: [[[0.2, 0.2], [0.8, 0.8]]] },
-  { id: 'zigzag', name: 'Zig-Zag Waves', hindiName: 'टेढ़ी-मेढ़ी लहरें (Zig-Zag)', segments: [[[0.15, 0.7], [0.35, 0.3], [0.5, 0.7], [0.65, 0.3], [0.85, 0.7]]] },
-  {
-    id: 'circle',
-    name: 'Circle',
-    hindiName: 'गोल चक्र (Circle)',
-    segments: [
-      Array.from({ length: 33 }, (_, i) => {
-        const theta = (i / 32) * Math.PI * 2;
-        return [0.5 + 0.35 * Math.cos(theta), 0.5 + 0.35 * Math.sin(theta)] as [number, number];
-      })
-    ]
-  },
-  {
-    id: 'letter-a',
-    name: 'Letter A',
-    hindiName: 'अक्षर A ट्रेसिंग',
-    segments: [[[0.5, 0.15], [0.2, 0.85]], [[0.5, 0.15], [0.8, 0.85]], [[0.32, 0.55], [0.68, 0.55]]]
-  },
-  {
-    id: 'letter-b',
-    name: 'Letter B',
-    hindiName: 'अक्षर B ट्रेसिंग',
-    segments: [
-      [[0.25, 0.15], [0.25, 0.85]],
-      [[0.25, 0.15], [0.55, 0.15], [0.68, 0.25], [0.68, 0.4], [0.55, 0.5], [0.25, 0.5]],
-      [[0.25, 0.5], [0.6, 0.5], [0.72, 0.62], [0.72, 0.75], [0.6, 0.85], [0.25, 0.85]]
-    ]
-  }
+const ALL_26_PATTERNS: PatternDefinition[] = [
+  { id: 'letter-a', name: 'Letter A', hindiName: 'अक्षर A', segments: [[[0.5, 0.15], [0.2, 0.85]], [[0.5, 0.15], [0.8, 0.85]], [[0.32, 0.55], [0.68, 0.55]]] },
+  { id: 'letter-b', name: 'Letter B', hindiName: 'अक्षर B', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.25, 0.15], [0.55, 0.15], [0.68, 0.25], [0.68, 0.4], [0.55, 0.5], [0.25, 0.5]], [[0.25, 0.5], [0.6, 0.5], [0.72, 0.62], [0.72, 0.75], [0.6, 0.85], [0.25, 0.85]]] },
+  { id: 'letter-c', name: 'Letter C', hindiName: 'अक्षर C', segments: [[[0.75, 0.25], [0.5, 0.15], [0.25, 0.35], [0.25, 0.65], [0.5, 0.85], [0.75, 0.75]]] },
+  { id: 'letter-d', name: 'Letter D', hindiName: 'अक्षर D', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.25, 0.15], [0.55, 0.15], [0.75, 0.35], [0.75, 0.65], [0.55, 0.85], [0.25, 0.85]]] },
+  { id: 'letter-e', name: 'Letter E', hindiName: 'अक्षर E', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.25, 0.15], [0.75, 0.15]], [[0.25, 0.5], [0.65, 0.5]], [[0.25, 0.85], [0.75, 0.85]]] },
+  { id: 'letter-f', name: 'Letter F', hindiName: 'अक्षर F', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.25, 0.15], [0.75, 0.15]], [[0.25, 0.5], [0.65, 0.5]]] },
+  { id: 'letter-g', name: 'Letter G', hindiName: 'अक्षर G', segments: [[[0.75, 0.25], [0.5, 0.15], [0.25, 0.35], [0.25, 0.65], [0.5, 0.85], [0.75, 0.85], [0.75, 0.5], [0.55, 0.5]]] },
+  { id: 'letter-h', name: 'Letter H', hindiName: 'अक्षर H', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.75, 0.15], [0.75, 0.85]], [[0.25, 0.5], [0.75, 0.5]]] },
+  { id: 'letter-i', name: 'Letter I', hindiName: 'अक्षर I', segments: [[[0.5, 0.15], [0.5, 0.85]], [[0.3, 0.15], [0.7, 0.15]], [[0.3, 0.85], [0.7, 0.85]]] },
+  { id: 'letter-j', name: 'Letter J', hindiName: 'अक्षर J', segments: [[[0.3, 0.15], [0.7, 0.15]], [[0.55, 0.15], [0.55, 0.7], [0.45, 0.85], [0.3, 0.8]]] },
+  { id: 'letter-k', name: 'Letter K', hindiName: 'अक्षर K', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.75, 0.15], [0.25, 0.5], [0.75, 0.85]]] },
+  { id: 'letter-l', name: 'Letter L', hindiName: 'अक्षर L', segments: [[[0.25, 0.15], [0.25, 0.85], [0.75, 0.85]]] },
+  { id: 'letter-m', name: 'Letter M', hindiName: 'अक्षर M', segments: [[[0.2, 0.85], [0.2, 0.15], [0.5, 0.55], [0.8, 0.15], [0.8, 0.85]]] },
+  { id: 'letter-n', name: 'Letter N', hindiName: 'अक्षर N', segments: [[[0.25, 0.85], [0.25, 0.15], [0.75, 0.85], [0.75, 0.15]]] },
+  { id: 'letter-o', name: 'Letter O', hindiName: 'अक्षर O', segments: [Array.from({ length: 33 }, (_, i) => { const theta = (i / 32) * Math.PI * 2; return [0.5 + 0.3 * Math.cos(theta), 0.5 + 0.35 * Math.sin(theta)] as [number, number]; })] },
+  { id: 'letter-p', name: 'Letter P', hindiName: 'अक्षर P', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.25, 0.15], [0.55, 0.15], [0.7, 0.28], [0.7, 0.42], [0.55, 0.55], [0.25, 0.55]]] },
+  { id: 'letter-q', name: 'Letter Q', hindiName: 'अक्षर Q', segments: [Array.from({ length: 33 }, (_, i) => { const theta = (i / 32) * Math.PI * 2; return [0.5 + 0.3 * Math.cos(theta), 0.48 + 0.33 * Math.sin(theta)] as [number, number]; }), [[0.55, 0.65], [0.75, 0.85]]] },
+  { id: 'letter-r', name: 'Letter R', hindiName: 'अक्षर R', segments: [[[0.25, 0.15], [0.25, 0.85]], [[0.25, 0.15], [0.55, 0.15], [0.7, 0.28], [0.7, 0.42], [0.55, 0.55], [0.25, 0.55]], [[0.45, 0.55], [0.75, 0.85]]] },
+  { id: 'letter-s', name: 'Letter S', hindiName: 'अक्षर S', segments: [[[0.75, 0.25], [0.5, 0.15], [0.3, 0.28], [0.4, 0.45], [0.65, 0.55], [0.7, 0.72], [0.5, 0.85], [0.25, 0.75]]] },
+  { id: 'letter-t', name: 'Letter T', hindiName: 'अक्षर T', segments: [[[0.2, 0.15], [0.8, 0.15]], [[0.5, 0.15], [0.5, 0.85]]] },
+  { id: 'letter-u', name: 'Letter U', hindiName: 'अक्षर U', segments: [[[0.25, 0.15], [0.25, 0.65], [0.4, 0.85], [0.6, 0.85], [0.75, 0.65], [0.75, 0.15]]] },
+  { id: 'letter-v', name: 'Letter V', hindiName: 'अक्षर V', segments: [[[0.2, 0.15], [0.5, 0.85], [0.8, 0.15]]] },
+  { id: 'letter-w', name: 'Letter W', hindiName: 'अक्षर W', segments: [[[0.15, 0.15], [0.3, 0.85], [0.5, 0.4], [0.7, 0.85], [0.85, 0.15]]] },
+  { id: 'letter-x', name: 'Letter X', hindiName: 'अक्षर X', segments: [[[0.2, 0.15], [0.8, 0.85]], [[0.8, 0.15], [0.2, 0.85]]] },
+  { id: 'letter-y', name: 'Letter Y', hindiName: 'अक्षर Y', segments: [[[0.2, 0.15], [0.5, 0.5]], [[0.8, 0.15], [0.5, 0.5]], [[0.5, 0.5], [0.5, 0.85]]] },
+  { id: 'letter-z', name: 'Letter Z', hindiName: 'अक्षर Z', segments: [[[0.2, 0.15], [0.8, 0.15], [0.2, 0.85], [0.8, 0.85]]] },
+  { id: 'line-standing', name: 'Standing Line', hindiName: 'सीधी खड़ी रेखा (|)', segments: [[[0.5, 0.15], [0.5, 0.85]]] },
+  { id: 'line-sleeping', name: 'Sleeping Line', hindiName: 'सीधी लेटी रेखा (—)', segments: [[[0.15, 0.5], [0.85, 0.5]]] }
 ];
 
 export default function EnglishAlphabetLab() {
@@ -260,14 +254,20 @@ export default function EnglishAlphabetLab() {
   const [cvcFeedback, setCvcFeedback] = useState<{ isCorrect: boolean; text: string } | null>(null);
   const [missedCvcWords, setMissedCvcWords] = useState<CvcWordItem[]>([]);
 
-  // Audio & Async Locks
   const audioCtxRef = useRef<AudioContext | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const isAudioLockedRef = useRef<boolean>(false);
 
   const t = LAB_STRINGS[currentLang];
 
-  // Sound Synth Generator
+  // IMMEDIATE SOUND CANCELLATION HELPER
+  const truncateAudio = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    isAudioLockedRef.current = false;
+  };
+
   const playSoundEffect = (type: 'correct' | 'wrong' | 'victory') => {
     if (typeof window === 'undefined') return;
     try {
@@ -320,7 +320,6 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  // Indian Speech Engine (Always speaks pure Hindi sounds with hi-IN engine for maximum acoustic accuracy)
   const speakVoice = (text: string, lang = 'hi-IN', rate = 0.82): Promise<void> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -329,7 +328,7 @@ export default function EnglishAlphabetLab() {
       }
       try {
         if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel(); // Clears previous queue before playing
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
@@ -359,16 +358,26 @@ export default function EnglishAlphabetLab() {
     });
   };
 
+  // PHONICS BLENDING SPEAKER: First sounds out phonetic pieces, then says the whole word
+  const speakCvcPhonicsBlend = async (item: CvcWordItem) => {
+    truncateAudio();
+    // 1. Speak acoustic sounds: "क ... ऐ ... ट"
+    await speakVoice(item.phonicSoundsHindi, 'hi-IN', 0.8);
+    await new Promise(r => setTimeout(r, 250));
+    // 2. Speak whole blended word in English
+    await speakVoice(`${item.word}!`, 'en-IN', 0.88);
+  };
+
   // --- 1. PHONIC SOUND GAME HANDLERS ---
-  // SPEAKS ONLY THE PURE HINDI SOUND (e.g., "ब" or "क"), NEVER ENGLISH ALPHABET NAME
   const calloutCurrentPhonic = async (item: PhonicQuestion) => {
     if (!item || !isMountedRef.current) return;
     setWrongPressKey(null);
-    // Speaks the pure acoustic sound in Hindi TTS: "ब ... ब"
+    truncateAudio();
     await speakVoice(`${item.spokenSound} ... ${item.spokenSound}`, 'hi-IN', 0.8);
   };
 
   const startPhonicGame = () => {
+    truncateAudio();
     const shuffled = [...PHONIC_BANK].sort(() => 0.5 - Math.random()).slice(0, 10);
     setGameQuestions(shuffled);
     setCurrentRoundIndex(0);
@@ -382,7 +391,7 @@ export default function EnglishAlphabetLab() {
 
     setTimeout(() => {
       calloutCurrentPhonic(shuffled[0]);
-    }, 250);
+    }, 200);
   };
 
   const currentPhonicItem = gameQuestions[currentRoundIndex];
@@ -404,10 +413,9 @@ export default function EnglishAlphabetLab() {
         type: 'correct',
         text: currentLang === 'hi' 
           ? `शाबाश! '${currentPhonicItem.hindiSound}' ध्वनि है अक्षर '${currentPhonicItem.lower}' की!`
-          : `Correct! The sound '${currentPhonicItem.hindiSound}' belongs to letter '${currentPhonicItem.lower}'!`
+          : `Correct! Sound '${currentPhonicItem.hindiSound}' is for letter '${currentPhonicItem.lower}'!`
       });
 
-      // Reinforce the link: "ब ... b"
       if (currentLang === 'hi') {
         await speakVoice(`शाबाश! ${currentPhonicItem.spokenSound} ... ${currentPhonicItem.lower}`, 'hi-IN', 0.86);
       } else {
@@ -422,7 +430,7 @@ export default function EnglishAlphabetLab() {
         type: 'wrong',
         text: currentLang === 'hi'
           ? `गलत! '${currentPhonicItem.hindiSound}' ध्वनि के लिए '${currentPhonicItem.lower}' दबाएं`
-          : `Oops! For '${currentPhonicItem.hindiSound}', press the letter '${currentPhonicItem.lower}'`
+          : `Oops! For '${currentPhonicItem.hindiSound}', press '${currentPhonicItem.lower}'`
       });
 
       await speakVoice(`नहीं! यह ध्वनि है ${currentPhonicItem.spokenSound}`, 'hi-IN', 0.85);
@@ -452,7 +460,6 @@ export default function EnglishAlphabetLab() {
     }
   };
 
-  // Keyboard capture for Phonic Game (lowercase matches)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat || section !== 'phonic_game' || !isPhonicPlaying || isPhonicFinished) return;
@@ -473,6 +480,7 @@ export default function EnglishAlphabetLab() {
   const currentCvcWord = filteredCvcWords[carouselIndex] || filteredCvcWords[0];
 
   const startCvcPlayGame = () => {
+    truncateAudio();
     const shuffled = [...CVC_DICTIONARY].sort(() => 0.5 - Math.random()).slice(0, 10);
     const questions = shuffled.map((target) => {
       const distractors = CVC_DICTIONARY
@@ -498,6 +506,7 @@ export default function EnglishAlphabetLab() {
   const handleCvcAnswer = async (selectedWord: string) => {
     if (isAudioLockedRef.current || isCvcQuizFinished) return;
     isAudioLockedRef.current = true;
+    truncateAudio();
 
     const currentQ = cvcQuizList[cvcQuizIndex];
     const isCorrect = selectedWord === currentQ.target.word;
@@ -507,21 +516,24 @@ export default function EnglishAlphabetLab() {
       setCvcQuizScore(prev => prev + 1);
       setCvcFeedback({
         isCorrect: true,
-        text: `Correct! This is ${currentQ.target.article} '${currentQ.target.word}'.`
+        text: `Correct! ${currentQ.target.phonicSoundsHindi} = ${currentQ.target.word}!`
       });
 
-      await speakVoice(`This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN', 0.88);
-      await new Promise(r => setTimeout(r, 400));
+      // Sounds out phonetics then the word
+      await speakVoice(currentQ.target.phonicSoundsHindi, 'hi-IN', 0.85);
+      await speakVoice(`${currentQ.target.word}!`, 'en-IN', 0.88);
+      await new Promise(r => setTimeout(r, 350));
     } else {
       playSoundEffect('wrong');
       setMissedCvcWords(prev => [...prev, currentQ.target]);
       setCvcFeedback({
         isCorrect: false,
-        text: `Try again! This is ${currentQ.target.article} '${currentQ.target.word}'.`
+        text: `Try again! ${currentQ.target.phonicSoundsHindi} = ${currentQ.target.word}`
       });
 
-      await speakVoice(`This is ${currentQ.target.article} ${currentQ.target.word}.`, 'en-IN', 0.88);
-      await new Promise(r => setTimeout(r, 400));
+      await speakVoice(currentQ.target.phonicSoundsHindi, 'hi-IN', 0.85);
+      await speakVoice(`${currentQ.target.word}`, 'en-IN', 0.88);
+      await new Promise(r => setTimeout(r, 350));
     }
 
     if (cvcQuizIndex + 1 >= 10) {
@@ -537,7 +549,7 @@ export default function EnglishAlphabetLab() {
   };
 
   // --- 3. TRACING LOGIC ---
-  const currentPattern = PATTERNS[patternIndex];
+  const currentPattern = ALL_26_PATTERNS[patternIndex];
 
   const drawGuide = useCallback(() => {
     const canvas = canvasRef.current;
@@ -673,7 +685,7 @@ export default function EnglishAlphabetLab() {
 
     const matchRatio = hitCount / checkpoints.length;
 
-    if (matchRatio >= 0.60) {
+    if (matchRatio >= 0.58) {
       playSoundEffect('correct');
       setTraceResult('success');
       setTraceScore((prev) => prev + 1);
@@ -687,9 +699,7 @@ export default function EnglishAlphabetLab() {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      truncateAudio();
     };
   }, []);
 
@@ -714,7 +724,7 @@ export default function EnglishAlphabetLab() {
           <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md gap-1">
             <button
               onClick={() => {
-                if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+                truncateAudio();
                 setCurrentLang('hi');
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
@@ -725,7 +735,7 @@ export default function EnglishAlphabetLab() {
             </button>
             <button
               onClick={() => {
-                if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+                truncateAudio();
                 setCurrentLang('en');
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
@@ -739,7 +749,10 @@ export default function EnglishAlphabetLab() {
           {/* 3 Main Functional Sections */}
           <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md gap-1 flex-wrap">
             <button
-              onClick={() => setSection('phonic_game')}
+              onClick={() => {
+                truncateAudio();
+                setSection('phonic_game');
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                 section === 'phonic_game' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
               }`}
@@ -747,7 +760,10 @@ export default function EnglishAlphabetLab() {
               <Key className="w-3.5 h-3.5" /> {t.tabPhonic}
             </button>
             <button
-              onClick={() => setSection('tracing')}
+              onClick={() => {
+                truncateAudio();
+                setSection('tracing');
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                 section === 'tracing' ? 'bg-white text-indigo-950 shadow-md' : 'text-white hover:bg-white/10'
               }`}
@@ -756,6 +772,7 @@ export default function EnglishAlphabetLab() {
             </button>
             <button
               onClick={() => {
+                truncateAudio();
                 setSection('cvc');
                 setCvcSubTab('menu');
               }}
@@ -924,20 +941,24 @@ export default function EnglishAlphabetLab() {
       )}
 
       {/* ============================================================== */}
-      {/* SECTION 2: DOTTED PATTERN TRACING                              */}
+      {/* SECTION 2: DOTTED ALPHABET & PATTERN TRACING (ALL 26 LETTERS)  */}
       {/* ============================================================== */}
       {section === 'tracing' && (
         <div className="bg-white border-2 border-teal-200 rounded-3xl p-4 md:p-5 shadow-xl flex flex-col items-center">
+          {/* Scrollable Letters Tray (A through Z) */}
           <div className="flex gap-1.5 overflow-x-auto w-full no-scrollbar pb-2 mb-3">
-            {PATTERNS.map((p, idx) => (
+            {ALL_26_PATTERNS.map((p, idx) => (
               <button
                 key={p.id}
-                onClick={() => setPatternIndex(idx)}
+                onClick={() => {
+                  truncateAudio();
+                  setPatternIndex(idx);
+                }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
                   patternIndex === idx ? 'bg-teal-600 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
-                {idx + 1}. {p.name}
+                {p.name}
               </button>
             ))}
           </div>
@@ -952,6 +973,7 @@ export default function EnglishAlphabetLab() {
               </span>
               <button
                 onClick={() => {
+                  truncateAudio();
                   userDrawnPointsRef.current = [];
                   setTraceResult(null);
                   drawGuide();
@@ -998,6 +1020,7 @@ export default function EnglishAlphabetLab() {
           <div className="w-full flex justify-between items-center mt-3 pt-2 border-t border-slate-200">
             <button
               onClick={() => {
+                truncateAudio();
                 userDrawnPointsRef.current = [];
                 setTraceResult(null);
                 drawGuide();
@@ -1008,7 +1031,8 @@ export default function EnglishAlphabetLab() {
             </button>
             <button
               onClick={() => {
-                if (patternIndex + 1 < PATTERNS.length) setPatternIndex(prev => prev + 1);
+                truncateAudio();
+                if (patternIndex + 1 < ALL_26_PATTERNS.length) setPatternIndex(prev => prev + 1);
                 else setPatternIndex(0);
               }}
               className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1"
@@ -1020,7 +1044,7 @@ export default function EnglishAlphabetLab() {
       )}
 
       {/* ============================================================== */}
-      {/* SECTION 3: CVC WORDS (100% RELIABLE FLASHCARDS & QUIZ)         */}
+      {/* SECTION 3: CVC WORDS (PHONIC SOUND BLENDING: क ... ऐ ... ट = CAT) */}
       {/* ============================================================== */}
       {section === 'cvc' && (
         <div className="space-y-4">
@@ -1037,8 +1061,8 @@ export default function EnglishAlphabetLab() {
                   </h3>
                   <p className="text-xs text-slate-600 mb-5 leading-relaxed">
                     {currentLang === 'hi' 
-                      ? 'स्वर (Vowel) चुनें: A, E, I, O, U। हर शब्द की स्पष्ट सचित्र पहचान, फोनिक्स स्पेलिंग व उच्चारण एक-एक करके देखें।' 
-                      : 'Choose a vowel: A, E, I, O, U. Explore crisp illustrated flashcards, phonics blending, and native word pronunciation.'}
+                      ? 'स्वर चुनें: A, E, I, O, U। हर शब्द की ध्वनियाँ (जैसे: क ... ऐ ... ट = cat) फोनिक्स ध्वनि से अलग-अलग सीखें!' 
+                      : 'Choose a vowel: A, E, I, O, U. Listen to each individual phonetic sound blend together to form 3-letter words!'}
                   </p>
                 </div>
 
@@ -1051,6 +1075,7 @@ export default function EnglishAlphabetLab() {
                       <button
                         key={v}
                         onClick={() => {
+                          truncateAudio();
                           setSelectedVowel(v);
                           setCarouselIndex(0);
                           setCvcSubTab('learn');
@@ -1064,6 +1089,7 @@ export default function EnglishAlphabetLab() {
 
                   <button
                     onClick={() => {
+                      truncateAudio();
                       setSelectedVowel('A');
                       setCarouselIndex(0);
                       setCvcSubTab('learn');
@@ -1085,15 +1111,15 @@ export default function EnglishAlphabetLab() {
                   </h3>
                   <p className="text-xs text-slate-600 mb-5 leading-relaxed">
                     {currentLang === 'hi'
-                      ? 'सभी स्वरों से 10 बिना दोहराव वाले सचित्र सवाल आएंगे। सही 3-अक्षर शब्द चुनें और 10 में से अपना स्कोर देखें!'
-                      : '10 unique illustrated questions selected randomly across all vowels. Pick the correct 3-letter word and check your accuracy score!'}
+                      ? '10 सचित्र सवाल आएंगे। चित्र और फोनिक्स ध्वनि से सही शब्द पहचानें!'
+                      : '10 unique illustrated questions. Listen to the phonics sound blend and pick the matching word!'}
                   </p>
                 </div>
 
                 <div className="w-full">
                   <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-4 text-left text-xs font-semibold text-indigo-900 space-y-1">
-                    <div>🏆 {currentLang === 'hi' ? 'सही उत्तर: विजय धुन + "This is a/an [word]"' : 'Correct: Victory audio chime + pronunciation'}</div>
-                    <div>🔔 {currentLang === 'hi' ? 'गलत उत्तर: कोमल बीप + सही उत्तर का ऑडियो उच्चारण' : 'Wrong: Soft cue + audio learning reinforcement'}</div>
+                    <div>🏆 {currentLang === 'hi' ? 'फोनिक्स जोड़: क ... ऐ ... ट = cat!' : 'Phonics Blend: c - a - t = cat!'}</div>
+                    <div>🔔 {currentLang === 'hi' ? 'गलत उत्तर पर सही फोनिक्स ब्लेंड का ऑडियो अभ्यास' : 'Immediate audio reinforcement on attempt'}</div>
                   </div>
 
                   <button
@@ -1112,7 +1138,10 @@ export default function EnglishAlphabetLab() {
             <div className="bg-white border-2 border-teal-200 rounded-3xl p-4 md:p-6 shadow-xl flex flex-col items-center">
               <div className="w-full flex justify-between items-center mb-4 flex-wrap gap-2">
                 <button
-                  onClick={() => setCvcSubTab('menu')}
+                  onClick={() => {
+                    truncateAudio();
+                    setCvcSubTab('menu');
+                  }}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'मुख्य मेन्यू (Menu)' : 'Main Menu'}
@@ -1123,6 +1152,7 @@ export default function EnglishAlphabetLab() {
                     <button
                       key={v}
                       onClick={() => {
+                        truncateAudio();
                         setSelectedVowel(v);
                         setCarouselIndex(0);
                       }}
@@ -1140,7 +1170,7 @@ export default function EnglishAlphabetLab() {
                 </span>
               </div>
 
-              {/* High-Contrast Vector Flashcard */}
+              {/* High-Contrast Flashcard with Phonic Blend Speaker */}
               <div className="w-full max-w-md bg-stone-50 border-2 border-teal-300 rounded-3xl p-4 text-center shadow-inner flex flex-col items-center mb-5">
                 
                 <div className={`w-full h-56 md:h-64 rounded-2xl mb-3 border-2 shadow-sm bg-gradient-to-br ${currentCvcWord.badgeBg} flex flex-col items-center justify-center relative overflow-hidden`}>
@@ -1152,46 +1182,54 @@ export default function EnglishAlphabetLab() {
                   </span>
                 </div>
 
+                {/* Big word + Speaker Button for Phonics Sound Out */}
                 <div className="flex items-center justify-center gap-3 my-1">
                   <span className="text-5xl md:text-6xl font-black text-teal-950 font-mono tracking-wider">
                     {currentCvcWord.word}
                   </span>
                   <button
-                    onClick={() => speakVoice(`This is ${currentCvcWord.article} ${currentCvcWord.word}. ${currentCvcWord.phonics}.`, 'en-IN')}
+                    onClick={() => speakCvcPhonicsBlend(currentCvcWord)}
                     className="p-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full transition cursor-pointer shadow-md"
-                    title="Audio"
+                    title="फोनिक्स ब्लेंड सुनें"
                   >
-                    <Volume2 className="w-5 h-5 animate-pulse" />
+                    <Volume2 className="w-6 h-6 animate-pulse" />
                   </button>
                 </div>
 
+                {/* Phonics Acoustic Breakup & Meaning */}
                 <div className="flex flex-wrap justify-center gap-2 mt-2">
-                  <span className="text-xs font-extrabold text-teal-800 bg-teal-100 px-3 py-0.5 rounded-full">
-                    {currentLang === 'hi' ? `फोनिक्स: ${currentCvcWord.phonics}` : `Phonics: ${currentCvcWord.phonics}`}
+                  <span className="text-xs font-extrabold text-teal-900 bg-teal-100 px-3 py-1 rounded-full border border-teal-300">
+                    ध्वनि: <strong>{currentCvcWord.phonicSoundsHindi}</strong>
                   </span>
-                  <span className="text-xs font-extrabold text-slate-800 bg-amber-100 px-3 py-0.5 rounded-full">
-                    {currentLang === 'hi' ? `अर्थ: ${currentCvcWord.hindiMeaning}` : `Meaning: ${currentCvcWord.hindiMeaning}`}
+                  <span className="text-xs font-extrabold text-slate-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+                    अर्थ: {currentCvcWord.hindiMeaning}
                   </span>
                 </div>
               </div>
 
               <div className="w-full max-w-md flex justify-between items-center gap-3">
                 <button
-                  onClick={() => setCarouselIndex(prev => (prev > 0 ? prev - 1 : filteredCvcWords.length - 1))}
+                  onClick={() => {
+                    truncateAudio();
+                    setCarouselIndex(prev => (prev > 0 ? prev - 1 : filteredCvcWords.length - 1));
+                  }}
                   className="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'पिछला शब्द' : 'Previous'}
                 </button>
 
                 <button
-                  onClick={() => speakVoice(`This is ${currentCvcWord.article} ${currentCvcWord.word}`, 'en-IN')}
+                  onClick={() => speakCvcPhonicsBlend(currentCvcWord)}
                   className="py-2.5 px-4 bg-teal-100 hover:bg-teal-200 text-teal-900 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1"
                 >
-                  <Volume2 className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'दोहराएं' : 'Repeat'}
+                  <Volume2 className="w-3.5 h-3.5" /> {currentLang === 'hi' ? 'फोनिक्स बोलें' : 'Sound Out'}
                 </button>
 
                 <button
-                  onClick={() => setCarouselIndex(prev => (prev < filteredCvcWords.length - 1 ? prev + 1 : 0))}
+                  onClick={() => {
+                    truncateAudio();
+                    setCarouselIndex(prev => (prev < filteredCvcWords.length - 1 ? prev + 1 : 0));
+                  }}
                   className="flex-1 py-2.5 px-3 bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs rounded-xl shadow transition cursor-pointer flex items-center justify-center gap-1"
                 >
                   {currentLang === 'hi' ? 'अगला शब्द' : 'Next'} <ArrowRight className="w-3.5 h-3.5" />
@@ -1205,7 +1243,10 @@ export default function EnglishAlphabetLab() {
             <div className="bg-white border-2 border-indigo-200 rounded-3xl p-4 md:p-6 shadow-xl flex flex-col items-center">
               <div className="w-full flex justify-between items-center mb-4 bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-2xl">
                 <button
-                  onClick={() => setCvcSubTab('menu')}
+                  onClick={() => {
+                    truncateAudio();
+                    setCvcSubTab('menu');
+                  }}
                   className="text-xs font-bold text-indigo-700 hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <ArrowLeft className="w-3 h-3" /> {currentLang === 'hi' ? 'मेन्यू' : 'Menu'}
@@ -1231,7 +1272,7 @@ export default function EnglishAlphabetLab() {
                   {currentLang === 'hi' ? 'चित्र देखकर सही 3-अक्षर शब्द (CVC) चुनें:' : 'Identify the image and select the correct 3-letter CVC word:'}
                 </span>
                 <span className="text-[11px] text-slate-500 font-semibold">
-                  ({currentLang === 'hi' ? 'संकेत' : 'Hint'}: {cvcQuizList[cvcQuizIndex].target.hindiMeaning})
+                  ({currentLang === 'hi' ? 'ध्वनि' : 'Phonics'}: <strong>{cvcQuizList[cvcQuizIndex].target.phonicSoundsHindi}</strong>)
                 </span>
               </div>
 
@@ -1312,7 +1353,10 @@ export default function EnglishAlphabetLab() {
                   <RotateCcw className="w-4 h-4" /> {currentLang === 'hi' ? 'पुनः नया गेम खेलें' : 'Play Again'}
                 </button>
                 <button
-                  onClick={() => setCvcSubTab('menu')}
+                  onClick={() => {
+                    truncateAudio();
+                    setCvcSubTab('menu');
+                  }}
                   className="py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
                 >
                   <Home className="w-4 h-4" /> {currentLang === 'hi' ? 'मुख्य मेन्यू' : 'Main Menu'}
