@@ -114,7 +114,7 @@ export interface CvcWordItem {
   vowel: 'A' | 'E' | 'I' | 'O' | 'U';
   hindiMeaning: string;
   phonics: string;
-  phonicSoundsHindi: string; // e.g. "क ... ऐ ... ट"
+  sounds: string[]; // Explicit array of the 3 sounds to play sequentially
   article: 'a' | 'an';
   emoji: string;
   badgeBg: string;
@@ -122,66 +122,65 @@ export interface CvcWordItem {
 
 const CVC_DICTIONARY: CvcWordItem[] = [
   // --- VOWEL A ---
-  { id: 'cat', word: 'cat', vowel: 'A', hindiMeaning: 'बिल्ली', phonics: 'c - a - t', phonicSoundsHindi: 'क ... ऐ ... ट', article: 'a', emoji: '🐱', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'bat', word: 'bat', vowel: 'A', hindiMeaning: 'बल्ला', phonics: 'b - a - t', phonicSoundsHindi: 'ब ... ऐ ... ट', article: 'a', emoji: '🏏', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
-  { id: 'hat', word: 'hat', vowel: 'A', hindiMeaning: 'टोपी', phonics: 'h - a - t', phonicSoundsHindi: 'ह ... ऐ ... ट', article: 'a', emoji: '👒', badgeBg: 'from-emerald-100 to-teal-100 border-emerald-300' },
-  { id: 'mat', word: 'mat', vowel: 'A', hindiMeaning: 'चटाई', phonics: 'm - a - t', phonicSoundsHindi: 'म ... ऐ ... ट', article: 'a', emoji: '🧘', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
-  { id: 'fan', word: 'fan', vowel: 'A', hindiMeaning: 'पंखा', phonics: 'f - a - n', phonicSoundsHindi: 'फ़ ... ऐ ... न', article: 'a', emoji: '🪭', badgeBg: 'from-sky-100 to-blue-100 border-sky-300' },
-  { id: 'pan', word: 'pan', vowel: 'A', hindiMeaning: 'कड़ाही / पैन', phonics: 'p - a - n', phonicSoundsHindi: 'प ... ऐ ... न', article: 'a', emoji: '🍳', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'van', word: 'van', vowel: 'A', hindiMeaning: 'वैन गाड़ी', phonics: 'v - a - n', phonicSoundsHindi: 'व ... ऐ ... न', article: 'a', emoji: '🚐', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
-  { id: 'cap', word: 'cap', vowel: 'A', hindiMeaning: 'कैप', phonics: 'c - a - p', phonicSoundsHindi: 'क ... ऐ ... प', article: 'a', emoji: '🧢', badgeBg: 'from-cyan-100 to-teal-100 border-cyan-300' },
-  { id: 'map', word: 'map', vowel: 'A', hindiMeaning: 'नक्शा', phonics: 'm - a - p', phonicSoundsHindi: 'म ... ऐ ... प', article: 'a', emoji: '🗺️', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
-  { id: 'bag', word: 'bag', vowel: 'A', hindiMeaning: 'बस्ता', phonics: 'b - a - g', phonicSoundsHindi: 'ब ... ऐ ... ग', article: 'a', emoji: '🎒', badgeBg: 'from-rose-100 to-pink-100 border-rose-300' },
+  { id: 'cat', word: 'cat', vowel: 'A', hindiMeaning: 'बिल्ली', phonics: 'c - a - t', sounds: ['क', 'ऐ', 'ट'], article: 'a', emoji: '🐱', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'bat', word: 'bat', vowel: 'A', hindiMeaning: 'बल्ला', phonics: 'b - a - t', sounds: ['ब', 'ऐ', 'ट'], article: 'a', emoji: '🏏', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
+  { id: 'hat', word: 'hat', vowel: 'A', hindiMeaning: 'टोपी', phonics: 'h - a - t', sounds: ['ह', 'ऐ', 'ट'], article: 'a', emoji: '👒', badgeBg: 'from-emerald-100 to-teal-100 border-emerald-300' },
+  { id: 'mat', word: 'mat', vowel: 'A', hindiMeaning: 'चटाई', phonics: 'm - a - t', sounds: ['म', 'ऐ', 'ट'], article: 'a', emoji: '🧘', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
+  { id: 'fan', word: 'fan', vowel: 'A', hindiMeaning: 'पंखा', phonics: 'f - a - n', sounds: ['फ़', 'ऐ', 'न'], article: 'a', emoji: '🪭', badgeBg: 'from-sky-100 to-blue-100 border-sky-300' },
+  { id: 'pan', word: 'pan', vowel: 'A', hindiMeaning: 'कड़ाही / पैन', phonics: 'p - a - n', sounds: ['प', 'ऐ', 'न'], article: 'a', emoji: '🍳', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'van', word: 'van', vowel: 'A', hindiMeaning: 'वैन गाड़ी', phonics: 'v - a - n', sounds: ['व', 'ऐ', 'न'], article: 'a', emoji: '🚐', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'cap', word: 'cap', vowel: 'A', hindiMeaning: 'कैप', phonics: 'c - a - p', sounds: ['क', 'ऐ', 'प'], article: 'a', emoji: '🧢', badgeBg: 'from-cyan-100 to-teal-100 border-cyan-300' },
+  { id: 'map', word: 'map', vowel: 'A', hindiMeaning: 'नक्शा', phonics: 'm - a - p', sounds: ['म', 'ऐ', 'प'], article: 'a', emoji: '🗺️', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
+  { id: 'bag', word: 'bag', vowel: 'A', hindiMeaning: 'बस्ता', phonics: 'b - a - g', sounds: ['ब', 'ऐ', 'ग'], article: 'a', emoji: '🎒', badgeBg: 'from-rose-100 to-pink-100 border-rose-300' },
 
   // --- VOWEL E ---
-  { id: 'bed', word: 'bed', vowel: 'E', hindiMeaning: 'बिस्तर', phonics: 'b - e - d', phonicSoundsHindi: 'ब ... ए ... ड', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
-  { id: 'red', word: 'red', vowel: 'E', hindiMeaning: 'लाल रंग', phonics: 'r - e - d', phonicSoundsHindi: 'र ... ए ... ड', article: 'a', emoji: '🔴', badgeBg: 'from-red-100 to-rose-100 border-red-300' },
-  { id: 'pen', word: 'pen', vowel: 'E', hindiMeaning: 'कलम', phonics: 'p - e - n', phonicSoundsHindi: 'प ... ए ... न', article: 'a', emoji: '🖊️', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
-  { id: 'hen', word: 'hen', vowel: 'E', hindiMeaning: 'मुर्गी', phonics: 'h - e - n', phonicSoundsHindi: 'ह ... ए ... न', article: 'a', emoji: '🐔', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
-  { id: 'net', word: 'net', vowel: 'E', hindiMeaning: 'जाल', phonics: 'n - e - t', phonicSoundsHindi: 'न ... ए ... ट', article: 'a', emoji: '🥅', badgeBg: 'from-teal-100 to-emerald-100 border-teal-300' },
-  { id: 'jet', word: 'jet', vowel: 'E', hindiMeaning: 'जेट विमान', phonics: 'j - e - t', phonicSoundsHindi: 'ज ... ए ... ट', article: 'a', emoji: '✈️', badgeBg: 'from-sky-100 to-indigo-100 border-sky-300' },
-  { id: 'leg', word: 'leg', vowel: 'E', hindiMeaning: 'टांग / पैर', phonics: 'l - e - g', phonicSoundsHindi: 'ल ... ए ... ग', article: 'a', emoji: '🦵', badgeBg: 'from-orange-100 to-amber-100 border-orange-300' },
-  { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', phonicSoundsHindi: 'व ... ए ... ब', article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
+  { id: 'bed', word: 'bed', vowel: 'E', hindiMeaning: 'बिस्तर', phonics: 'b - e - d', sounds: ['ब', 'ए', 'ड'], article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'red', word: 'red', vowel: 'E', hindiMeaning: 'लाल रंग', phonics: 'r - e - d', sounds: ['र', 'ए', 'ड'], article: 'a', emoji: '🔴', badgeBg: 'from-red-100 to-rose-100 border-red-300' },
+  { id: 'pen', word: 'pen', vowel: 'E', hindiMeaning: 'कलम', phonics: 'p - e - n', sounds: ['प', 'ए', 'न'], article: 'a', emoji: '🖊️', badgeBg: 'from-blue-100 to-cyan-100 border-blue-300' },
+  { id: 'hen', word: 'hen', vowel: 'E', hindiMeaning: 'मुर्गी', phonics: 'h - e - n', sounds: ['ह', 'ए', 'न'], article: 'a', emoji: '🐔', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'net', word: 'net', vowel: 'E', hindiMeaning: 'जाल', phonics: 'n - e - t', sounds: ['न', 'ए', 'ट'], article: 'a', emoji: '🥅', badgeBg: 'from-teal-100 to-emerald-100 border-teal-300' },
+  { id: 'jet', word: 'jet', vowel: 'E', hindiMeaning: 'जेट विमान', phonics: 'j - e - t', sounds: ['ज', 'ए', 'ट'], article: 'a', emoji: '✈️', badgeBg: 'from-sky-100 to-indigo-100 border-sky-300' },
+  { id: 'leg', word: 'leg', vowel: 'E', hindiMeaning: 'टांग / पैर', phonics: 'l - e - g', sounds: ['ल', 'ए', 'ग'], article: 'a', emoji: '🦵', badgeBg: 'from-orange-100 to-amber-100 border-orange-300' },
+  { id: 'web', word: 'web', vowel: 'E', hindiMeaning: 'मकड़ी का जाला', phonics: 'w - e - b', sounds: ['व', 'ए', 'ब'], article: 'a', emoji: '🕸️', badgeBg: 'from-slate-100 to-zinc-100 border-slate-300' },
 
   // --- VOWEL I ---
-  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', phonicSoundsHindi: 'ब ... इ ... न', article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
-  { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', phonicSoundsHindi: 'प ... इ ... न', article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
-  { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', phonicSoundsHindi: 'ट ... इ ... न', article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', phonicSoundsHindi: 'ल ... इ ... प', article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
-  { id: 'zip', word: 'zip', vowel: 'I', hindiMeaning: 'चेन / ज़िप', phonics: 'z - i - p', phonicSoundsHindi: 'ज़ ... इ ... प', article: 'a', emoji: '🤐', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'pig', word: 'pig', vowel: 'I', hindiMeaning: 'सुअर', phonics: 'p - i - g', phonicSoundsHindi: 'प ... इ ... ग', article: 'a', emoji: '🐷', badgeBg: 'from-pink-100 to-purple-100 border-pink-300' },
-  { id: 'wig', word: 'wig', vowel: 'I', hindiMeaning: 'नकली बाल', phonics: 'w - i - g', phonicSoundsHindi: 'व ... इ ... ग', article: 'a', emoji: '💇', badgeBg: 'from-purple-100 to-indigo-100 border-purple-300' },
-  { id: 'lid', word: 'lid', vowel: 'I', hindiMeaning: 'ढक्कन', phonics: 'l - i - d', phonicSoundsHindi: 'ल ... इ ... ड', article: 'a', emoji: '🫙', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
-  { id: 'six', word: 'six', vowel: 'I', hindiMeaning: 'छह (६)', phonics: 's - i - x', phonicSoundsHindi: 'स ... इ ... क्स', article: 'a', emoji: '6️⃣', badgeBg: 'from-blue-100 to-sky-100 border-blue-300' },
+  { id: 'bin', word: 'bin', vowel: 'I', hindiMeaning: 'कूड़ेदान', phonics: 'b - i - n', sounds: ['ब', 'इ', 'न'], article: 'a', emoji: '🗑️', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' },
+  { id: 'pin', word: 'pin', vowel: 'I', hindiMeaning: 'पिन', phonics: 'p - i - n', sounds: ['प', 'इ', 'न'], article: 'a', emoji: '📍', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
+  { id: 'tin', word: 'tin', vowel: 'I', hindiMeaning: 'टिन का डिब्बा', phonics: 't - i - n', sounds: ['ट', 'इ', 'न'], article: 'a', emoji: '🥫', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'lip', word: 'lip', vowel: 'I', hindiMeaning: 'होंठ', phonics: 'l - i - p', sounds: ['ल', 'इ', 'प'], article: 'a', emoji: '👄', badgeBg: 'from-pink-100 to-rose-100 border-pink-300' },
+  { id: 'zip', word: 'zip', vowel: 'I', hindiMeaning: 'चेन / ज़िप', phonics: 'z - i - p', sounds: ['ज़', 'इ', 'प'], article: 'a', emoji: '🤐', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'pig', word: 'pig', vowel: 'I', hindiMeaning: 'सुअर', phonics: 'p - i - g', sounds: ['प', 'इ', 'ग'], article: 'a', emoji: '🐷', badgeBg: 'from-pink-100 to-purple-100 border-pink-300' },
+  { id: 'wig', word: 'wig', vowel: 'I', hindiMeaning: 'नकली बाल', phonics: 'w - i - g', sounds: ['व', 'इ', 'ग'], article: 'a', emoji: '💇', badgeBg: 'from-purple-100 to-indigo-100 border-purple-300' },
+  { id: 'lid', word: 'lid', vowel: 'I', hindiMeaning: 'ढक्कन', phonics: 'l - i - d', sounds: ['ल', 'इ', 'ड'], article: 'a', emoji: '🫙', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
+  { id: 'six', word: 'six', vowel: 'I', hindiMeaning: 'छह (६)', phonics: 's - i - x', sounds: ['स', 'इ', 'क्स'], article: 'a', emoji: '6️⃣', badgeBg: 'from-blue-100 to-sky-100 border-blue-300' },
 
   // --- VOWEL O ---
-  { id: 'dog', word: 'dog', vowel: 'O', hindiMeaning: 'कुत्ता', phonics: 'd - o - g', phonicSoundsHindi: 'ड ... ओ ... ग', article: 'a', emoji: '🐶', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
-  { id: 'log', word: 'log', vowel: 'O', hindiMeaning: 'लकड़ी का लट्ठा', phonics: 'l - o - g', phonicSoundsHindi: 'ल ... ओ ... ग', article: 'a', emoji: '🪵', badgeBg: 'from-amber-100 to-stone-100 border-amber-300' },
-  { id: 'pot', word: 'pot', vowel: 'O', hindiMeaning: 'गमला / बर्तन', phonics: 'p - o - t', phonicSoundsHindi: 'प ... ओ ... ट', article: 'a', emoji: '🪴', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
-  { id: 'cot', word: 'cot', vowel: 'O', hindiMeaning: 'खटिया / पालना', phonics: 'c - o - t', phonicSoundsHindi: 'क ... ओ ... ट', article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
-  { id: 'box', word: 'box', vowel: 'O', hindiMeaning: 'डिब्बा', phonics: 'b - o - x', phonicSoundsHindi: 'ब ... ओ ... क्स', article: 'a', emoji: '📦', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'fox', word: 'fox', vowel: 'O', hindiMeaning: 'लोमड़ी', phonics: 'f - o - x', phonicSoundsHindi: 'फ़ ... ओ ... क्स', article: 'a', emoji: '🦊', badgeBg: 'from-orange-100 to-red-100 border-orange-300' },
-  { id: 'top', word: 'top', vowel: 'O', hindiMeaning: 'लट्टू', phonics: 't - o - p', phonicSoundsHindi: 'ट ... ओ ... प', article: 'a', emoji: '🪀', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
-  { id: 'mop', word: 'mop', vowel: 'O', hindiMeaning: 'पोछा', phonics: 'm - o - p', phonicSoundsHindi: 'म ... ओ ... प', article: 'a', emoji: '🧹', badgeBg: 'from-cyan-100 to-blue-100 border-cyan-300' },
-  { id: 'toy', word: 'toy', vowel: 'O', hindiMeaning: 'खिलौना', phonics: 't - o - y', phonicSoundsHindi: 'ट ... ओ ... य', article: 'a', emoji: '🧸', badgeBg: 'from-rose-100 to-amber-100 border-rose-300' },
+  { id: 'dog', word: 'dog', vowel: 'O', hindiMeaning: 'कुत्ता', phonics: 'd - o - g', sounds: ['ड', 'ओ', 'ग'], article: 'a', emoji: '🐶', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'log', word: 'log', vowel: 'O', hindiMeaning: 'लकड़ी का लट्ठा', phonics: 'l - o - g', sounds: ['ल', 'ओ', 'ग'], article: 'a', emoji: '🪵', badgeBg: 'from-amber-100 to-stone-100 border-amber-300' },
+  { id: 'pot', word: 'pot', vowel: 'O', hindiMeaning: 'गमला / बर्तन', phonics: 'p - o - t', sounds: ['प', 'ओ', 'ट'], article: 'a', emoji: '🪴', badgeBg: 'from-emerald-100 to-green-100 border-emerald-300' },
+  { id: 'cot', word: 'cot', vowel: 'O', hindiMeaning: 'खटिया / पालना', phonics: 'c - o - t', sounds: ['क', 'ओ', 'ट'], article: 'a', emoji: '🛏️', badgeBg: 'from-indigo-100 to-blue-100 border-indigo-300' },
+  { id: 'box', word: 'box', vowel: 'O', hindiMeaning: 'डिब्बा', phonics: 'b - o - x', sounds: ['ब', 'ओ', 'क्स'], article: 'a', emoji: '📦', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'fox', word: 'fox', vowel: 'O', hindiMeaning: 'लोमड़ी', phonics: 'f - o - x', sounds: ['फ़', 'ओ', 'क्स'], article: 'a', emoji: '🦊', badgeBg: 'from-orange-100 to-red-100 border-orange-300' },
+  { id: 'top', word: 'top', vowel: 'O', hindiMeaning: 'लट्टू', phonics: 't - o - p', sounds: ['ट', 'ओ', 'प'], article: 'a', emoji: '🪀', badgeBg: 'from-purple-100 to-pink-100 border-purple-300' },
+  { id: 'mop', word: 'mop', vowel: 'O', hindiMeaning: 'पोछा', phonics: 'm - o - p', sounds: ['म', 'ओ', 'प'], article: 'a', emoji: '🧹', badgeBg: 'from-cyan-100 to-blue-100 border-cyan-300' },
+  { id: 'toy', word: 'toy', vowel: 'O', hindiMeaning: 'खिलौना', phonics: 't - o - y', sounds: ['ट', 'ओ', 'य'], article: 'a', emoji: '🧸', badgeBg: 'from-rose-100 to-amber-100 border-rose-300' },
 
   // --- VOWEL U ---
-  { id: 'sun', word: 'sun', vowel: 'U', hindiMeaning: 'सूरज', phonics: 's - u - n', phonicSoundsHindi: 'स ... अ ... न', article: 'a', emoji: '☀️', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'bun', word: 'bun', vowel: 'U', hindiMeaning: 'बन रोटी', phonics: 'b - u - n', phonicSoundsHindi: 'ब ... अ ... न', article: 'a', emoji: '🍔', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'cup', word: 'cup', vowel: 'U', hindiMeaning: 'प्याला / कप', phonics: 'c - u - p', phonicSoundsHindi: 'क ... अ ... प', article: 'a', emoji: '☕', badgeBg: 'from-orange-100 to-yellow-100 border-orange-300' },
-  { id: 'pup', word: 'pup', vowel: 'U', hindiMeaning: 'कुत्ते का पिल्ला', phonics: 'p - u - p', phonicSoundsHindi: 'प ... अ ... प', article: 'a', emoji: '🐶', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
-  { id: 'tub', word: 'tub', vowel: 'U', hindiMeaning: 'टब', phonics: 't - u - b', phonicSoundsHindi: 'ट ... अ ... ब', article: 'a', emoji: '🛁', badgeBg: 'from-sky-100 to-cyan-100 border-sky-300' },
-  { id: 'bus', word: 'bus', vowel: 'U', hindiMeaning: 'बस', phonics: 'b - u - s', phonicSoundsHindi: 'ब ... अ ... स', article: 'a', emoji: '🚌', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
-  { id: 'hut', word: 'hut', vowel: 'U', hindiMeaning: 'झोपड़ी', phonics: 'h - u - t', phonicSoundsHindi: 'ह ... अ ... ट', article: 'a', emoji: '🛖', badgeBg: 'from-stone-100 to-amber-100 border-stone-300' },
-  { id: 'nut', word: 'nut', vowel: 'U', hindiMeaning: 'अखरोट / मूंगफली', phonics: 'n - u - t', phonicSoundsHindi: 'न ... अ ... ट', article: 'a', emoji: '🥜', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
-  { id: 'bug', word: 'bug', vowel: 'U', hindiMeaning: 'कीड़ा (लेडीबग)', phonics: 'b - u - g', phonicSoundsHindi: 'ब ... अ ... ग', article: 'a', emoji: '🐞', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
-  { id: 'jug', word: 'jug', vowel: 'U', hindiMeaning: 'जग', phonics: 'j - u - g', phonicSoundsHindi: 'ज ... अ ... ग', article: 'a', emoji: '🫖', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
-  { id: 'mug', word: 'mug', vowel: 'U', hindiMeaning: 'मग / प्याला', phonics: 'm - u - g', phonicSoundsHindi: 'म ... अ ... ग', article: 'a', emoji: '☕', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' }
+  { id: 'sun', word: 'sun', vowel: 'U', hindiMeaning: 'सूरज', phonics: 's - u - n', sounds: ['स', 'अ', 'न'], article: 'a', emoji: '☀️', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'bun', word: 'bun', vowel: 'U', hindiMeaning: 'बन रोटी', phonics: 'b - u - n', sounds: ['ब', 'अ', 'न'], article: 'a', emoji: '🍔', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'cup', word: 'cup', vowel: 'U', hindiMeaning: 'प्याला / कप', phonics: 'c - u - p', sounds: ['क', 'अ', 'प'], article: 'a', emoji: '☕', badgeBg: 'from-orange-100 to-yellow-100 border-orange-300' },
+  { id: 'pup', word: 'pup', vowel: 'U', hindiMeaning: 'कुत्ते का पिल्ला', phonics: 'p - u - p', sounds: ['प', 'अ', 'प'], article: 'a', emoji: '🐶', badgeBg: 'from-yellow-100 to-amber-100 border-yellow-300' },
+  { id: 'tub', word: 'tub', vowel: 'U', hindiMeaning: 'टब', phonics: 't - u - b', sounds: ['ट', 'अ', 'ब'], article: 'a', emoji: '🛁', badgeBg: 'from-sky-100 to-cyan-100 border-sky-300' },
+  { id: 'bus', word: 'bus', vowel: 'U', hindiMeaning: 'बस', phonics: 'b - u - s', sounds: ['ब', 'अ', 'स'], article: 'a', emoji: '🚌', badgeBg: 'from-amber-100 to-yellow-100 border-amber-300' },
+  { id: 'hut', word: 'hut', vowel: 'U', hindiMeaning: 'झोपड़ी', phonics: 'h - u - t', sounds: ['ह', 'अ', 'ट'], article: 'a', emoji: '🛖', badgeBg: 'from-stone-100 to-amber-100 border-stone-300' },
+  { id: 'nut', word: 'nut', vowel: 'U', hindiMeaning: 'अखरोट / मूंगफली', phonics: 'n - u - t', sounds: ['न', 'अ', 'ट'], article: 'a', emoji: '🥜', badgeBg: 'from-amber-100 to-orange-100 border-amber-300' },
+  { id: 'bug', word: 'bug', vowel: 'U', hindiMeaning: 'कीड़ा (लेडीबग)', phonics: 'b - u - g', sounds: ['ब', 'अ', 'ग'], article: 'a', emoji: '🐞', badgeBg: 'from-rose-100 to-red-100 border-rose-300' },
+  { id: 'jug', word: 'jug', vowel: 'U', hindiMeaning: 'जग', phonics: 'j - u - g', sounds: ['ज', 'अ', 'ग'], article: 'a', emoji: '🫖', badgeBg: 'from-teal-100 to-cyan-100 border-teal-300' },
+  { id: 'mug', word: 'mug', vowel: 'U', hindiMeaning: 'मग / प्याला', phonics: 'm - u - g', sounds: ['म', 'अ', 'ग'], article: 'a', emoji: '☕', badgeBg: 'from-blue-100 to-indigo-100 border-blue-300' }
 ];
 
 const VOWEL_OPTIONS: Array<'A' | 'E' | 'I' | 'O' | 'U'> = ['A', 'E', 'I', 'O', 'U'];
 
-// --- COMPREHENSIVE 26-ALPHABET + 2-LINE TRACING DEFINITIONS ---
 interface PatternDefinition {
   id: string;
   name: string;
@@ -260,7 +259,7 @@ export default function EnglishAlphabetLab() {
 
   const t = LAB_STRINGS[currentLang];
 
-  // IMMEDIATE SOUND CANCELLATION HELPER
+  // IMMEDIATELY CANCELS SPEECH
   const truncateAudio = () => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -320,7 +319,8 @@ export default function EnglishAlphabetLab() {
     } catch (e) {}
   };
 
-  const speakVoice = (text: string, lang = 'hi-IN', rate = 0.82): Promise<void> => {
+  // Speaks single utterance cleanly with guaranteed promise resolution
+  const speakVoice = (text: string, lang = 'hi-IN', rate = 0.85): Promise<void> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !window.speechSynthesis) {
         resolve();
@@ -328,7 +328,6 @@ export default function EnglishAlphabetLab() {
       }
       try {
         if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        window.speechSynthesis.cancel(); // Clears previous queue before playing
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
@@ -349,7 +348,7 @@ export default function EnglishAlphabetLab() {
 
         utterance.onend = done;
         utterance.onerror = done;
-        setTimeout(done, Math.max(1200, text.length * 120));
+        setTimeout(done, Math.max(1000, text.length * 160));
 
         window.speechSynthesis.speak(utterance);
       } catch (e) {
@@ -358,14 +357,27 @@ export default function EnglishAlphabetLab() {
     });
   };
 
-  // PHONICS BLENDING SPEAKER: First sounds out phonetic pieces, then says the whole word
+  // TRUE SEQUENTIAL SOUNDING OUT: 
+  // Sounds each individual phoneme (Sound 1 -> pause -> Sound 2 -> pause -> Sound 3 -> pause -> Blend)
   const speakCvcPhonicsBlend = async (item: CvcWordItem) => {
     truncateAudio();
-    // 1. Speak acoustic sounds: "क ... ऐ ... ट"
-    await speakVoice(item.phonicSoundsHindi, 'hi-IN', 0.8);
-    await new Promise(r => setTimeout(r, 250));
-    // 2. Speak whole blended word in English
-    await speakVoice(`${item.word}!`, 'en-IN', 0.88);
+    isAudioLockedRef.current = true;
+
+    // 1. Speak each sound one by one (e.g. 'क', then 'ऐ', then 'ट')
+    for (let i = 0; i < item.sounds.length; i++) {
+      if (!isMountedRef.current) return;
+      await speakVoice(item.sounds[i], 'hi-IN', 0.8);
+      await new Promise(r => setTimeout(r, 180));
+    }
+
+    // 2. Pause slightly before blending
+    await new Promise(r => setTimeout(r, 220));
+
+    // 3. Speak the final whole English word
+    if (isMountedRef.current) {
+      await speakVoice(item.word, 'en-IN', 0.88);
+    }
+    isAudioLockedRef.current = false;
   };
 
   // --- 1. PHONIC SOUND GAME HANDLERS ---
@@ -373,7 +385,9 @@ export default function EnglishAlphabetLab() {
     if (!item || !isMountedRef.current) return;
     setWrongPressKey(null);
     truncateAudio();
-    await speakVoice(`${item.spokenSound} ... ${item.spokenSound}`, 'hi-IN', 0.8);
+    await speakVoice(item.spokenSound, 'hi-IN', 0.8);
+    await new Promise(r => setTimeout(r, 200));
+    await speakVoice(item.spokenSound, 'hi-IN', 0.8);
   };
 
   const startPhonicGame = () => {
@@ -399,6 +413,7 @@ export default function EnglishAlphabetLab() {
   const handlePhonicKeyAnswer = async (pressedChar: string) => {
     if (!isPhonicPlaying || isPhonicFinished || isAudioLockedRef.current || !currentPhonicItem) return;
     isAudioLockedRef.current = true;
+    truncateAudio();
 
     const normalized = pressedChar.toLowerCase();
     const isCorrect = normalized === currentPhonicItem.lower;
@@ -417,11 +432,15 @@ export default function EnglishAlphabetLab() {
       });
 
       if (currentLang === 'hi') {
-        await speakVoice(`शाबाश! ${currentPhonicItem.spokenSound} ... ${currentPhonicItem.lower}`, 'hi-IN', 0.86);
+        await speakVoice(`शाबाश! ${currentPhonicItem.spokenSound}`, 'hi-IN', 0.86);
+        await new Promise(r => setTimeout(r, 120));
+        await speakVoice(currentPhonicItem.lower, 'hi-IN', 0.88);
       } else {
-        await speakVoice(`Correct! ${currentPhonicItem.spokenSound} is letter ${currentPhonicItem.lower}`, 'hi-IN', 0.86);
+        await speakVoice(`Correct! ${currentPhonicItem.spokenSound}`, 'hi-IN', 0.86);
+        await new Promise(r => setTimeout(r, 120));
+        await speakVoice(`Letter ${currentPhonicItem.lower}`, 'en-IN', 0.88);
       }
-      await new Promise(r => setTimeout(r, 350));
+      await new Promise(r => setTimeout(r, 250));
     } else {
       playSoundEffect('wrong');
       setWrongPressKey(normalized);
@@ -434,7 +453,7 @@ export default function EnglishAlphabetLab() {
       });
 
       await speakVoice(`नहीं! यह ध्वनि है ${currentPhonicItem.spokenSound}`, 'hi-IN', 0.85);
-      await new Promise(r => setTimeout(r, 350));
+      await new Promise(r => setTimeout(r, 250));
     }
 
     if (!isMountedRef.current) return;
@@ -516,24 +535,30 @@ export default function EnglishAlphabetLab() {
       setCvcQuizScore(prev => prev + 1);
       setCvcFeedback({
         isCorrect: true,
-        text: `Correct! ${currentQ.target.phonicSoundsHindi} = ${currentQ.target.word}!`
+        text: `Correct! ${currentQ.target.sounds.join(' + ')} = ${currentQ.target.word}!`
       });
 
-      // Sounds out phonetics then the word
-      await speakVoice(currentQ.target.phonicSoundsHindi, 'hi-IN', 0.85);
-      await speakVoice(`${currentQ.target.word}!`, 'en-IN', 0.88);
-      await new Promise(r => setTimeout(r, 350));
+      // Sound out all 3 phonemes
+      for (const s of currentQ.target.sounds) {
+        await speakVoice(s, 'hi-IN', 0.85);
+        await new Promise(r => setTimeout(r, 160));
+      }
+      await speakVoice(currentQ.target.word, 'en-IN', 0.88);
+      await new Promise(r => setTimeout(r, 250));
     } else {
       playSoundEffect('wrong');
       setMissedCvcWords(prev => [...prev, currentQ.target]);
       setCvcFeedback({
         isCorrect: false,
-        text: `Try again! ${currentQ.target.phonicSoundsHindi} = ${currentQ.target.word}`
+        text: `Try again! ${currentQ.target.sounds.join(' + ')} = ${currentQ.target.word}`
       });
 
-      await speakVoice(currentQ.target.phonicSoundsHindi, 'hi-IN', 0.85);
-      await speakVoice(`${currentQ.target.word}`, 'en-IN', 0.88);
-      await new Promise(r => setTimeout(r, 350));
+      for (const s of currentQ.target.sounds) {
+        await speakVoice(s, 'hi-IN', 0.85);
+        await new Promise(r => setTimeout(r, 160));
+      }
+      await speakVoice(currentQ.target.word, 'en-IN', 0.88);
+      await new Promise(r => setTimeout(r, 250));
     }
 
     if (cvcQuizIndex + 1 >= 10) {
@@ -822,7 +847,7 @@ export default function EnglishAlphabetLab() {
                 </span>
               </div>
 
-              {/* Central Phonics Card: Visual Devanagari Akshar & Repeat Button */}
+              {/* Central Phonics Card */}
               <div className="w-full max-w-md bg-gradient-to-b from-indigo-50/70 to-purple-50/70 border-2 border-indigo-300 rounded-3xl p-5 text-center shadow-inner mb-4 flex flex-col items-center">
                 <button
                   onClick={() => calloutCurrentPhonic(currentPhonicItem)}
@@ -836,7 +861,6 @@ export default function EnglishAlphabetLab() {
                   {t.soundPromptLabel}
                 </span>
 
-                {/* Big Clean Devanagari Sound */}
                 <div className="text-6xl md:text-7xl font-black text-indigo-950 my-1 font-mono tracking-wider">
                   {currentPhonicItem.hindiSound}
                 </div>
@@ -941,11 +965,10 @@ export default function EnglishAlphabetLab() {
       )}
 
       {/* ============================================================== */}
-      {/* SECTION 2: DOTTED ALPHABET & PATTERN TRACING (ALL 26 LETTERS)  */}
+      {/* SECTION 2: DOTTED ALPHABET TRACING (A–Z)                       */}
       {/* ============================================================== */}
       {section === 'tracing' && (
         <div className="bg-white border-2 border-teal-200 rounded-3xl p-4 md:p-5 shadow-xl flex flex-col items-center">
-          {/* Scrollable Letters Tray (A through Z) */}
           <div className="flex gap-1.5 overflow-x-auto w-full no-scrollbar pb-2 mb-3">
             {ALL_26_PATTERNS.map((p, idx) => (
               <button
@@ -1044,7 +1067,7 @@ export default function EnglishAlphabetLab() {
       )}
 
       {/* ============================================================== */}
-      {/* SECTION 3: CVC WORDS (PHONIC SOUND BLENDING: क ... ऐ ... ट = CAT) */}
+      {/* SECTION 3: CVC WORDS (SEQUENTIAL PHONIC SOUND OUT)             */}
       {/* ============================================================== */}
       {section === 'cvc' && (
         <div className="space-y-4">
@@ -1061,8 +1084,8 @@ export default function EnglishAlphabetLab() {
                   </h3>
                   <p className="text-xs text-slate-600 mb-5 leading-relaxed">
                     {currentLang === 'hi' 
-                      ? 'स्वर चुनें: A, E, I, O, U। हर शब्द की ध्वनियाँ (जैसे: क ... ऐ ... ट = cat) फोनिक्स ध्वनि से अलग-अलग सीखें!' 
-                      : 'Choose a vowel: A, E, I, O, U. Listen to each individual phonetic sound blend together to form 3-letter words!'}
+                      ? 'स्वर चुनें: A, E, I, O, U। हर शब्द की ध्वनियाँ (जैसे: क ... ऐ ... ट = cat) क्रमवार फोनिक्स से अलग-अलग सीखें!' 
+                      : 'Choose a vowel: A, E, I, O, U. Listen to each individual phonetic sound blend sequentially to form 3-letter words!'}
                   </p>
                 </div>
 
@@ -1118,7 +1141,7 @@ export default function EnglishAlphabetLab() {
 
                 <div className="w-full">
                   <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-4 text-left text-xs font-semibold text-indigo-900 space-y-1">
-                    <div>🏆 {currentLang === 'hi' ? 'फोनिक्स जोड़: क ... ऐ ... ट = cat!' : 'Phonics Blend: c - a - t = cat!'}</div>
+                    <div>🏆 {currentLang === 'hi' ? 'फोनिक्स जोड़: क ... ऐ ... ट = cat!' : 'Phonics Blend: c ... a ... t = cat!'}</div>
                     <div>🔔 {currentLang === 'hi' ? 'गलत उत्तर पर सही फोनिक्स ब्लेंड का ऑडियो अभ्यास' : 'Immediate audio reinforcement on attempt'}</div>
                   </div>
 
@@ -1170,7 +1193,7 @@ export default function EnglishAlphabetLab() {
                 </span>
               </div>
 
-              {/* High-Contrast Flashcard with Phonic Blend Speaker */}
+              {/* Flashcard with Phonics Blend Speaker */}
               <div className="w-full max-w-md bg-stone-50 border-2 border-teal-300 rounded-3xl p-4 text-center shadow-inner flex flex-col items-center mb-5">
                 
                 <div className={`w-full h-56 md:h-64 rounded-2xl mb-3 border-2 shadow-sm bg-gradient-to-br ${currentCvcWord.badgeBg} flex flex-col items-center justify-center relative overflow-hidden`}>
@@ -1182,7 +1205,7 @@ export default function EnglishAlphabetLab() {
                   </span>
                 </div>
 
-                {/* Big word + Speaker Button for Phonics Sound Out */}
+                {/* Big word + Button for Sequential Sound Out */}
                 <div className="flex items-center justify-center gap-3 my-1">
                   <span className="text-5xl md:text-6xl font-black text-teal-950 font-mono tracking-wider">
                     {currentCvcWord.word}
@@ -1196,10 +1219,10 @@ export default function EnglishAlphabetLab() {
                   </button>
                 </div>
 
-                {/* Phonics Acoustic Breakup & Meaning */}
+                {/* Visual 3-Sound Display */}
                 <div className="flex flex-wrap justify-center gap-2 mt-2">
                   <span className="text-xs font-extrabold text-teal-900 bg-teal-100 px-3 py-1 rounded-full border border-teal-300">
-                    ध्वनि: <strong>{currentCvcWord.phonicSoundsHindi}</strong>
+                    ध्वनि: <strong>{currentCvcWord.sounds.join(' + ')}</strong>
                   </span>
                   <span className="text-xs font-extrabold text-slate-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
                     अर्थ: {currentCvcWord.hindiMeaning}
@@ -1272,7 +1295,7 @@ export default function EnglishAlphabetLab() {
                   {currentLang === 'hi' ? 'चित्र देखकर सही 3-अक्षर शब्द (CVC) चुनें:' : 'Identify the image and select the correct 3-letter CVC word:'}
                 </span>
                 <span className="text-[11px] text-slate-500 font-semibold">
-                  ({currentLang === 'hi' ? 'ध्वनि' : 'Phonics'}: <strong>{cvcQuizList[cvcQuizIndex].target.phonicSoundsHindi}</strong>)
+                  ({currentLang === 'hi' ? 'ध्वनि' : 'Phonics'}: <strong>{cvcQuizList[cvcQuizIndex].target.sounds.join(' + ')}</strong>)
                 </span>
               </div>
 
@@ -1353,10 +1376,7 @@ export default function EnglishAlphabetLab() {
                   <RotateCcw className="w-4 h-4" /> {currentLang === 'hi' ? 'पुनः नया गेम खेलें' : 'Play Again'}
                 </button>
                 <button
-                  onClick={() => {
-                    truncateAudio();
-                    setCvcSubTab('menu');
-                  }}
+                  onClick={() => setCvcSubTab('menu')}
                   className="py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5"
                 >
                   <Home className="w-4 h-4" /> {currentLang === 'hi' ? 'मुख्य मेन्यू' : 'Main Menu'}
