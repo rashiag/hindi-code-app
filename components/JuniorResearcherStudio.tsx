@@ -1,90 +1,161 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Sparkles, RotateCcw, Volume2, Globe2, Flame, Sprout, Compass } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Sparkles, RotateCcw, Volume2, Globe2, Flame, 
+  FlaskConical, Compass, ArrowRight, Droplets, CheckCircle2 
+} from 'lucide-react';
 
-type ScienceTab = 'matter' | 'gravity' | 'density' | 'plants';
+type ScienceTab = 'density' | 'matter' | 'phlab' | 'solarsystem';
 
-const LAB_STRINGS = {
-  hi: {
-    bannerTitle: "Think Like a Researcher (नन्हे वैज्ञानिक)",
-    bannerSub: "प्रत्यक्ष वैज्ञानिक प्रयोग, गुरुत्वाकर्षण, पदार्थ की अवस्थाएँ एवं प्रकृति अनुसंधान",
-    tabMatter: "पदार्थ व तापमान (States of Matter)",
-    tabGravity: "सौरमंडल गुरुत्व (Gravity)",
-    tabDensity: "घनत्व (Density / Sink-Float)",
-    tabPlants: "प्रकाश संश्लेषण (Photosynthesis)",
-    listenFact: "वैज्ञानिक तथ्य सुनें",
-    listenGravity: "गुरुत्वाकर्षण नियम सुनें",
-    tempSliderLabel: "तापमान नियंत्रक (Temperature Slider):",
-    gravityCalcPrefix: "यदि पृथ्वी पर आपका भार",
-    gravityCalcSuffix: "है:",
-    gravityJump: "आपकी छलांग क्षमता:",
-    densityPrompt: "वस्तु चुनें और पानी के बीकर में डालकर घनत्व जांचें (Test Buoyancy):",
-    waterDensity: "जल घनत्व = 1.0 g/cm³",
-    dropPrompt: "ऊपर से कोई वस्तु चुनकर पानी में डालें 🧪",
-    densityFloats: "🟢 पानी पर तैर रही है (Floats)",
-    densitySinks: "🔴 तली में डूब गई (Sinks)",
-    plantPrompt: "सूर्य का प्रकाश और जल देकर नन्हे पौधे को बड़ा करें (Plant Growth Lab):",
-    sunlightBtn: "☀️ सूर्य का प्रकाश (Sunlight)",
-    waterBtn: "💧 जल (Water)",
-    onLabel: "चालू",
-    offLabel: "बंद"
+// -------------------------------------------------------------
+// DATA DEFINITIONS
+// -------------------------------------------------------------
+
+interface LiquidItem {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  emoji: string;
+  density: number; // g/cm3
+  color: string;
+  textColor: string;
+}
+
+const LIQUIDS: LiquidItem[] = [
+  { id: 'honey', nameEn: 'Honey', nameHi: 'शहद', emoji: '🍯', density: 1.42, color: '#b45309', textColor: '#ffffff' },
+  { id: 'coke', nameEn: 'Fanta / Soda', nameHi: 'सोडा / फैंटा', emoji: '🥤', density: 1.04, color: '#ea580c', textColor: '#ffffff' },
+  { id: 'water', nameEn: 'Colored Water', nameHi: 'रंगीन जल', emoji: '💧', density: 1.00, color: '#38bdf8', textColor: '#0f172a' },
+  { id: 'oil', nameEn: 'Cooking Oil', nameHi: 'खाद्य तेल', emoji: '🌻', density: 0.92, color: '#facc15', textColor: '#854d0e' },
+  { id: 'spirit', nameEn: 'Spirit / Alcohol', nameHi: 'स्पिरिट / अल्कोहल', emoji: '🧪', density: 0.79, color: '#a855f7', textColor: '#ffffff' }
+];
+
+interface TestObject {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  emoji: string;
+  density: number;
+}
+
+const DENSITY_OBJECTS: TestObject[] = [
+  { id: 'bolt', nameEn: 'Iron Bolt', nameHi: 'लोहे का नट', emoji: '🔩', density: 7.85 },
+  { id: 'grape', nameEn: 'Grape', nameHi: 'अंगूर', emoji: '🍇', density: 1.08 },
+  { id: 'plastic', nameEn: 'Plastic Cap', nameHi: 'प्लास्टिक ढक्कन', emoji: '🔘', density: 0.95 },
+  { id: 'cork', nameEn: 'Wood Cork', nameHi: 'लकड़ी का कॉर्क', emoji: '🪵', density: 0.24 }
+];
+
+// Matter Substances
+interface Substance {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  emoji: string;
+  sublimates?: boolean;
+  meltTemp: number;
+  boilTemp: number;
+  funFactEn: string;
+  funFactHi: string;
+}
+
+const SUBSTANCES: Substance[] = [
+  { 
+    id: 'water', 
+    nameEn: 'Water (H₂O)', 
+    nameHi: 'जल (पानी)', 
+    emoji: '💧',
+    meltTemp: 0, 
+    boilTemp: 100,
+    funFactEn: 'Water expands when it freezes into ice, making ice float!',
+    funFactHi: 'बर्फ बनने पर पानी का घनत्व कम हो जाता है, इसलिए बर्फ तैरती है!'
   },
-  en: {
-    bannerTitle: "Junior Science Lab & Simulator",
-    bannerSub: "Interactive Physics, Planetary Gravity, States of Matter & Nature Lab (NEP 2020)",
-    tabMatter: "States of Matter",
-    tabGravity: "Planetary Gravity",
-    tabDensity: "Density & Buoyancy",
-    tabPlants: "Photosynthesis Lab",
-    listenFact: "Listen to Scientific Fact",
-    listenGravity: "Listen to Gravity Rule",
-    tempSliderLabel: "Temperature Controller (Slider):",
-    gravityCalcPrefix: "If your weight on Earth is",
-    gravityCalcSuffix: ":",
-    gravityJump: "Your jumping ability:",
-    densityPrompt: "Select an object and drop it into the water beaker to test buoyancy:",
-    waterDensity: "Water Density = 1.0 g/cm³",
-    dropPrompt: "Select an item above to test in water 🧪",
-    densityFloats: "🟢 Floats on water surface",
-    densitySinks: "🔴 Sinks to the bottom",
-    plantPrompt: "Provide sunlight and water to grow the seedling (Plant Growth Lab):",
-    sunlightBtn: "☀️ Sunlight",
-    waterBtn: "💧 Water",
-    onLabel: "ON",
-    offLabel: "OFF"
+  { 
+    id: 'camphor', 
+    nameEn: 'Camphor (कपूर)', 
+    nameHi: 'कपूर (Camphor)', 
+    emoji: '⚪',
+    sublimates: true,
+    meltTemp: 175, 
+    boilTemp: 204, // Sublimates directly at room temp / mild heat
+    funFactEn: 'Sublimation! Camphor transforms directly from solid to aromatic gas without melting into liquid!',
+    funFactHi: 'ऊर्ध्वपातन (Sublimation)! कपूर बिना द्रव बने सीधे ठोस से सुगन्धित गैस में बदल जाता है!'
+  },
+  { 
+    id: 'chocolate', 
+    nameEn: 'Chocolate', 
+    nameHi: 'चॉकलेट', 
+    emoji: '🍫',
+    meltTemp: 34, 
+    boilTemp: 120,
+    funFactEn: 'Chocolate melts at 34°C—right below human body temperature (37°C), so it melts in your mouth!',
+    funFactHi: 'चॉकलेट 34°C पर पिघलती है, जो हमारे शरीर के तापमान से ठीक कम है, इसलिए मुँह में घुल जाती है!'
+  },
+  { 
+    id: 'iron', 
+    nameEn: 'Iron Metal', 
+    nameHi: 'लोहा (धातु)', 
+    emoji: '⚔️',
+    meltTemp: 1538, 
+    boilTemp: 2862,
+    funFactEn: 'Iron needs immense blast-furnace heat (1538°C) to melt into liquid magma!',
+    funFactHi: 'लोहे को पिघलाने के लिए भट्ठी में 1538°C के प्रचंड तापमान की आवश्यकता होती है!'
   }
-};
+];
+
+// pH Lab Items
+interface PHSample {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  emoji: string;
+  ph: number;
+  typeEn: 'Strong Acid' | 'Mild Acid' | 'Neutral' | 'Mild Base' | 'Strong Base';
+  typeHi: 'प्रबल अम्ल' | 'दुर्बल अम्ल' | 'उदासीन (Neutral)' | 'दुर्बल क्षार' | 'प्रबल क्षार';
+  color: string;
+}
+
+const PH_SAMPLES: PHSample[] = [
+  { id: 'lemon', nameEn: 'Lemon Juice', nameHi: 'नींबू का रस', emoji: '🍋', ph: 2.2, typeEn: 'Strong Acid', typeHi: 'प्रबल अम्ल', color: '#ef4444' },
+  { id: 'soda', nameEn: 'Cola / Fizzy Soda', nameHi: 'कोल्ड ड्रिंक / सोडा', emoji: '🥤', ph: 3.0, typeEn: 'Mild Acid', typeHi: 'दुर्बल अम्ल', color: '#f97316' },
+  { id: 'water', nameEn: 'Pure Distilled Water', nameHi: 'शुद्ध जल (Water)', emoji: '💧', ph: 7.0, typeEn: 'Neutral', typeHi: 'उदासीन (Neutral)', color: '#22c55e' },
+  { id: 'baking_soda', nameEn: 'Baking Soda Solution', nameHi: 'मीठा सोडा (Baking Soda)', emoji: '🧁', ph: 9.0, typeEn: 'Mild Base', typeHi: 'दुर्बल क्षार', color: '#06b6d4' },
+  { id: 'soap', nameEn: 'Soap & Detergent', nameHi: 'साबुन का घोल (Soap)', emoji: '🧼', ph: 11.5, typeEn: 'Strong Base', typeHi: 'प्रबल क्षार', color: '#3b82f6' }
+];
+
+// Solar System Data
+interface PlanetItem {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  emoji: string;
+  distance: string;
+  size: string;
+  funFactEn: string;
+  funFactHi: string;
+  color: string;
+}
+
+const SOLAR_SYSTEM: PlanetItem[] = [
+  { id: 'mercury', nameEn: 'Mercury', nameHi: 'बुध ग्रह', emoji: '⚪', distance: '58M km', size: 'Smallest', color: '#94a3b8', funFactEn: 'Mercury is the smallest planet and closest to the Sun. It has no atmosphere!', funFactHi: 'बुध सूर्य का सबसे नजदीकी और सौरमंडल का सबसे छोटा ग्रह है!' },
+  { id: 'venus', nameEn: 'Venus', nameHi: 'शुक्र ग्रह', emoji: '🟡', distance: '108M km', size: 'Earth-sized', color: '#facc15', funFactEn: 'Venus is the hottest planet because of thick runaway greenhouse gases!', funFactHi: 'शुक्र हमारे सौरमंडल का सबसे गर्म ग्रह है क्योंकि यहाँ घने तेजाबी बादल हैं!' },
+  { id: 'earth', nameEn: 'Earth', nameHi: 'पृथ्वी (हमारा घर)', emoji: '🌍', distance: '150M km', size: 'Life Haven', color: '#38bdf8', funFactEn: 'Earth is our home—the only known planet with liquid water, oxygen, and life!', funFactHi: 'पृथ्वी हमारा घर है—एकमात्र ऐसा ग्रह जहाँ जीवन, जल और ऑक्सीजन मौजूद है!' },
+  { id: 'mars', nameEn: 'Mars', nameHi: 'मंगल ग्रह', emoji: '🔴', distance: '228M km', size: 'Red Planet', color: '#ef4444', funFactEn: 'Mars is red because of rusted iron soil. It has the tallest volcano: Olympus Mons!', funFactHi: 'मंगल ग्रह पर लोहे की जंग वाली लाल मिट्टी है और सौरमंडल का सबसे ऊँचा पर्वत भी!' },
+  { id: 'jupiter', nameEn: 'Jupiter', nameHi: 'बृहस्पति ग्रह', emoji: '🪐', distance: '778M km', size: 'Giant Gas King', color: '#ea580c', funFactEn: 'Jupiter is the largest planet—so massive that over 1,300 Earths could fit inside!', funFactHi: 'बृहस्पति सबसे बड़ा ग्रह है—इसके अंदर 1300 पृथ्वी समा सकती हैं!' },
+  { id: 'saturn', nameEn: 'Saturn', nameHi: 'शनि ग्रह', emoji: '🪐', distance: '1.4B km', size: 'Ringed Beauty', color: '#eab308', funFactEn: 'Saturn is famous for its majestic sparkling rings made of ice chunks and dust!', funFactHi: 'शनि अपने विशाल और सुंदर बर्फीले छल्लों (वलयों) के लिए प्रसिद्ध है!' },
+  { id: 'uranus', nameEn: 'Uranus', nameHi: 'अरुण ग्रह', emoji: '🧊', distance: '2.8B km', size: 'Ice Giant', color: '#06b6d4', funFactEn: 'Uranus rotates tilted on its side like a rolling bowling ball!', funFactHi: 'अरुण ग्रह अपनी धुरी पर 98 डिग्री झुका हुआ है और लुढ़कती गेंद की तरह घूमता है!' },
+  { id: 'neptune', nameEn: 'Neptune', nameHi: 'वरुण ग्रह', emoji: '🌀', distance: '4.5B km', size: 'Deep Blue', color: '#2563eb', funFactEn: 'Neptune has supersonic storms and wind speeds exceeding 2,000 km per hour!', funFactHi: 'वरुण गहरे नीले रंग का बर्फीला ग्रह है जहाँ 2000 किमी/घंटे की गति से बर्फीली हवाएं चलती हैं!' }
+];
 
 export function JuniorResearcherStudio() {
   const [lang, setLang] = useState<'hi' | 'en'>('hi');
-  const [activeTab, setActiveTab] = useState<ScienceTab>('matter');
+  const [activeTab, setActiveTab] = useState<ScienceTab>('density');
 
-  // Module 1: States of Matter state
-  const [temperature, setTemperature] = useState<number>(25);
-
-  // Module 2: Gravity & Planets state
-  const [selectedPlanet, setSelectedPlanet] = useState<string>('earth');
-  const [earthWeight, setEarthWeight] = useState<number>(30); // kg
-
-  // Module 3: Density Sink/Float state
-  const [droppedItem, setDroppedItem] = useState<string | null>(null);
-
-  // Module 4: Plant Lifecycle state
-  const [sunlight, setSunlight] = useState<boolean>(true);
-  const [watered, setWatered] = useState<boolean>(true);
-
-  const t = LAB_STRINGS[lang];
-
+  // AUDIO UTILITY
   const stopAudio = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
   };
-
-  useEffect(() => {
-    return () => stopAudio();
-  }, []);
 
   const playSpeech = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -97,464 +168,683 @@ export function JuniorResearcherStudio() {
     } catch (e) {}
   };
 
-  const getMatterState = (temp: number) => {
-    if (temp <= 0) {
+  useEffect(() => {
+    return () => stopAudio();
+  }, []);
+
+  // -------------------------------------------------------------
+  // TAB 1: DENSITY TOWER STATE
+  // -------------------------------------------------------------
+  const [pouredLiquids, setPouredLiquids] = useState<LiquidItem[]>([LIQUIDS[0], LIQUIDS[2], LIQUIDS[3]]); // Default: Honey, Water, Oil
+  const [droppedObject, setDroppedObject] = useState<TestObject | null>(DENSITY_OBJECTS[1]); // Default: Grape
+
+  const toggleLiquid = (liq: LiquidItem) => {
+    stopAudio();
+    if (pouredLiquids.some(l => l.id === liq.id)) {
+      setPouredLiquids(prev => prev.filter(l => l.id !== liq.id));
+    } else {
+      // Add and auto-sort descending by density (densest sinks to bottom)
+      const next = [...pouredLiquids, liq].sort((a, b) => b.density - a.density);
+      setPouredLiquids(next);
+      playSpeech(lang === 'hi' 
+        ? `${liq.nameHi} डाला गया। घनत्व है ${liq.density} ग्राम प्रति घन सेमी।` 
+        : `Added ${liq.nameEn}. Density is ${liq.density} grams per cubic centimeter.`
+      );
+    }
+  };
+
+  const selectObject = (obj: TestObject) => {
+    stopAudio();
+    setDroppedObject(obj);
+    playSpeech(lang === 'hi'
+      ? `${obj.nameHi} बीकर में डाला गया। घनत्व ${obj.density} है।`
+      : `Dropped ${obj.nameEn}. Density is ${obj.density} grams per cubic centimeter.`
+    );
+  };
+
+  // -------------------------------------------------------------
+  // TAB 2: STATES OF MATTER STATE
+  // -------------------------------------------------------------
+  const [selectedSubstance, setSelectedSubstance] = useState<Substance>(SUBSTANCES[0]);
+  const [currentTemp, setCurrentTemp] = useState<number>(25);
+
+  const getSubstancePhase = () => {
+    if (selectedSubstance.sublimates) {
+      if (currentTemp < 40) return { phaseEn: 'Solid Crystal', phaseHi: 'ठोस (क्रिस्टल)', emoji: '⚪', stateColor: 'bg-sky-100 text-sky-900 border-sky-300' };
+      return { phaseEn: 'Sublimated Gas (No Liquid!)', phaseHi: 'सीधे वाष्प / गैस (ऊर्ध्वपातन)', emoji: '♨️', stateColor: 'bg-purple-100 text-purple-900 border-purple-300' };
+    }
+    if (currentTemp < selectedSubstance.meltTemp) {
+      return { phaseEn: 'Solid State', phaseHi: 'ठोस अवस्था (Solid)', emoji: '🧊', stateColor: 'bg-sky-100 text-sky-900 border-sky-300' };
+    }
+    if (currentTemp < selectedSubstance.boilTemp) {
+      return { phaseEn: 'Liquid State', phaseHi: 'द्रव अवस्था (Liquid)', emoji: '💧', stateColor: 'bg-amber-100 text-amber-900 border-amber-300' };
+    }
+    return { phaseEn: 'Gaseous Vapor', phaseHi: 'गैस / वाष्प (Gas)', emoji: '♨️', stateColor: 'bg-rose-100 text-rose-900 border-rose-300' };
+  };
+
+  // -------------------------------------------------------------
+  // TAB 3: ACID / BASE pH LAB STATE
+  // -------------------------------------------------------------
+  const [selectedSample, setSelectedSample] = useState<PHSample>(PH_SAMPLES[0]);
+  const [indicatorType, setIndicatorType] = useState<'universal' | 'red_litmus' | 'blue_litmus'>('universal');
+
+  const getIndicatorResult = () => {
+    if (indicatorType === 'universal') {
       return {
-        state: lang === 'hi' ? 'Solid (ठोस)' : 'Solid State',
-        name: lang === 'hi' ? 'बर्फ़ (Ice)' : 'Ice',
-        emoji: '🧊',
-        desc: lang === 'hi'
-          ? 'अणु एक-दूसरे से कसकर जुड़े हुए हैं और कंपन करते हैं।'
-          : 'Molecules are tightly packed in a rigid fixed lattice.'
+        labelEn: `Universal pH Paper turned ${selectedSample.ph < 4 ? 'Red/Orange' : selectedSample.ph === 7 ? 'Green' : 'Dark Blue'} (pH ${selectedSample.ph})`,
+        labelHi: `यूनिवर्सल इंडिकेटर का रंग ${selectedSample.ph < 4 ? 'लाल/नारंगी' : selectedSample.ph === 7 ? 'हरा' : 'गहरा नीला'} हुआ (pH ${selectedSample.ph})`,
+        colorBg: selectedSample.color
       };
     }
-    if (temp < 100) {
+    if (indicatorType === 'red_litmus') {
+      const turnsBlue = selectedSample.ph > 7.5;
       return {
-        state: lang === 'hi' ? 'Liquid (द्रव)' : 'Liquid State',
-        name: lang === 'hi' ? 'जल (Water)' : 'Water',
-        emoji: '💧',
-        desc: lang === 'hi'
-          ? 'अणु स्वतंत्र रूप से बह सकते हैं और पात्र का आकार ले लेते हैं।'
-          : 'Molecules flow past one another freely taking the container shape.'
+        labelEn: turnsBlue ? 'Red Litmus turned BLUE (Shows Base!)' : 'Red Litmus stayed RED (Acid / Neutral)',
+        labelHi: turnsBlue ? 'लाल लिटमस नीला हो गया (क्षार की पहचान!)' : 'लाल लिटमस लाल ही रहा (अम्ल / उदासीन)',
+        colorBg: turnsBlue ? '#2563eb' : '#ef4444'
       };
     }
+    // Blue litmus
+    const turnsRed = selectedSample.ph < 6.5;
     return {
-      state: lang === 'hi' ? 'Gas (गैस)' : 'Gas State',
-      name: lang === 'hi' ? 'भाप (Steam)' : 'Steam / Vapor',
-      emoji: '♨️',
-      desc: lang === 'hi'
-        ? 'अणु अत्यधिक ऊर्जा के साथ दूर-दूर तीव्र गति करते हैं।'
-        : 'Molecules move rapidly with high energy filling the whole volume.'
+      labelEn: turnsRed ? 'Blue Litmus turned RED (Shows Acid!)' : 'Blue Litmus stayed BLUE (Base / Neutral)',
+      labelHi: turnsRed ? 'नीला लिटमस लाल हो गया (अम्ल की पहचान!)' : 'नीला लिटमस नीला ही रहा (क्षार / उदासीन)',
+      colorBg: turnsRed ? '#ef4444' : '#2563eb'
     };
   };
 
-  const PLANETS = [
-    {
-      id: 'moon',
-      nameHi: 'चन्द्रमा (Moon)',
-      nameEn: 'Moon',
-      emoji: '🌕',
-      factor: 0.166,
-      jumpHi: '६ गुना ऊँची छलांग',
-      jumpEn: '6x higher jumps'
-    },
-    {
-      id: 'earth',
-      nameHi: 'पृथ्वी (Earth)',
-      nameEn: 'Earth',
-      emoji: '🌍',
-      factor: 1.0,
-      jumpHi: 'सामान्य छलांग (1x)',
-      jumpEn: 'Standard baseline jump (1x)'
-    },
-    {
-      id: 'mars',
-      nameHi: 'मंगल (Mars)',
-      nameEn: 'Mars',
-      emoji: '🔴',
-      factor: 0.38,
-      jumpHi: '२.५ गुना ऊँची छलांग',
-      jumpEn: '2.5x higher jumps'
-    },
-    {
-      id: 'jupiter',
-      nameHi: 'बृहस्पति (Jupiter)',
-      nameEn: 'Jupiter',
-      emoji: '🪐',
-      factor: 2.53,
-      jumpHi: 'अत्यधिक भारी / न्यूनतम छलांग',
-      jumpEn: 'Heavy gravity / minimal jump'
-    }
-  ];
-
-  const DENSITY_ITEMS = [
-    {
-      id: 'wood',
-      nameHi: 'लकड़ी (Wood Block)',
-      nameEn: 'Wood Block',
-      emoji: '🪵',
-      density: 0.6,
-      floats: true,
-      reasonHi: 'पानी से कम घनत्व (0.6 g/cm³) होने के कारण तैरती है।',
-      reasonEn: 'Density (0.6 g/cm³) is lower than water (1.0 g/cm³), so it floats.'
-    },
-    {
-      id: 'iron',
-      nameHi: 'लोहे की कील (Iron Nail)',
-      nameEn: 'Iron Nail',
-      emoji: '🔩',
-      density: 7.8,
-      floats: false,
-      reasonHi: 'पानी से अधिक भारी घनत्व (7.8 g/cm³) के कारण डूब जाती है।',
-      reasonEn: 'Density (7.8 g/cm³) is much higher than water, so it sinks.'
-    },
-    {
-      id: 'apple',
-      nameHi: 'सेब (Apple)',
-      nameEn: 'Apple',
-      emoji: '🍎',
-      density: 0.85,
-      floats: true,
-      reasonHi: '२५% हवा की मौजूदगी के कारण पानी पर तैरता है।',
-      reasonEn: 'Contains trapped air pockets (density 0.85 g/cm³), so it floats.'
-    },
-    {
-      id: 'coin',
-      nameHi: 'सिक्का (Coin)',
-      nameEn: 'Metal Coin',
-      emoji: '🪙',
-      density: 8.9,
-      floats: false,
-      reasonHi: 'ठोस धातु का घनत्व जल से बहुत अधिक है, इसलिए डूब जाता है।',
-      reasonEn: 'Dense metal composition causes it to sink directly to the bottom.'
-    }
-  ];
-
-  const currentPlanetObj = PLANETS.find((p) => p.id === selectedPlanet) || PLANETS[1];
-  const matterInfo = getMatterState(temperature);
+  // -------------------------------------------------------------
+  // TAB 4: SOLAR SYSTEM STATE
+  // -------------------------------------------------------------
+  const [selectedPlanet, setSelectedPlanet] = useState<PlanetItem>(SOLAR_SYSTEM[2]); // Earth default
 
   return (
     <div className="max-w-5xl mx-auto p-3 md:p-6 font-sans select-none">
       
-      {/* Header Banner with Bilingual Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-purple-50/80 p-4 rounded-2xl border border-purple-200">
+      {/* Top Banner with Bilingual Toggle */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-purple-50/90 p-4 rounded-3xl border-2 border-purple-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-600 text-white rounded-xl flex items-center justify-center text-xl shadow-md">
+          <div className="w-11 h-11 bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">
             🔬
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-purple-950">{t.bannerTitle}</h1>
-            <p className="text-xs md:text-sm font-semibold text-purple-800">
-              {t.bannerSub}
+            <h1 className="text-xl md:text-2xl font-black text-purple-950">
+              {lang === 'hi' ? 'नन्हे वैज्ञानिक: इंटरएक्टिव साइंस लैब' : 'Junior Science Lab & Interactive Simulator'}
+            </h1>
+            <p className="text-xs md:text-sm font-bold text-purple-800">
+              {lang === 'hi' 
+                ? 'घनत्व टॉवर, अम्ल-क्षार परीक्षण, पदार्थ रूपांतरण व सौरमंडल अन्वेषण' 
+                : 'Density Tower, Acid-Base Lab, States of Matter & Solar System (NEP 2020)'}
             </p>
           </div>
         </div>
 
-        {/* Controls: Language Switcher & Experiment Tabs */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* BILINGUAL LANGUAGE SWITCHER */}
-          <div className="flex bg-white p-1 rounded-xl border border-purple-300 shadow-sm gap-1">
-            <button
-              onClick={() => {
-                stopAudio();
-                setLang('hi');
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
-                lang === 'hi' ? 'bg-purple-600 text-white shadow-sm' : 'text-purple-950 hover:bg-purple-100'
-              }`}
-            >
-              हिंदी
-            </button>
-            <button
-              onClick={() => {
-                stopAudio();
-                setLang('en');
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
-                lang === 'en' ? 'bg-purple-600 text-white shadow-sm' : 'text-purple-950 hover:bg-purple-100'
-              }`}
-            >
-              English
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-purple-300 shadow-sm overflow-x-auto">
-            <button
-              onClick={() => { stopAudio(); setActiveTab('matter'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                activeTab === 'matter' ? 'bg-purple-600 text-white shadow' : 'text-purple-900 hover:bg-purple-50'
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5" /> {t.tabMatter}
-            </button>
-            <button
-              onClick={() => { stopAudio(); setActiveTab('gravity'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                activeTab === 'gravity' ? 'bg-purple-600 text-white shadow' : 'text-purple-900 hover:bg-purple-50'
-              }`}
-            >
-              <Globe2 className="w-3.5 h-3.5" /> {t.tabGravity}
-            </button>
-            <button
-              onClick={() => { stopAudio(); setActiveTab('density'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                activeTab === 'density' ? 'bg-purple-600 text-white shadow' : 'text-purple-900 hover:bg-purple-50'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" /> {t.tabDensity}
-            </button>
-            <button
-              onClick={() => { stopAudio(); setActiveTab('plants'); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                activeTab === 'plants' ? 'bg-purple-600 text-white shadow' : 'text-purple-900 hover:bg-purple-50'
-              }`}
-            >
-              <Sprout className="w-3.5 h-3.5" /> {t.tabPlants}
-            </button>
-          </div>
+        {/* Controls: Bilingual Toggle */}
+        <div className="flex bg-white p-1 rounded-2xl border border-purple-300 shadow-sm gap-1">
+          <button
+            onClick={() => { stopAudio(); setLang('hi'); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+              lang === 'hi' ? 'bg-purple-600 text-white shadow-sm' : 'text-purple-950 hover:bg-purple-100'
+            }`}
+          >
+            हिंदी
+          </button>
+          <button
+            onClick={() => { stopAudio(); setLang('en'); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+              lang === 'en' ? 'bg-purple-600 text-white shadow-sm' : 'text-purple-950 hover:bg-purple-100'
+            }`}
+          >
+            English
+          </button>
         </div>
       </div>
 
-      {/* Main Experiment Sandbox */}
-      <div className="bg-white rounded-3xl p-6 md:p-10 border-2 border-purple-200 shadow-xl min-h-[460px] flex flex-col justify-center items-center">
-        
-        {/* MODULE 1: STATES OF MATTER */}
-        {activeTab === 'matter' && (
-          <div className="w-full max-w-xl flex flex-col items-center text-center">
-            <button
-              onClick={() => {
-                if (lang === 'hi') {
-                  playSpeech(`तापमान ${temperature} डिग्री सेल्सियस पर जल की अवस्था ${matterInfo.state} है।`);
-                } else {
-                  playSpeech(`At ${temperature} degrees Celsius, water is in the ${matterInfo.state}.`);
-                }
-              }}
-              className="flex items-center gap-2 bg-purple-100 text-purple-900 font-bold px-4 py-1.5 rounded-full text-xs mb-6 cursor-pointer"
-            >
-              <Volume2 className="w-4 h-4 text-purple-700" /> {t.listenFact}
-            </button>
+      {/* Lab Navigation Switcher */}
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
+        <button
+          onClick={() => { stopAudio(); setActiveTab('density'); }}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs ${
+            activeTab === 'density' ? 'bg-purple-600 text-white shadow-md' : 'bg-white border border-purple-200 text-purple-900 hover:bg-purple-50'
+          }`}
+        >
+          <Droplets className="w-4 h-4" />
+          {lang === 'hi' ? '1. घनत्व टॉवर (Liquid Density)' : '1. Liquid Density Tower'}
+        </button>
 
-            {/* Visual Particle / Thermal Chamber */}
-            <div className={`w-full h-52 rounded-3xl border-2 flex flex-col items-center justify-center transition-all p-6 mb-6 shadow-inner ${
-              temperature <= 0 ? 'bg-sky-50 border-sky-300' : temperature < 100 ? 'bg-blue-50 border-blue-300' : 'bg-orange-50 border-orange-300'
-            }`}>
-              <span className="text-6xl md:text-7xl filter drop-shadow-md mb-2 animate-bounce">
-                {matterInfo.emoji}
-              </span>
-              <h3 className="text-2xl font-black text-slate-800">{matterInfo.name}</h3>
-              <span className="text-sm font-bold text-purple-900 mt-1">{matterInfo.state}</span>
-              <p className="text-xs text-slate-600 mt-2 max-w-sm">{matterInfo.desc}</p>
+        <button
+          onClick={() => { stopAudio(); setActiveTab('matter'); }}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs ${
+            activeTab === 'matter' ? 'bg-purple-600 text-white shadow-md' : 'bg-white border border-purple-200 text-purple-900 hover:bg-purple-50'
+          }`}
+        >
+          <Flame className="w-4 h-4" />
+          {lang === 'hi' ? '2. पदार्थ व ऊर्ध्वपातन (States of Matter)' : '2. States & Sublimation'}
+        </button>
+
+        <button
+          onClick={() => { stopAudio(); setActiveTab('phlab'); }}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs ${
+            activeTab === 'phlab' ? 'bg-purple-600 text-white shadow-md' : 'bg-white border border-purple-200 text-purple-900 hover:bg-purple-50'
+          }`}
+        >
+          <FlaskConical className="w-4 h-4" />
+          {lang === 'hi' ? '3. अम्ल व क्षार (Acid, Base & pH)' : '3. Acid, Base & pH Lab'}
+        </button>
+
+        <button
+          onClick={() => { stopAudio(); setActiveTab('solarsystem'); }}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs ${
+            activeTab === 'solarsystem' ? 'bg-purple-600 text-white shadow-md' : 'bg-white border border-purple-200 text-purple-900 hover:bg-purple-50'
+          }`}
+        >
+          <Globe2 className="w-4 h-4" />
+          {lang === 'hi' ? '4. सौरमंडल यात्रा (Solar System)' : '4. Solar System'}
+        </button>
+      </div>
+
+      {/* Main Interactive Stage */}
+      <div className="bg-white rounded-3xl p-5 md:p-8 border-2 border-purple-200 shadow-xl min-h-[480px]">
+
+        {/* ========================================================= */}
+        {/* TAB 1: INTERACTIVE MULTI-LIQUID DENSITY TOWER             */}
+        {/* ========================================================= */}
+        {activeTab === 'density' && (
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  {lang === 'hi' ? 'तरल पदार्थों का घनत्व टॉवर (Density Tower)' : 'Rainbow Liquid Density Tower'}
+                </h3>
+                <p className="text-xs font-bold text-slate-500">
+                  {lang === 'hi' 
+                    ? 'द्रवों पर क्लिक करके बीकर में डालें। भारी द्रव नीचे बैठेंगे, हल्के ऊपर तैरेंगे!' 
+                    : 'Click liquids to pour into the glass cylinder. Higher density settles at the bottom!'}
+                </p>
+              </div>
+              <button
+                onClick={() => playSpeech(lang === 'hi'
+                  ? 'भारी घनत्व वाले तरल हमेशा नीचे बैठते हैं और कम घनत्व वाले ऊपर तैरते हैं।'
+                  : 'Liquids with higher density sink to the bottom, while lighter liquids float on top.')}
+                className="p-2 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              >
+                <Volume2 className="w-4 h-4 text-purple-600" />
+                {lang === 'hi' ? 'नियम सुनें' : 'Listen Fact'}
+              </button>
             </div>
 
-            {/* Thermal Slider */}
-            <div className="w-full bg-purple-50/60 p-5 rounded-2xl border border-purple-200">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-black text-purple-950">{t.tempSliderLabel}</span>
-                <span className="text-lg font-black text-purple-900">{temperature}°C</span>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              
+              {/* Left Selector: Liquids & Droppable Objects */}
+              <div className="md:col-span-6 flex flex-col gap-4">
+                
+                {/* 1. Choose Liquids */}
+                <div>
+                  <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
+                    {lang === 'hi' ? '१. तरल चुनें (Click to Add / Remove):' : '1. Click to Pour / Remove Liquids:'}
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {LIQUIDS.map(liq => {
+                      const isPoured = pouredLiquids.some(l => l.id === liq.id);
+                      return (
+                        <button
+                          key={liq.id}
+                          onClick={() => toggleLiquid(liq)}
+                          className={`p-2.5 rounded-2xl border-2 flex items-center justify-between transition cursor-pointer text-left ${
+                            isPoured 
+                              ? 'bg-purple-50 border-purple-600 shadow-xs' 
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{liq.emoji}</span>
+                            <div>
+                              <span className="text-xs font-black block text-slate-900 leading-tight">
+                                {lang === 'hi' ? liq.nameHi : liq.nameEn}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-500">
+                                {liq.density} g/cm³
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                            isPoured ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            {isPoured ? (lang === 'hi' ? 'शामिल' : 'Poured') : '+'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Choose Floating / Sinking Objects */}
+                <div>
+                  <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
+                    {lang === 'hi' ? '२. कोई वस्तु बीकर में डालकर देखें (Drop Item):' : '2. Drop an Object to Test Floating Level:'}
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {DENSITY_OBJECTS.map(obj => (
+                      <button
+                        key={obj.id}
+                        onClick={() => selectObject(obj)}
+                        className={`p-2 rounded-xl border-2 flex items-center gap-2 transition cursor-pointer ${
+                          droppedObject?.id === obj.id
+                            ? 'bg-amber-100 border-amber-500 text-amber-950 shadow-xs font-black'
+                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-amber-50'
+                        }`}
+                      >
+                        <span className="text-xl">{obj.emoji}</span>
+                        <div>
+                          <span className="text-xs font-bold block">{lang === 'hi' ? obj.nameHi : obj.nameEn}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{obj.density} g/cm³</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
               </div>
-              <input
-                type="range"
-                min="-20"
-                max="120"
-                value={temperature}
-                onChange={(e) => {
-                  stopAudio();
-                  setTemperature(Number(e.target.value));
-                }}
-                className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-              />
-              <div className="flex justify-between text-[11px] font-bold text-slate-500 mt-2">
-                <span>-20°C ({lang === 'hi' ? 'ठंडा/बर्फ' : 'Freeze'})</span>
-                <span>0°C ({lang === 'hi' ? 'गलनांक' : 'Melting'})</span>
-                <span>100°C ({lang === 'hi' ? 'क्वथनांक/भाप' : 'Boiling'})</span>
-                <span>120°C</span>
+
+              {/* Right: The Virtual Glass Cylinder Tower */}
+              <div className="md:col-span-6 flex flex-col items-center">
+                <div className="relative w-48 h-80 bg-slate-100/60 rounded-b-3xl rounded-t-lg border-4 border-slate-400 border-t-0 p-2 flex flex-col-reverse justify-start overflow-hidden shadow-2xl backdrop-blur-xs">
+                  
+                  {pouredLiquids.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-center p-3 text-xs font-bold text-slate-400">
+                      {lang === 'hi' ? 'बाएं से कोई तरल चुनें' : 'Choose liquids to pour into cylinder'}
+                    </div>
+                  ) : (
+                    pouredLiquids.map((liq, idx) => {
+                      const layerHeightPercent = 100 / pouredLiquids.length;
+                      return (
+                        <div
+                          key={liq.id}
+                          style={{
+                            height: `${layerHeightPercent}%`,
+                            backgroundColor: liq.color
+                          }}
+                          className="w-full flex items-center justify-between px-2 text-[10px] font-black transition-all duration-500 shadow-inner"
+                        >
+                          <span style={{ color: liq.textColor }}>{liq.emoji} {lang === 'hi' ? liq.nameHi : liq.nameEn}</span>
+                          <span style={{ color: liq.textColor }} className="font-mono">{liq.density} g/cm³</span>
+                        </div>
+                      );
+                    })
+                  )}
+
+                  {/* Settled Test Object Indicator */}
+                  {droppedObject && pouredLiquids.length > 0 && (
+                    <div className="absolute inset-x-0 flex justify-center items-center pointer-events-none transition-all duration-700"
+                      style={{
+                        // Determine resting height: sinks below all liquids lighter than it
+                        bottom: `${Math.min(
+                          90,
+                          Math.max(
+                            8,
+                            (pouredLiquids.filter(l => l.density > droppedObject.density).length / pouredLiquids.length) * 100
+                          )
+                        )}%`
+                      }}
+                    >
+                      <div className="bg-white/95 px-2.5 py-1 rounded-full shadow-lg border border-slate-300 flex items-center gap-1.5 animate-bounce">
+                        <span className="text-xl">{droppedObject.emoji}</span>
+                        <span className="text-[10px] font-black text-slate-800">
+                          {lang === 'hi' ? droppedObject.nameHi : droppedObject.nameEn} ({droppedObject.density} g/cm³)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+
+                <span className="text-[11px] font-bold text-slate-500 mt-2">
+                  🧪 {lang === 'hi' ? 'कांच का बीकर (Graduated Cylinder)' : 'Liquid Layering Column'}
+                </span>
               </div>
+
             </div>
           </div>
         )}
 
-        {/* MODULE 2: PLANETARY GRAVITY */}
-        {activeTab === 'gravity' && (
-          <div className="w-full max-w-xl flex flex-col items-center text-center">
-            <button
-              onClick={() => {
-                const targetName = lang === 'hi' ? currentPlanetObj.nameHi : currentPlanetObj.nameEn;
-                const calcWeight = Math.round(earthWeight * currentPlanetObj.factor * 10) / 10;
-                if (lang === 'hi') {
-                  playSpeech(`पृथ्वी पर ३० किलो का भार ${targetName} पर लगभग ${calcWeight} किलोग्राम होगा!`);
-                } else {
-                  playSpeech(`A 30 kilogram weight on Earth would weigh approximately ${calcWeight} kilograms on ${targetName}!`);
-                }
-              }}
-              className="flex items-center gap-2 bg-purple-100 text-purple-900 font-bold px-4 py-1.5 rounded-full text-xs mb-6 cursor-pointer"
-            >
-              <Volume2 className="w-4 h-4 text-purple-700" /> {t.listenGravity}
-            </button>
+        {/* ========================================================= */}
+        {/* TAB 2: STATES OF MATTER WITH SUBSTANCES & SUBLIMATION      */}
+        {/* ========================================================= */}
+        {activeTab === 'matter' && (
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  {lang === 'hi' ? 'पदार्थ की अवस्थाएँ व ऊर्ध्वपातन' : 'States of Matter & Phase Changes'}
+                </h3>
+                <p className="text-xs font-bold text-slate-500">
+                  {lang === 'hi' 
+                    ? 'तत्व चुनें और तापमान स्लाइडर को खिसकाकर ठोस, द्रव व गैस में परिवर्तन देखें!' 
+                    : 'Select a substance and slide temperature to observe melting, boiling, and camphor sublimation!'}
+                </p>
+              </div>
+              <button
+                onClick={() => playSpeech(lang === 'hi' ? selectedSubstance.funFactHi : selectedSubstance.funFactEn)}
+                className="p-2 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              >
+                <Volume2 className="w-4 h-4 text-purple-600" />
+                {lang === 'hi' ? 'तथ्य सुनें' : 'Listen Fact'}
+              </button>
+            </div>
 
-            {/* Planet Selector Grid */}
-            <div className="grid grid-cols-4 gap-2 md:gap-3 w-full mb-6">
-              {PLANETS.map((p) => (
+            {/* Substance Switcher */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {SUBSTANCES.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => {
+                    stopAudio();
+                    setSelectedSubstance(s);
+                    setCurrentTemp(25);
+                  }}
+                  className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 transition cursor-pointer ${
+                    selectedSubstance.id === s.id
+                      ? 'bg-purple-600 text-white border-purple-700 shadow-md scale-102 font-black'
+                      : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-purple-50'
+                  }`}
+                >
+                  <span className="text-2xl">{s.emoji}</span>
+                  <div className="text-left">
+                    <span className="text-xs font-black block leading-tight">{lang === 'hi' ? s.nameHi : s.nameEn}</span>
+                    <span className="text-[10px] opacity-80 block">{s.sublimates ? (lang === 'hi' ? 'ऊर्ध्वपातन' : 'Sublimates') : (lang === 'hi' ? 'सामान्य' : 'Standard')}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Thermal Reaction Chamber */}
+            {(() => {
+              const phase = getSubstancePhase();
+              return (
+                <div className="bg-slate-50 rounded-3xl border-2 border-slate-200 p-6 flex flex-col items-center text-center">
+                  
+                  <div className="w-32 h-32 rounded-3xl bg-white border-2 border-slate-200 flex flex-col items-center justify-center shadow-inner mb-3">
+                    <span className="text-6xl animate-pulse">{phase.emoji}</span>
+                  </div>
+
+                  <span className={`px-4 py-1 rounded-full text-xs font-black border mb-2 ${phase.stateColor}`}>
+                    {lang === 'hi' ? phase.phaseHi : phase.phaseEn}
+                  </span>
+
+                  <p className="text-xs font-bold text-slate-600 max-w-md mb-6">
+                    {lang === 'hi' ? selectedSubstance.funFactHi : selectedSubstance.funFactEn}
+                  </p>
+
+                  {/* Temperature Range Slider */}
+                  <div className="w-full max-w-lg bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-black text-slate-800">
+                        🌡️ {lang === 'hi' ? 'तापमान नियंत्रक (Temperature):' : 'Thermal Controller:'}
+                      </span>
+                      <span className="text-xl font-black text-purple-700 font-mono">
+                        {currentTemp}°C
+                      </span>
+                    </div>
+
+                    <input
+                      type="range"
+                      min={selectedSubstance.id === 'iron' ? 0 : -20}
+                      max={selectedSubstance.id === 'iron' ? 3000 : 250}
+                      value={currentTemp}
+                      onChange={(e) => {
+                        stopAudio();
+                        setCurrentTemp(Number(e.target.value));
+                      }}
+                      className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                    />
+
+                    <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
+                      <span>{selectedSubstance.id === 'iron' ? '0°C' : '-20°C'}</span>
+                      <span>
+                        {selectedSubstance.sublimates 
+                          ? (lang === 'hi' ? 'ऊर्ध्वपातन (>40°C)' : 'Sublimates (>40°C)') 
+                          : `${selectedSubstance.meltTemp}°C (${lang === 'hi' ? 'गलनांक' : 'Melt'})`}
+                      </span>
+                      <span>{selectedSubstance.id === 'iron' ? '3000°C' : '250°C'}</span>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 3: ACID / BASE & pH TESTING LAB                       */}
+        {/* ========================================================= */}
+        {activeTab === 'phlab' && (
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  {lang === 'hi' ? 'अम्ल, क्षार व pH परीक्षण प्रयोगशाला' : 'Acid, Base & pH Testing Chamber'}
+                </h3>
+                <p className="text-xs font-bold text-slate-500">
+                  {lang === 'hi' 
+                    ? 'घरेलू वस्तु चुनें और लिटमस या pH पेपर से जाँचें कि वह अम्ल (Acid) है या क्षार (Base)!' 
+                    : 'Choose household items and test with Litmus or Universal pH strip!'}
+                </p>
+              </div>
+              <button
+                onClick={() => playSpeech(lang === 'hi'
+                  ? `pH 7 से कम अम्ल होता है, 7 उदासीन होता है, और 7 से अधिक क्षार कहलाता है।`
+                  : `pH below 7 is acidic, exactly 7 is neutral, and pH above 7 is alkaline or base.`)}
+                className="p-2 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              >
+                <Volume2 className="w-4 h-4 text-purple-600" />
+                {lang === 'hi' ? 'pH नियम सुनें' : 'Listen pH Rule'}
+              </button>
+            </div>
+
+            {/* Sample Chooser */}
+            <div>
+              <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
+                {lang === 'hi' ? 'परीक्षण हेतु वस्तु चुनें (Choose Sample):' : 'Select a Test Sample:'}
+              </span>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                {PH_SAMPLES.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      stopAudio();
+                      setSelectedSample(s);
+                      playSpeech(lang === 'hi'
+                        ? `${s.nameHi} का pH लगभग ${s.ph} है। यह ${s.typeHi} है।`
+                        : `${s.nameEn} has a pH of ${s.ph}. It is a ${s.typeEn}.`
+                      );
+                    }}
+                    className={`p-3 rounded-2xl border-2 flex flex-col items-center text-center transition cursor-pointer ${
+                      selectedSample.id === s.id
+                        ? 'bg-purple-600 text-white border-purple-700 shadow-md font-black scale-102'
+                        : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-purple-50'
+                    }`}
+                  >
+                    <span className="text-2xl mb-1">{s.emoji}</span>
+                    <span className="text-xs font-bold block">{lang === 'hi' ? s.nameHi : s.nameEn}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Indicator Strips */}
+            <div>
+              <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
+                {lang === 'hi' ? 'सूचक (Indicator) चुनें:' : 'Select Testing Method / Indicator:'}
+              </span>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setIndicatorType('universal')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                    indicatorType === 'universal' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  🌈 {lang === 'hi' ? 'यूनिवर्सल pH पेपर' : 'Universal pH Strip'}
+                </button>
+                <button
+                  onClick={() => setIndicatorType('red_litmus')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                    indicatorType === 'red_litmus' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  🟥 {lang === 'hi' ? 'लाल लिटमस पेपर' : 'Red Litmus Paper'}
+                </button>
+                <button
+                  onClick={() => setIndicatorType('blue_litmus')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                    indicatorType === 'blue_litmus' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  🟦 {lang === 'hi' ? 'नीला लिटमस पेपर' : 'Blue Litmus Paper'}
+                </button>
+              </div>
+            </div>
+
+            {/* Test Strip Visual Result Card */}
+            {(() => {
+              const res = getIndicatorResult();
+              return (
+                <div className="bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
+                  
+                  <div className="flex items-center gap-4">
+                    {/* Visual Color Strip */}
+                    <div 
+                      style={{ backgroundColor: res.colorBg }}
+                      className="w-10 h-28 rounded-lg border-2 border-slate-400 shadow-md flex items-center justify-center font-black text-white text-xs rotate-6"
+                    >
+                      pH
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                        {lang === 'hi' ? 'परीक्षण परिणाम (Observation):' : 'Chemical Observation:'}
+                      </span>
+                      <h4 className="text-base font-black text-slate-900 mt-0.5">
+                        {lang === 'hi' ? res.labelHi : res.labelEn}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="bg-purple-100 text-purple-900 text-xs font-black px-2.5 py-0.5 rounded-md">
+                          pH: {selectedSample.ph}
+                        </span>
+                        <span className="bg-slate-200 text-slate-800 text-xs font-bold px-2.5 py-0.5 rounded-md">
+                          {lang === 'hi' ? selectedSample.typeHi : selectedSample.typeEn}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 max-w-xs text-center">
+                    💡 {selectedSample.ph < 7 
+                      ? (lang === 'hi' ? 'अम्ल (Acid) स्वाद में खट्टे होते हैं और नीले लिटमस को लाल करते हैं।' : 'Acids taste sour and turn blue litmus paper RED.')
+                      : selectedSample.ph === 7 
+                      ? (lang === 'hi' ? 'उदासीन (Neutral) न अम्ल होते हैं न क्षार।' : 'Neutral substances have balanced pH 7 (like pure water).')
+                      : (lang === 'hi' ? 'क्षार (Base) स्पर्श में चिकने होते हैं और लाल लिटमस को नीला करते हैं।' : 'Bases feel slippery and turn red litmus paper BLUE.')}
+                  </div>
+
+                </div>
+              );
+            })()}
+
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 4: INTERACTIVE SOLAR SYSTEM EXPLORER                  */}
+        {/* ========================================================= */}
+        {activeTab === 'solarsystem' && (
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  {lang === 'hi' ? 'हमारा सौरमंडल (Solar System Explorer)' : 'Interactive Solar System Explorer'}
+                </h3>
+                <p className="text-xs font-bold text-slate-500">
+                  {lang === 'hi' 
+                    ? 'सूर्य व ग्रहों पर टैप करें। उनकी आवाज़, दूरी और रोचक वैज्ञानिक तथ्य जानें!' 
+                    : 'Click any planet to hear its name pronounced and discover cosmic facts!'}
+                </p>
+              </div>
+              <button
+                onClick={() => playSpeech(lang === 'hi' ? selectedPlanet.funFactHi : selectedPlanet.funFactEn)}
+                className="p-2 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              >
+                <Volume2 className="w-4 h-4 text-purple-600" />
+                {lang === 'hi' ? 'ग्रह तथ्य सुनें' : 'Listen Planet Fact'}
+              </button>
+            </div>
+
+            {/* Orbit / Planet Selection Deck */}
+            <div className="bg-slate-950 p-4 md:p-6 rounded-3xl border-4 border-slate-800 flex items-center gap-2 overflow-x-auto shadow-2xl">
+              {/* The Sun */}
+              <div className="shrink-0 flex flex-col items-center mr-2">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-orange-500/50 shadow-lg flex items-center justify-center text-2xl animate-pulse">
+                  ☀️
+                </div>
+                <span className="text-[10px] font-black text-amber-300 mt-1">Sun</span>
+              </div>
+
+              {/* 8 Planets */}
+              {SOLAR_SYSTEM.map(p => (
                 <button
                   key={p.id}
                   onClick={() => {
                     stopAudio();
-                    setSelectedPlanet(p.id);
+                    setSelectedPlanet(p);
+                    playSpeech(lang === 'hi' 
+                      ? `${p.nameHi}। ${p.funFactHi}` 
+                      : `${p.nameEn}. ${p.funFactEn}`
+                    );
                   }}
-                  className={`p-3 rounded-2xl border-2 flex flex-col items-center justify-center transition cursor-pointer ${
-                    selectedPlanet === p.id
-                      ? 'bg-purple-600 border-purple-700 text-white shadow-md scale-105'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-purple-50'
+                  className={`shrink-0 p-3 rounded-2xl transition cursor-pointer flex flex-col items-center ${
+                    selectedPlanet.id === p.id 
+                      ? 'bg-slate-800 ring-2 ring-purple-400 scale-110 shadow-lg' 
+                      : 'hover:bg-slate-900 opacity-80'
                   }`}
                 >
                   <span className="text-3xl mb-1">{p.emoji}</span>
-                  <span className="text-[11px] font-black">
-                    {lang === 'hi' ? p.nameHi.split(' ')[0] : p.nameEn}
-                  </span>
+                  <span className="text-xs font-black text-white">{lang === 'hi' ? p.nameHi.split(' ')[0] : p.nameEn}</span>
+                  <span className="text-[9px] font-bold text-slate-400 mt-0.5">{p.distance}</span>
                 </button>
               ))}
             </div>
 
-            {/* Gravity Calculator Display */}
-            <div className="w-full bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-3xl p-6 shadow-sm flex flex-col items-center">
-              <span className="text-xs font-bold text-slate-500 mb-1">
-                {t.gravityCalcPrefix} {earthWeight} kg{t.gravityCalcSuffix}
-              </span>
-              <div className="flex items-baseline gap-2 my-2">
-                <span className="text-4xl md:text-5xl font-black text-purple-950">
-                  {Math.round(earthWeight * currentPlanetObj.factor * 10) / 10}
-                </span>
-                <span className="text-lg font-bold text-purple-800">
-                  kg ({lang === 'hi' ? 'किलोग्राम' : 'Kilograms'})
-                </span>
-              </div>
-              <div className="bg-white px-4 py-2 rounded-xl border border-purple-200 text-xs font-bold text-purple-900 mt-2">
-                🚀 {t.gravityJump} {lang === 'hi' ? currentPlanetObj.jumpHi : currentPlanetObj.jumpEn}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* MODULE 3: DENSITY & BUOYANCY */}
-        {activeTab === 'density' && (
-          <div className="w-full max-w-xl flex flex-col items-center text-center">
-            <span className="text-xs font-black text-purple-900 mb-4">
-              {t.densityPrompt}
-            </span>
-
-            {/* Item Chooser */}
-            <div className="grid grid-cols-4 gap-2 md:gap-3 w-full mb-6">
-              {DENSITY_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    stopAudio();
-                    setDroppedItem(item.id);
-                  }}
-                  className={`p-3 rounded-2xl border-2 flex flex-col items-center transition cursor-pointer ${
-                    droppedItem === item.id
-                      ? 'bg-purple-600 text-white border-purple-700 shadow-md scale-105'
-                      : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-purple-50'
-                  }`}
+            {/* Planet Spotlight Card */}
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div 
+                  style={{ backgroundColor: selectedPlanet.color }}
+                  className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-md text-white"
                 >
-                  <span className="text-3xl mb-1">{item.emoji}</span>
-                  <span className="text-[10px] font-black">
-                    {lang === 'hi' ? item.nameHi.split(' ')[0] : item.nameEn}
+                  {selectedPlanet.emoji}
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
+                    {lang === 'hi' ? 'ग्रह विवरण (Planet Details)' : 'Planet Profile'}
                   </span>
-                </button>
-              ))}
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight">
+                    {lang === 'hi' ? selectedPlanet.nameHi : selectedPlanet.nameEn}
+                  </h3>
+                  <div className="flex gap-2 mt-1">
+                    <span className="bg-white px-2.5 py-0.5 rounded-md text-xs font-bold text-slate-700 border border-purple-100">
+                      📏 {lang === 'hi' ? 'सूर्य से दूरी:' : 'Distance:'} {selectedPlanet.distance}
+                    </span>
+                    <span className="bg-white px-2.5 py-0.5 rounded-md text-xs font-bold text-slate-700 border border-purple-100">
+                      ⭐ {selectedPlanet.size}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-purple-200 max-w-sm text-xs font-bold text-purple-950 leading-relaxed shadow-xs">
+                💡 {lang === 'hi' ? selectedPlanet.funFactHi : selectedPlanet.funFactEn}
+              </div>
             </div>
 
-            {/* Virtual Water Beaker */}
-            <div className="relative w-full h-56 bg-gradient-to-b from-sky-100 to-blue-200 rounded-3xl border-4 border-blue-400 p-4 flex flex-col justify-between overflow-hidden shadow-inner">
-              <span className="text-[10px] font-extrabold text-blue-900 self-end bg-white/70 px-2 py-0.5 rounded">
-                {t.waterDensity}
-              </span>
-
-              {droppedItem ? (
-                (() => {
-                  const it = DENSITY_ITEMS.find((d) => d.id === droppedItem)!;
-                  return (
-                    <div className={`w-full flex flex-col items-center transition-all duration-700 ${
-                      it.floats ? 'justify-start mt-2' : 'justify-end mb-2'
-                    }`}>
-                      <span className="text-5xl animate-bounce">{it.emoji}</span>
-                      <span className="bg-white/90 text-slate-900 font-extrabold text-xs px-3 py-1 rounded-full shadow mt-2">
-                        {it.floats ? t.densityFloats : t.densitySinks}
-                      </span>
-                      <p className="text-[11px] font-bold text-blue-950 mt-1 bg-white/60 px-2 py-0.5 rounded">
-                        {lang === 'hi' ? it.reasonHi : it.reasonEn}
-                      </p>
-                    </div>
-                  );
-                })()
-              ) : (
-                <div className="h-full flex items-center justify-center text-xs font-bold text-blue-800/70">
-                  {t.dropPrompt}
-                </div>
-              )}
-
-              <div className="w-full h-3 bg-blue-300/40 rounded-full" />
-            </div>
-          </div>
-        )}
-
-        {/* MODULE 4: PLANT LIFECYCLE & PHOTOSYNTHESIS */}
-        {activeTab === 'plants' && (
-          <div className="w-full max-w-xl flex flex-col items-center text-center">
-            <span className="text-xs font-black text-purple-900 mb-4">
-              {t.plantPrompt}
-            </span>
-
-            {/* Toggle Controls */}
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={() => {
-                  stopAudio();
-                  setSunlight(!sunlight);
-                }}
-                className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border-2 transition cursor-pointer ${
-                  sunlight ? 'bg-amber-400 border-amber-500 text-amber-950 shadow' : 'bg-slate-100 border-slate-300 text-slate-400'
-                }`}
-              >
-                {t.sunlightBtn} {sunlight ? t.onLabel : t.offLabel}
-              </button>
-              <button
-                onClick={() => {
-                  stopAudio();
-                  setWatered(!watered);
-                }}
-                className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border-2 transition cursor-pointer ${
-                  watered ? 'bg-blue-500 border-blue-600 text-white shadow' : 'bg-slate-100 border-slate-300 text-slate-400'
-                }`}
-              >
-                {t.waterBtn} {watered ? t.onLabel : t.offLabel}
-              </button>
-            </div>
-
-            {/* Plant Stage Visualization */}
-            <div className="w-full h-52 bg-gradient-to-b from-sky-50 to-emerald-100 rounded-3xl border-2 border-emerald-300 p-6 flex flex-col items-center justify-center shadow-inner">
-              {sunlight && watered ? (
-                <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                  <span className="text-6xl mb-2">🌸</span>
-                  <span className="text-base font-black text-emerald-950">
-                    {lang === 'hi' ? 'पूर्ण विकसित पुष्पित पौधा!' : 'Healthy Flowering Plant!'}
-                  </span>
-                  <span className="text-xs font-bold text-emerald-700 mt-1">
-                    {lang === 'hi' ? 'प्रकाश संश्लेषण पूर्ण हुआ!' : 'Photosynthesis Successful!'}
-                  </span>
-                </div>
-              ) : sunlight && !watered ? (
-                <div className="flex flex-col items-center">
-                  <span className="text-5xl mb-2">🥀</span>
-                  <span className="text-sm font-black text-amber-950">
-                    {lang === 'hi' ? 'पौधा मुरझा रहा है' : 'Wilting Seedling (Needs Water)'}
-                  </span>
-                  <span className="text-xs text-amber-800">
-                    {lang === 'hi' ? 'विकास के लिए पानी अनिवार्य है।' : 'Water is vital for cell hydration.'}
-                  </span>
-                </div>
-              ) : !sunlight && watered ? (
-                <div className="flex flex-col items-center">
-                  <span className="text-5xl mb-2">🌱</span>
-                  <span className="text-sm font-black text-slate-800">
-                    {lang === 'hi' ? 'धीमी वृद्धि' : 'Slow Growth (Needs Sunlight)'}
-                  </span>
-                  <span className="text-xs text-slate-600">
-                    {lang === 'hi' ? 'भोजन बनाने के लिए धूप की आवश्यकता है।' : 'Chlorophyll requires sunlight to make food.'}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl mb-2">🌰</span>
-                  <span className="text-sm font-black text-stone-700">
-                    {lang === 'hi' ? 'सुप्त बीज' : 'Dormant Seed'}
-                  </span>
-                  <span className="text-xs text-stone-500">
-                    {lang === 'hi' ? 'धूप और पानी दोनों चालू करें।' : 'Enable both sunlight and water to sprout.'}
-                  </span>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
