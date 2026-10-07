@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Sparkles, RotateCcw, Volume2, Globe2, Flame, 
-  FlaskConical, Compass, ArrowRight, Droplets, CheckCircle2 
+  Volume2, Globe2, Flame, 
+  FlaskConical, Droplets
 } from 'lucide-react';
 
 type ScienceTab = 'density' | 'matter' | 'phlab' | 'solarsystem';
@@ -45,7 +45,6 @@ const DENSITY_OBJECTS: TestObject[] = [
   { id: 'cork', nameEn: 'Wood Cork', nameHi: 'लकड़ी का कॉर्क', emoji: '🪵', density: 0.24 }
 ];
 
-// Matter Substances
 interface Substance {
   id: string;
   nameEn: string;
@@ -76,7 +75,7 @@ const SUBSTANCES: Substance[] = [
     emoji: '⚪',
     sublimates: true,
     meltTemp: 175, 
-    boilTemp: 204, // Sublimates directly at room temp / mild heat
+    boilTemp: 204,
     funFactEn: 'Sublimation! Camphor transforms directly from solid to aromatic gas without melting into liquid!',
     funFactHi: 'ऊर्ध्वपातन (Sublimation)! कपूर बिना द्रव बने सीधे ठोस से सुगन्धित गैस में बदल जाता है!'
   },
@@ -102,7 +101,6 @@ const SUBSTANCES: Substance[] = [
   }
 ];
 
-// pH Lab Items
 interface PHSample {
   id: string;
   nameEn: string;
@@ -122,35 +120,128 @@ const PH_SAMPLES: PHSample[] = [
   { id: 'soap', nameEn: 'Soap & Detergent', nameHi: 'साबुन का घोल (Soap)', emoji: '🧼', ph: 11.5, typeEn: 'Strong Base', typeHi: 'प्रबल क्षार', color: '#3b82f6' }
 ];
 
-// Solar System Data
 interface PlanetItem {
   id: string;
   nameEn: string;
   nameHi: string;
-  emoji: string;
   distance: string;
   size: string;
   funFactEn: string;
   funFactHi: string;
   color: string;
+  grad: string;
+  sphereSize: string;
+  ring?: boolean;
+  bands?: boolean;
+  hasGlow?: boolean;
 }
 
 const SOLAR_SYSTEM: PlanetItem[] = [
-  { id: 'mercury', nameEn: 'Mercury', nameHi: 'बुध ग्रह', emoji: '⚪', distance: '58M km', size: 'Smallest', color: '#94a3b8', funFactEn: 'Mercury is the smallest planet and closest to the Sun. It has no atmosphere!', funFactHi: 'बुध सूर्य का सबसे नजदीकी और सौरमंडल का सबसे छोटा ग्रह है!' },
-  { id: 'venus', nameEn: 'Venus', nameHi: 'शुक्र ग्रह', emoji: '🟡', distance: '108M km', size: 'Earth-sized', color: '#facc15', funFactEn: 'Venus is the hottest planet because of thick runaway greenhouse gases!', funFactHi: 'शुक्र हमारे सौरमंडल का सबसे गर्म ग्रह है क्योंकि यहाँ घने तेजाबी बादल हैं!' },
-  { id: 'earth', nameEn: 'Earth', nameHi: 'पृथ्वी (हमारा घर)', emoji: '🌍', distance: '150M km', size: 'Life Haven', color: '#38bdf8', funFactEn: 'Earth is our home—the only known planet with liquid water, oxygen, and life!', funFactHi: 'पृथ्वी हमारा घर है—एकमात्र ऐसा ग्रह जहाँ जीवन, जल और ऑक्सीजन मौजूद है!' },
-  { id: 'mars', nameEn: 'Mars', nameHi: 'मंगल ग्रह', emoji: '🔴', distance: '228M km', size: 'Red Planet', color: '#ef4444', funFactEn: 'Mars is red because of rusted iron soil. It has the tallest volcano: Olympus Mons!', funFactHi: 'मंगल ग्रह पर लोहे की जंग वाली लाल मिट्टी है और सौरमंडल का सबसे ऊँचा पर्वत भी!' },
-  { id: 'jupiter', nameEn: 'Jupiter', nameHi: 'बृहस्पति ग्रह', emoji: '🪐', distance: '778M km', size: 'Giant Gas King', color: '#ea580c', funFactEn: 'Jupiter is the largest planet—so massive that over 1,300 Earths could fit inside!', funFactHi: 'बृहस्पति सबसे बड़ा ग्रह है—इसके अंदर 1300 पृथ्वी समा सकती हैं!' },
-  { id: 'saturn', nameEn: 'Saturn', nameHi: 'शनि ग्रह', emoji: '🪐', distance: '1.4B km', size: 'Ringed Beauty', color: '#eab308', funFactEn: 'Saturn is famous for its majestic sparkling rings made of ice chunks and dust!', funFactHi: 'शनि अपने विशाल और सुंदर बर्फीले छल्लों (वलयों) के लिए प्रसिद्ध है!' },
-  { id: 'uranus', nameEn: 'Uranus', nameHi: 'अरुण ग्रह', emoji: '🧊', distance: '2.8B km', size: 'Ice Giant', color: '#06b6d4', funFactEn: 'Uranus rotates tilted on its side like a rolling bowling ball!', funFactHi: 'अरुण ग्रह अपनी धुरी पर 98 डिग्री झुका हुआ है और लुढ़कती गेंद की तरह घूमता है!' },
-  { id: 'neptune', nameEn: 'Neptune', nameHi: 'वरुण ग्रह', emoji: '🌀', distance: '4.5B km', size: 'Deep Blue', color: '#2563eb', funFactEn: 'Neptune has supersonic storms and wind speeds exceeding 2,000 km per hour!', funFactHi: 'वरुण गहरे नीले रंग का बर्फीला ग्रह है जहाँ 2000 किमी/घंटे की गति से बर्फीली हवाएं चलती हैं!' }
+  { 
+    id: 'mercury', 
+    nameEn: 'Mercury', 
+    nameHi: 'बुध ग्रह', 
+    distance: '58M km', 
+    size: 'Smallest Planet', 
+    color: '#71717a', 
+    grad: 'from-stone-300 via-zinc-500 to-stone-800',
+    sphereSize: 'w-7 h-7',
+    funFactEn: 'Mercury is the smallest planet and closest to the Sun. It has no atmosphere!', 
+    funFactHi: 'बुध सूर्य का सबसे नजदीकी और सौरमंडल का सबसे छोटा ग्रह है!' 
+  },
+  { 
+    id: 'venus', 
+    nameEn: 'Venus', 
+    nameHi: 'शुक्र ग्रह', 
+    distance: '108M km', 
+    size: 'Earth-sized', 
+    color: '#eab308', 
+    grad: 'from-amber-200 via-yellow-600 to-amber-900',
+    sphereSize: 'w-9 h-9',
+    funFactEn: 'Venus is the hottest planet because of thick runaway greenhouse gases!', 
+    funFactHi: 'शुक्र हमारे सौरमंडल का सबसे गर्म ग्रह है क्योंकि यहाँ घने तेजाबी बादल हैं!' 
+  },
+  { 
+    id: 'earth', 
+    nameEn: 'Earth', 
+    nameHi: 'पृथ्वी (हमारा घर)', 
+    distance: '150M km', 
+    size: 'Life Haven', 
+    color: '#0284c7', 
+    grad: 'from-sky-300 via-blue-600 to-emerald-700',
+    sphereSize: 'w-10 h-10',
+    hasGlow: true,
+    funFactEn: 'Earth is our home—the only known planet with liquid water, oxygen, and life!', 
+    funFactHi: 'पृथ्वी हमारा घर है—एकमात्र ऐसा ग्रह जहाँ जीवन, जल और ऑक्सीजन मौजूद है!' 
+  },
+  { 
+    id: 'mars', 
+    nameEn: 'Mars', 
+    nameHi: 'मंगल ग्रह', 
+    distance: '228M km', 
+    size: 'Red Planet', 
+    color: '#dc2626', 
+    grad: 'from-orange-400 via-red-600 to-amber-950',
+    sphereSize: 'w-8 h-8',
+    funFactEn: 'Mars is red because of rusted iron soil. It has the tallest volcano: Olympus Mons!', 
+    funFactHi: 'मंगल ग्रह पर लोहे की जंग वाली लाल मिट्टी है और सौरमंडल का सबसे ऊँचा पर्वत भी!' 
+  },
+  { 
+    id: 'jupiter', 
+    nameEn: 'Jupiter', 
+    nameHi: 'बृहस्पति ग्रह', 
+    distance: '778M km', 
+    size: 'Giant Gas King', 
+    color: '#ea580c', 
+    grad: 'from-amber-100 via-orange-300 to-amber-900',
+    sphereSize: 'w-14 h-14',
+    bands: true,
+    funFactEn: 'Jupiter is the largest planet—so massive that over 1,300 Earths could fit inside!', 
+    funFactHi: 'बृहस्पति सबसे बड़ा ग्रह है—इसके अंदर 1300 पृथ्वी समा सकती हैं!' 
+  },
+  { 
+    id: 'saturn', 
+    nameEn: 'Saturn', 
+    nameHi: 'शनि ग्रह', 
+    distance: '1.4B km', 
+    size: 'Ringed Beauty', 
+    color: '#ca8a04', 
+    grad: 'from-yellow-100 via-amber-200 to-stone-600',
+    sphereSize: 'w-12 h-12',
+    ring: true,
+    funFactEn: 'Saturn is famous for its majestic sparkling rings made of ice chunks and dust!', 
+    funFactHi: 'शनि अपने विशाल और सुंदर बर्फीले छल्लों (वलयों) के लिए प्रसिद्ध है!' 
+  },
+  { 
+    id: 'uranus', 
+    nameEn: 'Uranus', 
+    nameHi: 'अरुण ग्रह', 
+    distance: '2.8B km', 
+    size: 'Ice Giant', 
+    color: '#0891b2', 
+    grad: 'from-cyan-200 via-teal-400 to-blue-800',
+    sphereSize: 'w-10 h-10',
+    funFactEn: 'Uranus rotates tilted on its side like a rolling bowling ball!', 
+    funFactHi: 'अरुण ग्रह अपनी धुरी पर 98 डिग्री झुका हुआ है और लुढ़कती गेंद की तरह घूमता है!' 
+  },
+  { 
+    id: 'neptune', 
+    nameEn: 'Neptune', 
+    nameHi: 'वरुण ग्रह', 
+    distance: '4.5B km', 
+    size: 'Deep Blue', 
+    color: '#1d4ed8', 
+    grad: 'from-blue-400 via-indigo-600 to-blue-950',
+    sphereSize: 'w-10 h-10',
+    funFactEn: 'Neptune has supersonic storms and wind speeds exceeding 2,000 km per hour!', 
+    funFactHi: 'वरुण गहरे नीले रंग का बर्फीला ग्रह है जहाँ 2000 किमी/घंटे की गति से बर्फीली हवाएं चलती हैं!' 
+  }
 ];
 
 export function JuniorResearcherStudio() {
   const [lang, setLang] = useState<'hi' | 'en'>('hi');
   const [activeTab, setActiveTab] = useState<ScienceTab>('density');
 
-  // AUDIO UTILITY
   const stopAudio = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -172,18 +263,15 @@ export function JuniorResearcherStudio() {
     return () => stopAudio();
   }, []);
 
-  // -------------------------------------------------------------
   // TAB 1: DENSITY TOWER STATE
-  // -------------------------------------------------------------
-  const [pouredLiquids, setPouredLiquids] = useState<LiquidItem[]>([LIQUIDS[0], LIQUIDS[2], LIQUIDS[3]]); // Default: Honey, Water, Oil
-  const [droppedObject, setDroppedObject] = useState<TestObject | null>(DENSITY_OBJECTS[1]); // Default: Grape
+  const [pouredLiquids, setPouredLiquids] = useState<LiquidItem[]>([LIQUIDS[0], LIQUIDS[2], LIQUIDS[3]]);
+  const [droppedObject, setDroppedObject] = useState<TestObject | null>(DENSITY_OBJECTS[1]);
 
   const toggleLiquid = (liq: LiquidItem) => {
     stopAudio();
     if (pouredLiquids.some(l => l.id === liq.id)) {
       setPouredLiquids(prev => prev.filter(l => l.id !== liq.id));
     } else {
-      // Add and auto-sort descending by density (densest sinks to bottom)
       const next = [...pouredLiquids, liq].sort((a, b) => b.density - a.density);
       setPouredLiquids(next);
       playSpeech(lang === 'hi' 
@@ -202,9 +290,7 @@ export function JuniorResearcherStudio() {
     );
   };
 
-  // -------------------------------------------------------------
   // TAB 2: STATES OF MATTER STATE
-  // -------------------------------------------------------------
   const [selectedSubstance, setSelectedSubstance] = useState<Substance>(SUBSTANCES[0]);
   const [currentTemp, setCurrentTemp] = useState<number>(25);
 
@@ -222,9 +308,7 @@ export function JuniorResearcherStudio() {
     return { phaseEn: 'Gaseous Vapor', phaseHi: 'गैस / वाष्प (Gas)', emoji: '♨️', stateColor: 'bg-rose-100 text-rose-900 border-rose-300' };
   };
 
-  // -------------------------------------------------------------
   // TAB 3: ACID / BASE pH LAB STATE
-  // -------------------------------------------------------------
   const [selectedSample, setSelectedSample] = useState<PHSample>(PH_SAMPLES[0]);
   const [indicatorType, setIndicatorType] = useState<'universal' | 'red_litmus' | 'blue_litmus'>('universal');
 
@@ -244,7 +328,6 @@ export function JuniorResearcherStudio() {
         colorBg: turnsBlue ? '#2563eb' : '#ef4444'
       };
     }
-    // Blue litmus
     const turnsRed = selectedSample.ph < 6.5;
     return {
       labelEn: turnsRed ? 'Blue Litmus turned RED (Shows Acid!)' : 'Blue Litmus stayed BLUE (Base / Neutral)',
@@ -253,10 +336,8 @@ export function JuniorResearcherStudio() {
     };
   };
 
-  // -------------------------------------------------------------
   // TAB 4: SOLAR SYSTEM STATE
-  // -------------------------------------------------------------
-  const [selectedPlanet, setSelectedPlanet] = useState<PlanetItem>(SOLAR_SYSTEM[2]); // Earth default
+  const [selectedPlanet, setSelectedPlanet] = useState<PlanetItem>(SOLAR_SYSTEM[2]);
 
   return (
     <div className="max-w-5xl mx-auto p-3 md:p-6 font-sans select-none">
@@ -346,9 +427,7 @@ export function JuniorResearcherStudio() {
       {/* Main Interactive Stage */}
       <div className="bg-white rounded-3xl p-5 md:p-8 border-2 border-purple-200 shadow-xl min-h-[480px]">
 
-        {/* ========================================================= */}
-        {/* TAB 1: INTERACTIVE MULTI-LIQUID DENSITY TOWER             */}
-        {/* ========================================================= */}
+        {/* TAB 1: INTERACTIVE MULTI-LIQUID DENSITY TOWER */}
         {activeTab === 'density' && (
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
@@ -374,11 +453,7 @@ export function JuniorResearcherStudio() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-              
-              {/* Left Selector: Liquids & Droppable Objects */}
               <div className="md:col-span-6 flex flex-col gap-4">
-                
-                {/* 1. Choose Liquids */}
                 <div>
                   <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
                     {lang === 'hi' ? '१. तरल चुनें (Click to Add / Remove):' : '1. Click to Pour / Remove Liquids:'}
@@ -418,7 +493,6 @@ export function JuniorResearcherStudio() {
                   </div>
                 </div>
 
-                {/* 2. Choose Floating / Sinking Objects */}
                 <div>
                   <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
                     {lang === 'hi' ? '२. कोई वस्तु बीकर में डालकर देखें (Drop Item):' : '2. Drop an Object to Test Floating Level:'}
@@ -443,19 +517,16 @@ export function JuniorResearcherStudio() {
                     ))}
                   </div>
                 </div>
-
               </div>
 
-              {/* Right: The Virtual Glass Cylinder Tower */}
               <div className="md:col-span-6 flex flex-col items-center">
                 <div className="relative w-48 h-80 bg-slate-100/60 rounded-b-3xl rounded-t-lg border-4 border-slate-400 border-t-0 p-2 flex flex-col-reverse justify-start overflow-hidden shadow-2xl backdrop-blur-xs">
-                  
                   {pouredLiquids.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-center p-3 text-xs font-bold text-slate-400">
                       {lang === 'hi' ? 'बाएं से कोई तरल चुनें' : 'Choose liquids to pour into cylinder'}
                     </div>
                   ) : (
-                    pouredLiquids.map((liq, idx) => {
+                    pouredLiquids.map((liq) => {
                       const layerHeightPercent = 100 / pouredLiquids.length;
                       return (
                         <div
@@ -473,11 +544,9 @@ export function JuniorResearcherStudio() {
                     })
                   )}
 
-                  {/* Settled Test Object Indicator */}
                   {droppedObject && pouredLiquids.length > 0 && (
                     <div className="absolute inset-x-0 flex justify-center items-center pointer-events-none transition-all duration-700"
                       style={{
-                        // Determine resting height: sinks below all liquids lighter than it
                         bottom: `${Math.min(
                           90,
                           Math.max(
@@ -495,21 +564,17 @@ export function JuniorResearcherStudio() {
                       </div>
                     </div>
                   )}
-
                 </div>
 
                 <span className="text-[11px] font-bold text-slate-500 mt-2">
                   🧪 {lang === 'hi' ? 'कांच का बीकर (Graduated Cylinder)' : 'Liquid Layering Column'}
                 </span>
               </div>
-
             </div>
           </div>
         )}
 
-        {/* ========================================================= */}
-        {/* TAB 2: STATES OF MATTER WITH SUBSTANCES & SUBLIMATION      */}
-        {/* ========================================================= */}
+        {/* TAB 2: STATES OF MATTER WITH SUBSTANCES & SUBLIMATION */}
         {activeTab === 'matter' && (
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
@@ -532,7 +597,6 @@ export function JuniorResearcherStudio() {
               </button>
             </div>
 
-            {/* Substance Switcher */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {SUBSTANCES.map(s => (
                 <button
@@ -557,12 +621,10 @@ export function JuniorResearcherStudio() {
               ))}
             </div>
 
-            {/* Thermal Reaction Chamber */}
             {(() => {
               const phase = getSubstancePhase();
               return (
                 <div className="bg-slate-50 rounded-3xl border-2 border-slate-200 p-6 flex flex-col items-center text-center">
-                  
                   <div className="w-32 h-32 rounded-3xl bg-white border-2 border-slate-200 flex flex-col items-center justify-center shadow-inner mb-3">
                     <span className="text-6xl animate-pulse">{phase.emoji}</span>
                   </div>
@@ -575,7 +637,6 @@ export function JuniorResearcherStudio() {
                     {lang === 'hi' ? selectedSubstance.funFactHi : selectedSubstance.funFactEn}
                   </p>
 
-                  {/* Temperature Range Slider */}
                   <div className="w-full max-w-lg bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-black text-slate-800">
@@ -608,16 +669,13 @@ export function JuniorResearcherStudio() {
                       <span>{selectedSubstance.id === 'iron' ? '3000°C' : '250°C'}</span>
                     </div>
                   </div>
-
                 </div>
               );
             })()}
           </div>
         )}
 
-        {/* ========================================================= */}
-        {/* TAB 3: ACID / BASE & pH TESTING LAB                       */}
-        {/* ========================================================= */}
+        {/* TAB 3: ACID / BASE & pH TESTING LAB */}
         {activeTab === 'phlab' && (
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
@@ -642,7 +700,6 @@ export function JuniorResearcherStudio() {
               </button>
             </div>
 
-            {/* Sample Chooser */}
             <div>
               <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
                 {lang === 'hi' ? 'परीक्षण हेतु वस्तु चुनें (Choose Sample):' : 'Select a Test Sample:'}
@@ -672,7 +729,6 @@ export function JuniorResearcherStudio() {
               </div>
             </div>
 
-            {/* Indicator Strips */}
             <div>
               <span className="text-xs font-black text-purple-950 uppercase tracking-wide block mb-2">
                 {lang === 'hi' ? 'सूचक (Indicator) चुनें:' : 'Select Testing Method / Indicator:'}
@@ -705,14 +761,11 @@ export function JuniorResearcherStudio() {
               </div>
             </div>
 
-            {/* Test Strip Visual Result Card */}
             {(() => {
               const res = getIndicatorResult();
               return (
                 <div className="bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
-                  
                   <div className="flex items-center gap-4">
-                    {/* Visual Color Strip */}
                     <div 
                       style={{ backgroundColor: res.colorBg }}
                       className="w-10 h-28 rounded-lg border-2 border-slate-400 shadow-md flex items-center justify-center font-black text-white text-xs rotate-6"
@@ -745,17 +798,13 @@ export function JuniorResearcherStudio() {
                       ? (lang === 'hi' ? 'उदासीन (Neutral) न अम्ल होते हैं न क्षार।' : 'Neutral substances have balanced pH 7 (like pure water).')
                       : (lang === 'hi' ? 'क्षार (Base) स्पर्श में चिकने होते हैं और लाल लिटमस को नीला करते हैं।' : 'Bases feel slippery and turn red litmus paper BLUE.')}
                   </div>
-
                 </div>
               );
             })()}
-
           </div>
         )}
 
-        {/* ========================================================= */}
-        {/* TAB 4: INTERACTIVE SOLAR SYSTEM EXPLORER                  */}
-        {/* ========================================================= */}
+        {/* TAB 4: REDESIGNED COSMIC SOLAR SYSTEM SIMULATOR (CSS/SVG SPHERES) */}
         {activeTab === 'solarsystem' && (
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
@@ -765,75 +814,111 @@ export function JuniorResearcherStudio() {
                 </h3>
                 <p className="text-xs font-bold text-slate-500">
                   {lang === 'hi' 
-                    ? 'सूर्य व ग्रहों पर टैप करें। उनकी आवाज़, दूरी और रोचक वैज्ञानिक तथ्य जानें!' 
-                    : 'Click any planet to hear its name pronounced and discover cosmic facts!'}
+                    ? 'किसी भी ग्रह पर टैप करें—उसकी कक्षा, वास्तविक रंग और रोचक तथ्य जानें!' 
+                    : 'Click any planet to inspect its orbit, atmosphere, and hear real cosmic facts!'}
                 </p>
               </div>
               <button
                 onClick={() => playSpeech(lang === 'hi' ? selectedPlanet.funFactHi : selectedPlanet.funFactEn)}
-                className="p-2 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                className="p-2.5 bg-purple-50 text-purple-900 hover:bg-purple-100 rounded-2xl transition cursor-pointer flex items-center gap-2 text-xs font-black border border-purple-200"
               >
                 <Volume2 className="w-4 h-4 text-purple-600" />
-                {lang === 'hi' ? 'ग्रह तथ्य सुनें' : 'Listen Planet Fact'}
+                {lang === 'hi' ? 'तथ्य सुनें (Listen Audio)' : 'Listen Cosmic Fact'}
               </button>
             </div>
 
-            {/* Orbit / Planet Selection Deck */}
-            <div className="bg-slate-950 p-4 md:p-6 rounded-3xl border-4 border-slate-800 flex items-center gap-2 overflow-x-auto shadow-2xl">
+            {/* Space Canvas Container */}
+            <div className="relative w-full min-h-[220px] bg-[#070b19] rounded-3xl p-6 border-2 border-slate-800 shadow-2xl flex items-center justify-between overflow-x-auto gap-4 scrollbar-none">
+              
+              {/* Starfield Background */}
+              <div className="absolute inset-0 opacity-40 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+
               {/* The Sun */}
-              <div className="shrink-0 flex flex-col items-center mr-2">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-orange-500/50 shadow-lg flex items-center justify-center text-2xl animate-pulse">
-                  ☀️
+              <div className="shrink-0 flex flex-col items-center z-10 mr-2">
+                <div className="relative w-16 h-16 rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200 shadow-[0_0_40px_rgba(245,158,11,0.9)] animate-pulse flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-2 border-yellow-200/40 animate-ping [animation-duration:3s]" />
                 </div>
-                <span className="text-[10px] font-black text-amber-300 mt-1">Sun</span>
+                <span className="text-[11px] font-black text-amber-300 mt-2 tracking-wider">SUN</span>
               </div>
 
-              {/* 8 Planets */}
-              {SOLAR_SYSTEM.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    stopAudio();
-                    setSelectedPlanet(p);
-                    playSpeech(lang === 'hi' 
-                      ? `${p.nameHi}। ${p.funFactHi}` 
-                      : `${p.nameEn}. ${p.funFactEn}`
-                    );
-                  }}
-                  className={`shrink-0 p-3 rounded-2xl transition cursor-pointer flex flex-col items-center ${
-                    selectedPlanet.id === p.id 
-                      ? 'bg-slate-800 ring-2 ring-purple-400 scale-110 shadow-lg' 
-                      : 'hover:bg-slate-900 opacity-80'
-                  }`}
-                >
-                  <span className="text-3xl mb-1">{p.emoji}</span>
-                  <span className="text-xs font-black text-white">{lang === 'hi' ? p.nameHi.split(' ')[0] : p.nameEn}</span>
-                  <span className="text-[9px] font-bold text-slate-400 mt-0.5">{p.distance}</span>
-                </button>
-              ))}
+              {/* Planets */}
+              {SOLAR_SYSTEM.map((p) => {
+                const isSelected = selectedPlanet.id === p.id;
+
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      stopAudio();
+                      setSelectedPlanet(p);
+                      playSpeech(lang === 'hi' 
+                        ? `${p.nameHi}। ${p.funFactHi}` 
+                        : `${p.nameEn}. ${p.funFactEn}`
+                      );
+                    }}
+                    className={`shrink-0 flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all cursor-pointer relative z-10 group ${
+                      isSelected 
+                        ? 'bg-white/10 ring-2 ring-purple-400 scale-110 shadow-lg' 
+                        : 'hover:bg-white/5 opacity-85 hover:opacity-100'
+                    }`}
+                  >
+                    {/* Realistic Sphere / Rings Container */}
+                    <div className="relative flex items-center justify-center h-16">
+                      <div 
+                        className={`${p.sphereSize} rounded-full bg-gradient-to-br ${p.grad} shadow-inner transition-transform group-hover:scale-105`}
+                        style={{
+                          boxShadow: p.hasGlow 
+                            ? '0 0 16px rgba(56,189,248,0.6), inset -3px -3px 8px rgba(0,0,0,0.7)' 
+                            : 'inset -3px -3px 8px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.5)'
+                        }}
+                      >
+                        {p.bands && (
+                          <div className="w-full h-full rounded-full opacity-35 bg-[repeating-linear-gradient(0deg,#78350f_0px,#78350f_2px,transparent_2px,transparent_6px)]" />
+                        )}
+                      </div>
+
+                      {p.ring && (
+                        <div className="absolute inset-0 -left-4 -right-4 flex items-center justify-center pointer-events-none">
+                          <div className="w-20 h-5 border-2 border-amber-300/80 rounded-[100%] rotate-[-24deg] shadow-sm" />
+                        </div>
+                      )}
+                    </div>
+
+                    <span className="text-xs font-black text-white mt-1 leading-tight">
+                      {lang === 'hi' ? p.nameHi : p.nameEn}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-400 font-mono">
+                      {p.distance}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Planet Spotlight Card */}
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
+            {/* Inspected Planet Detail Card */}
+            <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border-2 border-purple-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+              <div className="flex items-center gap-5">
                 <div 
-                  style={{ backgroundColor: selectedPlanet.color }}
-                  className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl shadow-md text-white"
-                >
-                  {selectedPlanet.emoji}
-                </div>
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-white shadow-xl relative overflow-hidden"
+                  style={{
+                    background: `radial-gradient(circle at 30% 30%, #ffffff 0%, ${selectedPlanet.color} 50%, #090d16 100%)`,
+                    boxShadow: `0 0 25px ${selectedPlanet.color}66`
+                  }}
+                />
+
                 <div>
                   <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
-                    {lang === 'hi' ? 'ग्रह विवरण (Planet Details)' : 'Planet Profile'}
+                    {lang === 'hi' ? 'ग्रह अन्वेषण प्रोफाइल' : 'Planetary Profile'}
                   </span>
                   <h3 className="text-2xl font-black text-slate-900 leading-tight">
                     {lang === 'hi' ? selectedPlanet.nameHi : selectedPlanet.nameEn}
                   </h3>
-                  <div className="flex gap-2 mt-1">
-                    <span className="bg-white px-2.5 py-0.5 rounded-md text-xs font-bold text-slate-700 border border-purple-100">
+                  
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    <span className="bg-white px-3 py-1 rounded-xl text-xs font-black text-slate-800 border border-purple-200 shadow-xs">
                       📏 {lang === 'hi' ? 'सूर्य से दूरी:' : 'Distance:'} {selectedPlanet.distance}
                     </span>
-                    <span className="bg-white px-2.5 py-0.5 rounded-md text-xs font-bold text-slate-700 border border-purple-100">
+                    <span className="bg-white px-3 py-1 rounded-xl text-xs font-black text-purple-900 border border-purple-200 shadow-xs">
                       ⭐ {selectedPlanet.size}
                     </span>
                   </div>
