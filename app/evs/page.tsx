@@ -4,15 +4,16 @@ import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HindiAnimalStudio } from '@/components/HindiAnimalStudio';
 import { HindiPlantStudio } from '@/components/HindiPlantStudio';
+import { HindiAnatomyStudio } from '@/components/HindiAnatomyStudio';
 
-type EvsTab = 'animals' | 'plants' | 'seasons' | 'transport';
+type EvsTab = 'animals' | 'anatomy' | 'plants' | 'seasons' | 'transport';
 
 function EvsPortalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get('tab');
-  const validTabs: EvsTab[] = ['animals', 'plants', 'seasons', 'transport'];
+  const validTabs: EvsTab[] = ['animals', 'anatomy', 'plants', 'seasons', 'transport'];
   const activeTab: EvsTab = validTabs.includes(tabParam as EvsTab) ? (tabParam as EvsTab) : 'animals';
 
   const handleTabChange = (newTab: EvsTab) => {
@@ -50,6 +51,16 @@ function EvsPortalContent() {
             🦁 पशु-पक्षी संसार (Animals)
           </button>
           <button
+            onClick={() => handleTabChange('anatomy')}
+            className={`px-3.5 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
+              activeTab === 'anatomy'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-emerald-900 hover:bg-emerald-200/50'
+            }`}
+          >
+            👦 हमारा शरीर व दाँत (My Body &amp; Teeth)
+          </button>
+          <button
             onClick={() => handleTabChange('plants')}
             className={`px-3.5 py-2 rounded-lg transition whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === 'plants'
@@ -77,7 +88,7 @@ function EvsPortalContent() {
                 : 'text-emerald-900 hover:bg-emerald-200/50'
             }`}
           >
-            🚗 यातायात के साधन (Transport)
+            🚗 यातायात (Transport)
           </button>
         </div>
       </header>
@@ -85,6 +96,7 @@ function EvsPortalContent() {
       {/* Render Active Module */}
       <div className="w-full max-w-5xl">
         {activeTab === 'animals' && <HindiAnimalStudio />}
+        {activeTab === 'anatomy' && <HindiAnatomyStudio />}
         {activeTab === 'plants' && <HindiPlantStudio />}
         {activeTab === 'seasons' && (
           <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-emerald-300 text-center text-emerald-900">
