@@ -1,66 +1,72 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Volume2, Sparkles, CheckCircle2, RotateCcw, Heart, Smile, Frown, Trophy } from 'lucide-react';
+import { 
+  Volume2, Sparkles, CheckCircle2, RotateCcw, 
+  Smile, Frown, ShieldCheck, Heart, Info, ArrowRight 
+} from 'lucide-react';
 
 type SubModule = 'body' | 'teeth';
 
-interface BodyPart {
+interface BodyPin {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  x: number; // percentage in SVG coordinate space
+  y: number;
+  badgeBg: string;
+  funFactEn: string;
+  funFactHi: string;
+  senseEn: string;
+  senseHi: string;
+}
+
+const BODY_PINS: BodyPin[] = [
+  { id: 'hair', nameEn: 'Hair & Head', nameHi: 'सिर और बाल', x: 50, y: 11, badgeBg: '#7c3aed', senseEn: 'Protects the brain helmet!', senseHi: 'मस्तिष्क को सुरक्षित रखता है!', funFactEn: 'Humans have around 100,000 hairs on their head.', funFactHi: 'हमारे सिर पर लगभग 1 लाख बाल होते हैं।' },
+  { id: 'eyes', nameEn: 'Eyes', nameHi: 'आँखें', x: 44, y: 22, badgeBg: '#0284c7', senseEn: 'Sense of Sight (देखना)', senseHi: 'देखने की ज्ञानेंद्रिय', funFactEn: 'Your eyes blink about 20,000 times a day!', funFactHi: 'आँखें दिन भर में लगभग 20,000 बार झपकती हैं!' },
+  { id: 'ears', nameEn: 'Ears', nameHi: 'कान', x: 67, y: 23, badgeBg: '#d97706', senseEn: 'Sense of Hearing (सुनना)', senseHi: 'सुनने की ज्ञानेंद्रिय', funFactEn: 'Ears also keep your body balanced so you don’t fall.', funFactHi: 'कान हमारे शरीर का संतुलन बनाए रखने में भी मदद करते हैं।' },
+  { id: 'nose', nameEn: 'Nose', nameHi: 'नाक', x: 50, y: 27, badgeBg: '#059669', senseEn: 'Sense of Smell (सूँघना)', senseHi: 'सूँघने की ज्ञानेंद्रिय', funFactEn: 'Your nose can recognize up to 50,000 distinct smells.', funFactHi: 'नाक 50,000 अलग-अलग तरह की गंध पहचान सकती है।' },
+  { id: 'mouth', nameEn: 'Teeth & Tongue', nameHi: 'दाँत और जीभ', x: 50, y: 34, badgeBg: '#e11d48', senseEn: 'Sense of Taste (स्वाद व चबाना)', senseHi: 'स्वाद व भोजन चबाना', funFactEn: 'Enamel on your teeth is harder than your bones!', funFactHi: 'दाँतों का एनामेल हमारी हड्डियों से भी ज्यादा कठोर होता है!' },
+  { id: 'hands', nameEn: 'Hands & Fingers', nameHi: 'हाथ और उँगलियाँ', x: 19, y: 55, badgeBg: '#ea580c', senseEn: 'Sense of Touch (स्पर्श)', senseHi: 'स्पर्श और चीज़ें पकड़ना', funFactEn: 'Each hand has 27 small bones working together.', funFactHi: 'प्रत्येक हाथ में 27 छोटी हड्डियाँ मिलकर काम करती हैं।' },
+  { id: 'stomach', nameEn: 'Stomach', nameHi: 'पेट (आमाशय)', x: 50, y: 60, badgeBg: '#8b5cf6', senseEn: 'Food Digestion Center', senseHi: 'भोजन पाचन केंद्र', funFactEn: 'The stomach digests food using natural juices.', funFactHi: 'पेट भोजन को पाचक रसों से ऊर्जा में बदलता है।' },
+  { id: 'knees', nameEn: 'Knees & Legs', nameHi: 'घुटने और पैर', x: 42, y: 80, badgeBg: '#0284c7', senseEn: 'Mobility & Jump (चलना-दौड़ना)', senseHi: 'दौड़ना और कूदना', funFactEn: 'The femur (thigh bone) is the strongest bone in the body.', funFactHi: 'जांघ की फीमर हड्डी शरीर की सबसे मजबूत हड्डी है।' },
+  { id: 'feet', nameEn: 'Feet & Toes', nameHi: 'पंजे और पैर', x: 38, y: 94, badgeBg: '#10b981', senseEn: 'Body Balance & Support', senseHi: 'शरीर का आधार व संतुलन', funFactEn: 'One quarter of all your bones are in your feet.', funFactHi: 'शरीर की एक-चौथाई हड्डियाँ हमारे पंजों में होती हैं।' }
+];
+
+interface DentalFood {
   id: string;
   nameEn: string;
   nameHi: string;
   icon: string;
-  descEn: string;
-  descHi: string;
-  factEn: string;
-  factHi: string;
+  type: 'sparkle' | 'cavity';
+  color: string;
+  tipEn: string;
+  tipHi: string;
 }
 
-const BODY_PARTS: BodyPart[] = [
-  { id: 'head', nameEn: 'Head & Hair', nameHi: 'सिर और बाल', icon: '👦', descEn: 'Houses the brain and thinking center!', descHi: 'यहाँ हमारा मस्तिष्क होता है जो सोचता है!', factEn: 'Your skull protects your brain like a sturdy natural helmet.', factHi: 'खोपड़ी हमारे मस्तिष्क को प्राकृतिक हेलमेट की तरह सुरक्षित रखती है।' },
-  { id: 'eyes', nameEn: 'Eyes', nameHi: 'आँखें', icon: '👀', descEn: 'Help us see colors, shapes, and the world!', descHi: 'रंग, आकार व सुंदर संसार देखने में मदद करती हैं!', factEn: 'Humans blink about 15 to 20 times every single minute!', factHi: 'हम एक मिनट में लगभग 15 से 20 बार पलकें झपकाते हैं!' },
-  { id: 'ears', nameEn: 'Ears', nameHi: 'कान', icon: '👂', descEn: 'Help us hear music, birds, and voices!', descHi: 'संगीत, चिड़ियों की चहचहाहट व आवाज़ें सुनते हैं!', factEn: 'The smallest bone in your body (stapes) is inside the ear.', factHi: 'शरीर की सबसे छोटी हड्डी (स्टेप्स) कान के अंदर होती है।' },
-  { id: 'nose', nameEn: 'Nose', nameHi: 'नाक', icon: '👃', descEn: 'Helps us smell delicious food and breathe air!', descHi: 'खुशबू सूंघने और साँस लेने का काम करती है!', factEn: 'Your nose can remember up to 50,000 different scents.', factHi: 'हमारी नाक 50,000 अलग-अलग गंधों को याद रख सकती है।' },
-  { id: 'mouth', nameEn: 'Mouth & Teeth', nameHi: 'मुँह और दाँत', icon: '👄', descEn: 'Helps us speak, taste, and chew food!', descHi: 'बोलने, स्वाद लेने और भोजन चबाने के काम आता है!', factEn: 'Teeth are covered in enamel, the hardest substance in your body.', factHi: 'दाँतों पर एनामेल की परत होती है जो शरीर का सबसे कठोर हिस्सा है।' },
-  { id: 'hands', nameEn: 'Hands & Fingers', nameHi: 'हाथ और उँगलियाँ', icon: '🖐️', descEn: 'Used to write, draw, hold, and play!', descHi: 'लिखने, चित्र बनाने और चीज़ें पकड़ने में मदद करते हैं!', factEn: 'Each hand has 27 separate bones and 5 agile fingers.', factHi: 'प्रत्येक हाथ में 27 हड्डियाँ और 5 फुर्तीली उँगलियाँ होती हैं।' },
-  { id: 'stomach', nameEn: 'Stomach', nameHi: 'पेट (आमाशय)', icon: '🥣', descEn: 'J-shaped organ that digests the food we eat!', descHi: 'J-आकार का अंग जो खाए हुए भोजन को पचाता है!', factEn: 'The stomach breaks down food using specialized enzymes.', factHi: 'पेट पाचक रसों से भोजन को छोटे-छोटे टुकड़ों में घोलता है।' },
-  { id: 'legs', nameEn: 'Legs & Knees', nameHi: 'पैर और घुटने', icon: '🦵', descEn: 'Help us stand, run, jump, and dance!', descHi: 'दौड़ने, कूदने, नाचने और खड़े रहने में मदद करते हैं!', factEn: 'The femur in your thigh is the longest and strongest bone.', factHi: 'जांघ की हड्डी (फीमर) शरीर की सबसे लंबी और मजबूत हड्डी है।' },
-  { id: 'feet', nameEn: 'Feet & Toes', nameHi: 'पंजे और पैर', icon: '🦶', descEn: 'Keep us balanced and propel our steps!', descHi: 'शरीर का संतुलन बनाए रखते हैं और चलने में मदद करते हैं!', factEn: 'Both feet together contain about 25% of all bones in your body.', factHi: 'हमारे दोनों पैरों में शरीर की कुल हड्डियों का 25% हिस्सा होता है।' }
-];
-
-interface FoodItem {
-  id: string;
-  nameEn: string;
-  nameHi: string;
-  emoji: string;
-  type: 'healthy' | 'junk';
-  reasonEn: string;
-  reasonHi: string;
-}
-
-const FOOD_ITEMS: FoodItem[] = [
-  { id: 'milk', nameEn: 'Fresh Milk', nameHi: 'दूध', emoji: '🥛', type: 'healthy', reasonEn: 'Rich in Calcium! Makes teeth enamel strong.', reasonHi: 'कैल्शियम से भरपूर! दाँतों को मजबूत बनाता है।' },
-  { id: 'apple', nameEn: 'Crisp Apple', nameHi: 'सेब', emoji: '🍎', type: 'healthy', reasonEn: 'Natural crunchy fiber cleans teeth naturally.', reasonHi: 'प्राकृतिक रेशे दाँतों की प्राकृतिक सफाई करते हैं।' },
-  { id: 'cheese', nameEn: 'Cheese', nameHi: 'पनीर', emoji: '🧀', type: 'healthy', reasonEn: 'Fights acid and rebuilds mineral protection.', reasonHi: 'एसिड को रोकता है और सुरक्षा परत बनाता है।' },
-  { id: 'broccoli', nameEn: 'Broccoli', nameHi: 'हरी ब्रोकली', emoji: '🥦', type: 'healthy', reasonEn: 'Packed with vitamins for healthy gums.', reasonHi: 'मसूड़ों को स्वस्थ रखने वाले विटामिन से भरपूर।' },
-  { id: 'cola', nameEn: 'Fizzy Soda', nameHi: 'कोल्ड ड्रिंक', emoji: '🥤', type: 'junk', reasonEn: 'High sugar and acid wear down protective enamel.', reasonHi: 'ज्यादा चीनी और एसिड दाँतों की परत को नुकसान पहुंचाते हैं।' },
-  { id: 'candy', nameEn: 'Sticky Candies', nameHi: 'मीठी टॉफी', emoji: '🍬', type: 'junk', reasonEn: 'Sticks between teeth and invites cavity germs.', reasonHi: 'दाँतों के बीच चिपकती है जिससे कीड़े (कैविटी) बनते हैं।' },
-  { id: 'donut', nameEn: 'Glazed Donut', nameHi: 'डोनट', emoji: '🍩', type: 'junk', reasonEn: 'Sticky refined sugars feed bacteria.', reasonHi: 'मीठा दाँतों पर चिपककर बैक्टीरिया को बढ़ावा देता है।' },
-  { id: 'chocolate', nameEn: 'Chocolate Bar', nameHi: 'चॉकलेट', emoji: '🍫', type: 'junk', reasonEn: 'Sweet residue stays on teeth if not rinsed.', reasonHi: 'बिना कुल्ला किए दाँतों में फंसा रहकर सड़न पैदा करता है।' }
+const DENTAL_FOODS: DentalFood[] = [
+  { id: 'milk', nameEn: 'Pure Milk', nameHi: 'ताज़ा दूध', icon: '🥛', type: 'sparkle', color: '#38bdf8', tipEn: 'Calcium builds gleaming white tooth enamel!', tipHi: 'कैल्शियम दाँतों की रक्षा परत को मजबूत बनाता है!' },
+  { id: 'apple', nameEn: 'Crisp Apple', nameHi: 'लाल सेब', icon: '🍎', type: 'sparkle', color: '#ef4444', tipEn: 'Crunchy fiber washes away sticky particles!', tipHi: 'सेब के प्राकृतिक रेशे दाँतों की सफाई करते हैं!' },
+  { id: 'cheese', nameEn: 'Cheddar Cheese', nameHi: 'पनीर (चीज़)', icon: '🧀', type: 'sparkle', color: '#f59e0b', tipEn: 'Neutralizes harmful mouth acids after meals.', tipHi: 'मुँह में बनने वाले हानिकारक एसिड को खत्म करता है।' },
+  { id: 'carrot', nameEn: 'Crunchy Carrot', nameHi: 'गाजर', icon: '🥕', type: 'sparkle', color: '#ea580c', tipEn: 'Chewing raw carrots massages gums naturally.', tipHi: 'कच्ची गाजर चबाने से मसूड़े स्वस्थ रहते हैं।' },
+  { id: 'cola', nameEn: 'Fizzy Soda', nameHi: 'कोला / सोडा', icon: '🥤', type: 'cavity', color: '#991b1b', tipEn: 'High sugar and acid strip enamel shields!', tipHi: 'अम्ल और अधिक चीनी दाँतों के कवच को गला देते हैं!' },
+  { id: 'candy', nameEn: 'Sticky Candy', nameHi: 'चिपचिपी टॉफ़ी', icon: '🍬', type: 'cavity', color: '#db2777', tipEn: 'Sticks between teeth and feeds cavity bacteria.', tipHi: 'दाँतों में फंसकर कीड़ों (कैविटी) को न्योता देती है।' },
+  { id: 'donut', nameEn: 'Glazed Donut', nameHi: 'मीठा डोनट', icon: '🍩', type: 'cavity', color: '#b45309', tipEn: 'Refined sugar sticks in molars for hours.', tipHi: 'रिफाइंड चीनी दाँतों के कोनों में चिपकी रहती है।' },
+  { id: 'choc', nameEn: 'Sweet Chocolate', nameHi: 'चॉकलेट', icon: '🍫', type: 'cavity', color: '#78350f', tipEn: 'Sweet residues cause tooth decay if unbrushed.', tipHi: 'बिना कुल्ला किए दाँत में सड़न पैदा करती है।' }
 ];
 
 export function HindiAnatomyStudio() {
   const [lang, setLang] = useState<'hi' | 'en'>('hi');
   const [subModule, setSubModule] = useState<SubModule>('body');
 
-  // Audio utility
+  // AUDIO UTILITY
   const stopAudio = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
   };
 
-  const speakText = (text: string) => {
+  const playSpeech = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       stopAudio();
@@ -75,134 +81,147 @@ export function HindiAnatomyStudio() {
     return () => stopAudio();
   }, []);
 
-  // GAME 1: BODY PARTS STATE
-  const [selectedBodyPart, setSelectedBodyPart] = useState<BodyPart>(BODY_PARTS[1]); // Default: Eyes
-  const [quizTarget, setQuizTarget] = useState<BodyPart | null>(null);
+  // -------------------------------------------------------------
+  // TAB 1: INTERACTIVE BODY MAP PIN LOCATOR
+  // -------------------------------------------------------------
+  const [selectedPin, setSelectedPin] = useState<BodyPin>(BODY_PINS[1]); // Default: Eyes
+  const [isQuizMode, setIsQuizMode] = useState(false);
+  const [quizTarget, setQuizTarget] = useState<BodyPin>(BODY_PINS[3]); // Target nose
   const [quizScore, setQuizScore] = useState(0);
-  const [quizFeedback, setQuizFeedback] = useState<string | null>(null);
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
-  const startBodyQuiz = () => {
-    const randomPart = BODY_PARTS[Math.floor(Math.random() * BODY_PARTS.length)];
-    setQuizTarget(randomPart);
-    setQuizFeedback(null);
-    speakText(lang === 'hi' ? `ढूंढो: ${randomPart.nameHi} कहाँ है?` : `Find: Where is the ${randomPart.nameEn}?`);
+  const startQuiz = () => {
+    setIsQuizMode(true);
+    const nextPin = BODY_PINS[Math.floor(Math.random() * BODY_PINS.length)];
+    setQuizTarget(nextPin);
+    setFeedbackMsg(null);
+    playSpeech(lang === 'hi' ? `ढूंढो: ${nextPin.nameHi} पर टैप करो!` : `Can you locate the ${nextPin.nameEn}?`);
   };
 
-  const handleBodyPartClick = (part: BodyPart) => {
-    setSelectedBodyPart(part);
-    if (quizTarget) {
-      if (part.id === quizTarget.id) {
-        setQuizScore(prev => prev + 1);
-        setQuizFeedback(lang === 'hi' ? 'शाबाश! सही पहचाना! 🎉' : 'Awesome! Correct! 🎉');
-        speakText(lang === 'hi' ? `शाबाश! यह ${part.nameHi} है।` : `Great! That is ${part.nameEn}!`);
-        setTimeout(() => startBodyQuiz(), 1600);
+  const handlePinClick = (pin: BodyPin) => {
+    setSelectedPin(pin);
+    if (isQuizMode) {
+      if (pin.id === quizTarget.id) {
+        setQuizScore(s => s + 1);
+        setFeedbackMsg(lang === 'hi' ? `शाबाश! आपने ${pin.nameHi} सही पहचाना! ⭐` : `Spot on! You found the ${pin.nameEn}! ⭐`);
+        playSpeech(lang === 'hi' ? `शाबाश! बिल्कुल सही!` : `Spot on! Great work!`);
+        setTimeout(() => {
+          const rand = BODY_PINS[Math.floor(Math.random() * BODY_PINS.length)];
+          setQuizTarget(rand);
+          setFeedbackMsg(null);
+          playSpeech(lang === 'hi' ? `अब ढूंढो: ${rand.nameHi}` : `Now find: ${rand.nameEn}`);
+        }, 1500);
       } else {
-        setQuizFeedback(lang === 'hi' ? `यह ${part.nameHi} है। दोबारा प्रयास करें!` : `That is ${part.nameEn}. Try again!`);
-        speakText(lang === 'hi' ? `यह ${part.nameHi} है।` : `That is ${part.nameEn}.`);
+        setFeedbackMsg(lang === 'hi' ? `यह ${pin.nameHi} है। दोबारा प्रयास करो!` : `That is the ${pin.nameEn}. Try again!`);
+        playSpeech(lang === 'hi' ? `यह ${pin.nameHi} है।` : `That is ${pin.nameEn}.`);
       }
     } else {
-      speakText(lang === 'hi' ? `${part.nameHi}। ${part.descHi}` : `${part.nameEn}. ${part.descEn}`);
+      playSpeech(lang === 'hi' ? `${pin.nameHi}। ${pin.senseHi}। ${pin.funFactHi}` : `${pin.nameEn}. ${pin.senseEn}. ${pin.funFactEn}`);
     }
   };
 
-  // GAME 2: TOOTH DEFENDER STATE
-  const [foodPool, setFoodPool] = useState<FoodItem[]>(FOOD_ITEMS);
-  const [currentFoodIdx, setCurrentFoodIdx] = useState(0);
-  const [toothScore, setToothScore] = useState(0);
-  const [toothFeedback, setToothFeedback] = useState<string | null>(null);
-  const [brushingStep, setBrushingStep] = useState(0);
+  // -------------------------------------------------------------
+  // TAB 2: GLOSSY TOOTH DEFENDER STATE
+  // -------------------------------------------------------------
+  const [foodIndex, setFoodIndex] = useState(0);
+  const [defenderScore, setDefenderScore] = useState(0);
+  const [defenderStatus, setDefenderStatus] = useState<string | null>(null);
+  const [sparkleAnim, setSparkleAnim] = useState(false);
+  const [cavityAnim, setCavityAnim] = useState(false);
 
-  const currentFood = foodPool[currentFoodIdx];
+  const activeFood = DENTAL_FOODS[foodIndex];
 
-  const handleSortFood = (destination: 'healthy' | 'junk') => {
-    if (!currentFood) return;
-    const isCorrect = (destination === 'healthy' && currentFood.type === 'healthy') ||
-                      (destination === 'junk' && currentFood.type === 'junk');
+  const sortFood = (choice: 'sparkle' | 'cavity') => {
+    if (!activeFood) return;
+    const isCorrect = choice === activeFood.type;
 
     if (isCorrect) {
-      setToothScore(prev => prev + 1);
-      const msg = destination === 'healthy'
-        ? (lang === 'hi' ? `बिल्कुल सही! ${currentFood.nameHi} दाँतों को मजबूत बनाता है! 🦷✨` : `Spot on! ${currentFood.nameEn} protects enamel! 🦷✨`)
-        : (lang === 'hi' ? `शाबाश! ${currentFood.nameHi} से दाँतों में कीड़ा लग सकता है! 🚫👾` : `Good job! ${currentFood.nameEn} can cause cavities! 🚫👾`);
-      setToothFeedback(msg);
-      speakText(msg);
+      setDefenderScore(s => s + 1);
+      if (choice === 'sparkle') {
+        setSparkleAnim(true);
+        setTimeout(() => setSparkleAnim(false), 1200);
+        setDefenderStatus(lang === 'hi' ? `शानदार! ${activeFood.nameHi} से दाँत चमक उठे! 🦷✨` : `Great choice! ${activeFood.nameEn} guards your smile! 🦷✨`);
+        playSpeech(lang === 'hi' ? `${activeFood.nameHi} दाँतों के लिए बहुत अच्छा है!` : `${activeFood.nameEn} makes teeth gleam!`);
+      } else {
+        setCavityAnim(true);
+        setTimeout(() => setCavityAnim(false), 1200);
+        setDefenderStatus(lang === 'hi' ? `बहुत खूब! ${activeFood.nameHi} से दाँत बचा लिए! 🛡️` : `Smart shield! Saved teeth from ${activeFood.nameEn}! 🛡️`);
+        playSpeech(lang === 'hi' ? `शाबाश! यह कीड़ा पैदा करता है।` : `Good save! Avoid sugary decay.`);
+      }
     } else {
-      const msg = lang === 'hi' ? 'ओह! दोबारा सोचें कि यह दाँतों के लिए अच्छा है या बुरा।' : 'Oops! Think again whether this is tooth-friendly.';
-      setToothFeedback(msg);
-      speakText(msg);
+      setDefenderStatus(lang === 'hi' ? `ओह! दोबारा सोचें कि यह दाँतों को चमकाता है या कीड़ा लगाता है।` : `Oops! Rethink if this feeds sparkle or cavities.`);
+      playSpeech(lang === 'hi' ? `दोबारा सोचें!` : `Think again!`);
     }
 
     setTimeout(() => {
-      setToothFeedback(null);
-      if (currentFoodIdx + 1 < foodPool.length) {
-        setCurrentFoodIdx(prev => prev + 1);
-      } else {
-        setCurrentFoodIdx(0); // Loop or finish
-      }
-    }, 1800);
+      setDefenderStatus(null);
+      setFoodIndex((foodIndex + 1) % DENTAL_FOODS.length);
+    }, 1600);
   };
 
-  const brushingSteps = [
-    { titleEn: '1. Toothpaste', titleHi: '१. टूथपेस्ट', textEn: 'Apply pea-sized toothpaste on soft brush.', textHi: 'ब्रश पर मटर के दाने जितना टूथपेस्ट लगाएं।', icon: '🪥' },
-    { titleEn: '2. Circles', titleHi: '२. गोलाकार गति', textEn: 'Brush gently in circular motions for 2 minutes.', textHi: 'हल्के हाथों से २ मिनट तक गोल-गोल ब्रश करें।', icon: '🔄' },
-    { titleEn: '3. Rinse', titleHi: '३. कुल्ला करें', textEn: 'Rinse mouth thoroughly with clean water.', textHi: 'साफ पानी से अच्छी तरह कुल्ला करें।', icon: '💧' },
-    { titleEn: '4. Twice a Day', titleHi: '४. दिन में दो बार', textEn: 'Morning and before bed for a sparkling smile!', textHi: 'सुबह और रात सोने से पहले—चमकती मुस्कान के लिए!', icon: '✨' }
-  ];
-
   return (
-    <div className="w-full bg-white rounded-3xl border-2 border-emerald-200 shadow-sm p-4 md:p-7 select-none">
+    <div className="w-full bg-gradient-to-b from-white to-emerald-50/40 rounded-3xl border-2 border-emerald-200 shadow-xl p-4 md:p-7 select-none overflow-hidden font-sans">
       
-      {/* Top Banner with Module Switcher & Bilingual Toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-emerald-100">
+      {/* Top Studio Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-5 border-b border-emerald-100">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md">
-            👦
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-emerald-600/20">
+            🧬
           </div>
           <div>
-            <h2 className="text-lg md:text-xl font-black text-emerald-950 leading-tight">
-              {lang === 'hi' ? 'हमारा शरीर व स्वास्थ्य (Human Anatomy & Health)' : 'Human Anatomy & Dental Health Lab'}
+            <h2 className="text-xl md:text-2xl font-black text-emerald-950 tracking-tight flex items-center gap-2">
+              {lang === 'hi' ? 'हमारा शरीर व दाँतों की रक्षा' : 'Human Anatomy & Tooth Defender'}
+              <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                NEP 2020 EVS
+              </span>
             </h2>
             <p className="text-xs text-emerald-800/80 font-bold">
-              {lang === 'hi' ? 'शरीर के मुख्य अंग, ज्ञानेंद्रियाँ और दाँतों की सुरक्षा' : 'Body Parts, Senses & Healthy Teeth Sorting Game'}
+              {lang === 'hi' 
+                ? 'सचित्र ज्ञानेंद्रियाँ, शरीर रचना और स्वस्थ दाँतों का खेल' 
+                : 'Interactive anatomical pointer, sense organs & dental care playground'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Sub-game toggles */}
-          <div className="flex bg-emerald-50 p-1 rounded-xl border border-emerald-200 gap-1 text-xs font-bold">
+          {/* Sub-tab pills */}
+          <div className="flex bg-emerald-100/70 p-1 rounded-2xl border border-emerald-200 gap-1 text-xs font-black">
             <button
               onClick={() => { stopAudio(); setSubModule('body'); }}
-              className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                subModule === 'body' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-900 hover:bg-emerald-100'
+              className={`px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                subModule === 'body' 
+                  ? 'bg-emerald-600 text-white shadow-md' 
+                  : 'text-emerald-900 hover:bg-emerald-200/60'
               }`}
             >
-              👦 {lang === 'hi' ? 'शरीर के अंग' : 'My Body'}
+              👦 {lang === 'hi' ? 'शरीर के अंग व ज्ञानेंद्रियाँ' : 'Body & Senses'}
             </button>
             <button
               onClick={() => { stopAudio(); setSubModule('teeth'); }}
-              className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                subModule === 'teeth' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-900 hover:bg-emerald-100'
+              className={`px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                subModule === 'teeth' 
+                  ? 'bg-emerald-600 text-white shadow-md' 
+                  : 'text-emerald-900 hover:bg-emerald-200/60'
               }`}
             >
-              🦷 {lang === 'hi' ? 'दाँतों की रक्षा' : 'Tooth Defender'}
+              🦷 {lang === 'hi' ? 'दाँतों की रक्षा (Defender)' : 'Tooth Defender'}
             </button>
           </div>
 
           {/* Bilingual Toggle */}
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 text-xs font-black">
+          <div className="flex bg-white p-1 rounded-2xl border border-emerald-200 shadow-xs gap-1 text-xs font-black">
             <button
               onClick={() => { stopAudio(); setLang('hi'); }}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                lang === 'hi' ? 'bg-white text-emerald-900 shadow-xs' : 'text-slate-600'
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                lang === 'hi' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               हिंदी
             </button>
             <button
               onClick={() => { stopAudio(); setLang('en'); }}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                lang === 'en' ? 'bg-white text-emerald-900 shadow-xs' : 'text-slate-600'
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                lang === 'en' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               English
@@ -211,233 +230,440 @@ export function HindiAnatomyStudio() {
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* MODULE 1: MY BODY & SENSES                              */}
-      {/* ======================================================== */}
+      {/* ========================================================= */}
+      {/* GAME 1: VECTOR INTERACTIVE BODY ANATOMY MAP              */}
+      {/* ========================================================= */}
       {subModule === 'body' && (
-        <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           
-          {/* Left Column: Body Parts Selection Tray */}
-          <div className="lg:col-span-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-emerald-900 tracking-wider">
-                {lang === 'hi' ? 'अंग चुनें या पहचानें:' : 'Select Body Part:'}
+          {/* Left Column: Interactive Vector Child Character with Glowing Pins */}
+          <div className="lg:col-span-6 bg-gradient-to-b from-sky-50 via-emerald-50/50 to-amber-50/30 rounded-3xl border-2 border-emerald-200 p-4 flex flex-col items-center justify-center relative shadow-inner min-h-[460px]">
+            
+            {/* Top Avatar Banner */}
+            <div className="w-full flex items-center justify-between mb-2 px-2 z-10">
+              <span className="text-[11px] font-black text-emerald-900 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-emerald-200 shadow-2xs">
+                {isQuizMode 
+                  ? (lang === 'hi' ? `🎯 ढूंढो: ${quizTarget.nameHi}` : `🎯 Find: ${quizTarget.nameEn}`)
+                  : (lang === 'hi' ? '👉 किसी भी अंग के बिंदु (Pin) पर टैप करें' : '👉 Tap any glowing hotspot pin')}
               </span>
-              
-              {quizTarget ? (
-                <span className="text-xs font-black bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full animate-pulse">
-                  🎯 {lang === 'hi' ? `ढूंढो: ${quizTarget.nameHi}` : `Find: ${quizTarget.nameEn}`}
-                </span>
+
+              {isQuizMode ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                    ⭐ {quizScore}
+                  </span>
+                  <button
+                    onClick={() => { setIsQuizMode(false); setFeedbackMsg(null); }}
+                    className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                  >
+                    {lang === 'hi' ? 'बंद करें' : 'Stop'}
+                  </button>
+                </div>
               ) : (
                 <button
-                  onClick={startBodyQuiz}
-                  className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1 shadow-xs"
+                  onClick={startQuiz}
+                  className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow-xs transition cursor-pointer flex items-center gap-1"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  {lang === 'hi' ? 'पहचान क्विज़ खेलें' : 'Play Quiz'}
+                  {lang === 'hi' ? 'क्विज़ खेलें' : 'Play Quiz'}
                 </button>
               )}
             </div>
 
-            {quizFeedback && (
-              <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-black text-emerald-900 text-center animate-in fade-in">
-                {quizFeedback}
+            {feedbackMsg && (
+              <div className="absolute top-14 inset-x-4 z-20 p-2.5 bg-white/95 backdrop-blur-md border-2 border-amber-300 rounded-2xl text-xs font-black text-amber-950 text-center shadow-lg animate-in fade-in zoom-in-95">
+                {feedbackMsg}
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-2">
-              {BODY_PARTS.map((part) => {
-                const isSelected = selectedBodyPart.id === part.id;
+            {/* Stylized Vector Silhouette Canvas */}
+            <div className="relative w-72 h-[410px] flex items-center justify-center">
+              
+              {/* High-Quality Geometric Cartoon SVG Silhouette */}
+              <svg viewBox="0 0 200 320" className="w-full h-full drop-shadow-md">
+                <defs>
+                  <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fed7aa" />
+                    <stop offset="100%" stopColor="#fdba74" />
+                  </linearGradient>
+                  <linearGradient id="shirtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#0284c7" />
+                  </linearGradient>
+                  <linearGradient id="shortGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#d97706" />
+                  </linearGradient>
+                </defs>
+
+                {/* Hair */}
+                <path d="M 65 50 C 60 15, 140 15, 135 50 C 145 35, 130 18, 100 18 C 70 18, 55 35, 65 50 Z" fill="#451a03" />
+                
+                {/* Ears */}
+                <circle cx="68" cy="55" r="9" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1.5" />
+                <circle cx="132" cy="55" r="9" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1.5" />
+
+                {/* Head */}
+                <ellipse cx="100" cy="56" rx="32" ry="34" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1.5" />
+
+                {/* Eyes */}
+                <ellipse cx="88" cy="52" rx="4.5" ry="6" fill="#0f172a" />
+                <ellipse cx="112" cy="52" rx="4.5" ry="6" fill="#0f172a" />
+                <circle cx="90" cy="50" r="1.5" fill="#ffffff" />
+                <circle cx="114" cy="50" r="1.5" fill="#ffffff" />
+
+                {/* Cheeks */}
+                <circle cx="80" cy="62" r="5" fill="#f43f5e" opacity="0.4" />
+                <circle cx="120" cy="62" r="5" fill="#f43f5e" opacity="0.4" />
+
+                {/* Nose & Smile */}
+                <path d="M 100 56 L 98 62 L 102 62" fill="none" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M 91 69 Q 100 78 109 69" fill="#ffffff" stroke="#991b1b" strokeWidth="1.5" />
+
+                {/* Neck */}
+                <rect x="93" y="87" width="14" height="12" fill="url(#skinGrad)" />
+
+                {/* T-Shirt Torso */}
+                <path d="M 72 98 L 128 98 L 136 170 L 64 170 Z" fill="url(#shirtGrad)" rx="8" />
+
+                {/* Arms */}
+                <path d="M 72 100 L 40 145 L 48 152 L 76 115 Z" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1" />
+                <path d="M 128 100 L 160 145 L 152 152 L 124 115 Z" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1" />
+
+                {/* Hands */}
+                <circle cx="38" cy="150" r="8" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1" />
+                <circle cx="162" cy="150" r="8" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1" />
+
+                {/* Shorts */}
+                <path d="M 66 170 L 134 170 L 138 215 L 104 215 L 100 185 L 96 215 L 62 215 Z" fill="url(#shortGrad)" />
+
+                {/* Legs */}
+                <rect x="72" y="215" width="16" height="65" rx="7" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1" />
+                <rect x="112" y="215" width="16" height="65" rx="7" fill="url(#skinGrad)" stroke="#fb923c" strokeWidth="1" />
+
+                {/* Knees Indicator Circles */}
+                <circle cx="80" cy="245" r="4" fill="#fed7aa" stroke="#ea580c" strokeWidth="1" />
+                <circle cx="120" cy="245" r="4" fill="#fed7aa" stroke="#ea580c" strokeWidth="1" />
+
+                {/* Shoes */}
+                <ellipse cx="76" cy="285" rx="15" ry="8" fill="#e11d48" />
+                <ellipse cx="124" cy="285" rx="15" ry="8" fill="#e11d48" />
+              </svg>
+
+              {/* Pulsating Interactive Pins Placed on Avatar Target Percentages */}
+              {BODY_PINS.map((pin) => {
+                const isSelected = selectedPin.id === pin.id;
+                const isTarget = isQuizMode && quizTarget.id === pin.id;
+
                 return (
                   <button
-                    key={part.id}
-                    onClick={() => handleBodyPartClick(part)}
-                    className={`p-2.5 rounded-2xl border-2 flex flex-col items-center justify-center transition cursor-pointer text-center ${
-                      isSelected
-                        ? 'bg-emerald-50 border-emerald-600 shadow-sm scale-102 font-black'
-                        : 'bg-slate-50 border-slate-200 hover:bg-emerald-50/50 hover:border-emerald-300'
-                    }`}
+                    key={pin.id}
+                    onClick={() => handlePinClick(pin)}
+                    style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition group z-20"
+                    title={pin.nameEn}
                   >
-                    <span className="text-2xl mb-1">{part.icon}</span>
-                    <span className="text-[11px] font-bold text-slate-900 leading-tight">
-                      {lang === 'hi' ? part.nameHi : part.nameEn}
-                    </span>
+                    {/* Ripple ring */}
+                    <span 
+                      style={{ backgroundColor: pin.badgeBg }} 
+                      className={`absolute inset-0 rounded-full animate-ping opacity-60 ${
+                        isSelected || isTarget ? 'scale-150' : 'opacity-0 group-hover:opacity-40'
+                      }`} 
+                    />
+
+                    {/* Core Pin Disc */}
+                    <div 
+                      style={{ backgroundColor: pin.badgeBg }}
+                      className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-black text-[11px] shadow-lg border-2 border-white transition-transform ${
+                        isSelected ? 'scale-125 ring-3 ring-emerald-400' : 'hover:scale-115'
+                      }`}
+                    >
+                      •
+                    </div>
                   </button>
                 );
               })}
             </div>
 
-            {quizTarget && (
-              <div className="mt-2 flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
-                <span className="font-bold text-slate-600">
-                  {lang === 'hi' ? 'स्कोर:' : 'Score:'} <strong>{quizScore}</strong>
-                </span>
-                <button
-                  onClick={() => { setQuizTarget(null); setQuizFeedback(null); }}
-                  className="text-rose-600 font-bold hover:underline"
-                >
-                  {lang === 'hi' ? 'क्विज़ समाप्त करें' : 'Exit Quiz'}
-                </button>
-              </div>
-            )}
+            <span className="text-[10px] font-bold text-slate-400 mt-1">
+              {lang === 'hi' ? 'चित्र: मानव शरीर रचना गाइड (NEP 2020)' : 'Vector Model: Child Anatomy & Senses Explorer'}
+            </span>
           </div>
 
-          {/* Right Column: Interactive Detail Card */}
-          <div className="lg:col-span-7 bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-white rounded-3xl border-2 border-emerald-200 p-6 flex flex-col justify-between min-h-[380px]">
+          {/* Right Column: High-Fidelity Information Card with Spoken Insight */}
+          <div className="lg:col-span-6 bg-white rounded-3xl border-2 border-emerald-200 p-6 flex flex-col justify-between shadow-sm min-h-[460px]">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="bg-emerald-100 text-emerald-900 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                  {lang === 'hi' ? 'अंग जानकारी' : 'Organ Detail'}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <span 
+                  style={{ backgroundColor: `${selectedPin.badgeBg}15`, color: selectedPin.badgeBg }}
+                  className="text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider"
+                >
+                  {lang === 'hi' ? 'अंग का विवरण' : 'Organ Inspection'}
                 </span>
+
                 <button
-                  onClick={() => speakText(lang === 'hi' ? `${selectedBodyPart.nameHi}। ${selectedBodyPart.descHi} ${selectedBodyPart.factHi}` : `${selectedBodyPart.nameEn}. ${selectedBodyPart.descEn} ${selectedBodyPart.factEn}`)}
-                  className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-black shadow-xs"
+                  onClick={() => playSpeech(lang === 'hi' ? `${selectedPin.nameHi}। ${selectedPin.senseHi}। ${selectedPin.funFactHi}` : `${selectedPin.nameEn}. ${selectedPin.senseEn}. ${selectedPin.funFactEn}`)}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 shadow-sm"
                 >
                   <Volume2 className="w-4 h-4" />
-                  {lang === 'hi' ? 'सुनें' : 'Listen'}
+                  {lang === 'hi' ? 'उच्चारण व तथ्य सुनें' : 'Listen Fact'}
                 </button>
               </div>
 
-              <div className="flex flex-col items-center text-center my-4">
-                <div className="w-24 h-24 rounded-3xl bg-white border-2 border-emerald-200 shadow-md flex items-center justify-center text-5xl mb-3">
-                  {selectedBodyPart.icon}
+              {/* Big Spotlight Display */}
+              <div className="my-5 flex items-center gap-4 bg-emerald-50/50 p-4 rounded-3xl border border-emerald-200">
+                <div 
+                  style={{ backgroundColor: selectedPin.badgeBg }}
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl text-white shadow-md shadow-emerald-900/10 shrink-0"
+                >
+                  ✨
                 </div>
-                <h3 className="text-2xl font-black text-slate-900">
-                  {lang === 'hi' ? selectedBodyPart.nameHi : selectedBodyPart.nameEn}
-                </h3>
-                <p className="text-sm font-bold text-emerald-900 mt-1 max-w-md">
-                  {lang === 'hi' ? selectedBodyPart.descHi : selectedBodyPart.descEn}
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight">
+                    {lang === 'hi' ? selectedPin.nameHi : selectedPin.nameEn}
+                  </h3>
+                  <span className="text-xs font-black text-emerald-800 block mt-0.5">
+                    {lang === 'hi' ? selectedPin.senseHi : selectedPin.senseEn}
+                  </span>
+                </div>
+              </div>
+
+              {/* Fun Fact Card */}
+              <div className="bg-amber-50/80 border-2 border-amber-200/80 p-4 rounded-2xl mb-4">
+                <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider block mb-1">
+                  💡 {lang === 'hi' ? 'रोचक वैज्ञानिक तथ्य (Scientific Fact):' : 'Anatomy Busy Book Fun Fact:'}
+                </span>
+                <p className="text-xs font-bold text-slate-800 leading-relaxed">
+                  {lang === 'hi' ? selectedPin.funFactHi : selectedPin.funFactEn}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-emerald-200 shadow-xs">
-              <span className="text-[10px] font-black uppercase text-amber-700 block mb-1">
-                💡 {lang === 'hi' ? 'रोचक तथ्य (Fun Fact):' : 'Did You Know?'}
+            {/* Quick Pin Tray for Immediate Switching */}
+            <div className="pt-3 border-t border-slate-100">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-2">
+                {lang === 'hi' ? 'अन्य अंग चुनें (Direct Jump):' : 'Jump to Body Part:'}
               </span>
-              <p className="text-xs font-semibold text-slate-700 leading-relaxed">
-                {lang === 'hi' ? selectedBodyPart.factHi : selectedBodyPart.factEn}
-              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {BODY_PINS.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => handlePinClick(p)}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      selectedPin.id === p.id 
+                        ? 'bg-slate-900 text-white font-black' 
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {lang === 'hi' ? p.nameHi.split(' ')[0] : p.nameEn.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
             </div>
+
           </div>
 
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODULE 2: TOOTH DEFENDER & FOOD SORTING                 */}
-      {/* ======================================================== */}
+      {/* ========================================================= */}
+      {/* GAME 2: GLOSSY 3D TOOTH DEFENDER ARENA                   */}
+      {/* ========================================================= */}
       {subModule === 'teeth' && (
-        <div className="mt-5 flex flex-col gap-6">
+        <div className="flex flex-col gap-6">
           
-          {/* Top Instruction & Audio Tip */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200">
+          {/* Header Score & Guidance */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-blue-50/70 p-4 rounded-3xl border-2 border-blue-200">
             <div>
-              <h3 className="text-sm font-black text-amber-950">
-                {lang === 'hi' ? 'दाँतों की सुरक्षा: अच्छा खाना बनाम नुकसानदेह खाना' : 'Tooth Defender: Cavity Fighter Sorting Challenge'}
+              <h3 className="text-base font-black text-blue-950">
+                {lang === 'hi' ? 'दाँतों की रक्षा: मोती जैसे चमकते दाँत बनाम कैविटी कीड़ा' : 'Tooth Defender: Sparkling Tooth vs. Cavity Bug'}
               </h3>
-              <p className="text-xs text-amber-800 font-semibold">
-                {lang === 'hi' ? 'नीचे दिए गए भोजन को छांटें—स्वस्थ दाँत को खिलाएं या कचरा टोकरी में डालें!' : 'Sort each food: Feed the Sparkling Tooth or trash the sticky junk food!'}
+              <p className="text-xs text-blue-800 font-bold">
+                {lang === 'hi' 
+                  ? 'सामने आए भोजन को छांटें—स्वस्थ दाँत को खिलाएं या कीड़े से दूर रखें!' 
+                  : 'Sort the food on the table—nourish the Sparkle Tooth or discard cavity-causing sweets!'}
               </p>
             </div>
+            
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black bg-white px-3 py-1 rounded-xl border border-amber-200 text-amber-900">
-                ⭐ {lang === 'hi' ? 'स्कोर:' : 'Score:'} {toothScore}
+              <span className="text-xs font-black bg-white px-3.5 py-1.5 rounded-xl border border-blue-200 text-blue-950 shadow-xs">
+                ⭐ {lang === 'hi' ? 'स्कोर:' : 'Score:'} {defenderScore}
               </span>
               <button
-                onClick={() => speakText(lang === 'hi' ? 'स्वस्थ दाँतों के लिए फल, सब्जियाँ और दूध खाएं। अधिक मीठा और सोडा दाँतों में कीड़ा लगाते हैं।' : 'Eat milk, fruit, and crunchy vegetables for strong teeth. Avoid sticky candy and sugary sodas.')}
-                className="p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black cursor-pointer flex items-center gap-1 shadow-xs"
+                onClick={() => playSpeech(lang === 'hi'
+                  ? 'कैल्शियम, दूध और फल दाँतों को मजबूत बनाते हैं। टॉफी, कोल्ड ड्रिंक और अधिक मीठा दाँतों में कीड़ा लगाते हैं।'
+                  : 'Milk, apples, and cheese build strong teeth. Sticky candies and sodas feed cavity bacteria.')}
+                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1 shadow-xs"
               >
                 <Volume2 className="w-3.5 h-3.5" />
-                {lang === 'hi' ? 'दाँतों का नियम' : 'Tooth Rule'}
+                {lang === 'hi' ? 'नियम सुनें' : 'Listen Rule'}
               </button>
             </div>
           </div>
 
-          {/* Feedback Toast */}
-          {toothFeedback && (
-            <div className="p-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs font-black text-emerald-950 text-center animate-in zoom-in-95">
-              {toothFeedback}
+          {defenderStatus && (
+            <div className="p-3 bg-white border-2 border-blue-400 rounded-2xl text-xs font-black text-slate-900 text-center shadow-md animate-in zoom-in-95">
+              {defenderStatus}
             </div>
           )}
 
-          {/* Central Arena: 2 Teeth & Middle Conveyor */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          {/* Central Arena: 2 Beautiful SVG Teeth + Center Inspector */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
             
-            {/* Left: Happy Sparkling Tooth */}
-            <div className="md:col-span-4 bg-gradient-to-b from-sky-50 to-blue-50 border-2 border-blue-200 rounded-3xl p-5 flex flex-col items-center text-center shadow-xs">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl shadow-md border border-blue-100 mb-2">
-                🦷✨
+            {/* 1. LEFT TOOTH: HAPPY SPARKLING TOOTH (3D Glossy SVG) */}
+            <div className={`md:col-span-4 bg-gradient-to-b from-sky-50 to-blue-100/70 border-3 border-blue-300 rounded-3xl p-5 flex flex-col items-center justify-between text-center shadow-lg transition-transform ${
+              sparkleAnim ? 'scale-105 ring-4 ring-sky-400' : ''
+            }`}>
+              
+              <div className="relative w-32 h-36 flex items-center justify-center">
+                {/* 3D Glossy Tooth SVG */}
+                <svg viewBox="0 0 100 110" className="w-full h-full drop-shadow-lg">
+                  {/* Outer Enamel Body */}
+                  <path 
+                    d="M 25 15 C 40 10, 60 10, 75 15 C 90 20, 95 45, 90 75 C 85 95, 75 105, 65 95 C 55 85, 45 85, 35 95 C 25 105, 15 95, 10 75 C 5 45, 10 20, 25 15 Z" 
+                    fill="#ffffff" 
+                    stroke="#38bdf8" 
+                    strokeWidth="3"
+                  />
+                  {/* Gloss Specular Highlight */}
+                  <path 
+                    d="M 22 25 C 28 20, 42 20, 42 25 C 42 35, 20 40, 22 25 Z" 
+                    fill="#e0f2fe" 
+                    opacity="0.8" 
+                  />
+                  {/* Eyes & Smile */}
+                  <circle cx="38" cy="45" r="4.5" fill="#0f172a" />
+                  <circle cx="62" cy="45" r="4.5" fill="#0f172a" />
+                  <circle cx="40" cy="43" r="1.5" fill="#ffffff" />
+                  <circle cx="64" cy="43" r="1.5" fill="#ffffff" />
+                  {/* Rosy Cheeks */}
+                  <circle cx="30" cy="53" r="4" fill="#f43f5e" opacity="0.4" />
+                  <circle cx="70" cy="53" r="4" fill="#f43f5e" opacity="0.4" />
+                  {/* Big Grin */}
+                  <path d="M 40 58 Q 50 68 60 58" fill="none" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+
+                {/* Sparkling Stars Overlay */}
+                <div className="absolute -top-1 -right-1 text-2xl animate-spin [animation-duration:6s]">
+                  ✨
+                </div>
               </div>
-              <h4 className="text-base font-black text-blue-950">
-                {lang === 'hi' ? 'स्वस्थ चमकता दाँत' : 'Happy Healthy Tooth'}
-              </h4>
-              <p className="text-[11px] text-blue-800 font-bold mb-3">
-                {lang === 'hi' ? 'कैल्शियम, फल व हरी सब्जियाँ पसंद हैं!' : 'Loves milk, apples & calcium!'}
-              </p>
+
+              <div className="my-2">
+                <h4 className="text-base font-black text-blue-950">
+                  {lang === 'hi' ? 'मोती जैसा चमकता दाँत' : 'Happy Sparkle Tooth'}
+                </h4>
+                <p className="text-[11px] font-bold text-blue-800">
+                  {lang === 'hi' ? 'दूध, फल व हरी सब्जियाँ पसंद हैं!' : 'Thrives on milk, fruit & calcium!'}
+                </p>
+              </div>
+
               <button
-                onClick={() => handleSortFood('healthy')}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                onClick={() => sortFood('sparkle')}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black transition cursor-pointer shadow-md flex items-center justify-center gap-2"
               >
                 <Smile className="w-4 h-4" />
-                {lang === 'hi' ? 'दाँत को खिलाएं (स्वस्थ)' : 'Feed Tooth (Healthy)'}
+                {lang === 'hi' ? 'दाँत को खिलाएं (स्वस्थ भोजन)' : 'Feed Sparkle Tooth (Healthy)'}
               </button>
             </div>
 
-            {/* Center: Current Inspected Food Item */}
-            <div className="md:col-span-4 bg-white border-2 border-dashed border-slate-300 rounded-3xl p-5 flex flex-col items-center text-center shadow-md">
-              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
-                {lang === 'hi' ? 'यह भोजन चुनें:' : 'Inspect This Food:'}
+            {/* 2. CENTER INSPECTION PLATE */}
+            <div className="md:col-span-4 bg-white border-2 border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-between text-center shadow-lg min-h-[300px]">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                {lang === 'hi' ? 'इस भोजन की पहचान करें:' : 'Inspect This Plate:'}
               </span>
-              <div className="w-24 h-24 bg-amber-50 rounded-3xl border border-amber-200 flex items-center justify-center text-6xl shadow-inner mb-2 animate-bounce">
-                {currentFood.emoji}
+
+              <div className="my-auto flex flex-col items-center">
+                <div 
+                  style={{ backgroundColor: `${activeFood.color}15`, borderColor: `${activeFood.color}40` }}
+                  className="w-28 h-28 rounded-3xl border-3 flex items-center justify-center text-6xl shadow-inner mb-3 transition-transform hover:scale-105"
+                >
+                  {activeFood.icon}
+                </div>
+                <h3 className="text-xl font-black text-slate-900 leading-tight">
+                  {lang === 'hi' ? activeFood.nameHi : activeFood.nameEn}
+                </h3>
+                <p className="text-xs font-bold text-slate-500 mt-1 max-w-[220px]">
+                  {lang === 'hi' ? activeFood.tipHi : activeFood.tipEn}
+                </p>
               </div>
-              <h3 className="text-lg font-black text-slate-900 leading-tight">
-                {lang === 'hi' ? currentFood.nameHi : currentFood.nameEn}
-              </h3>
-              <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                {lang === 'hi' ? currentFood.reasonHi : currentFood.reasonEn}
-              </p>
+
+              <span className="text-[10px] font-extrabold text-slate-400">
+                {lang === 'hi' ? 'बाएं या दाएं बटन दबाकर सही दाँत चुनें' : 'Choose left or right button'}
+              </span>
             </div>
 
-            {/* Right: Sad Cavity Tooth / Trash */}
-            <div className="md:col-span-4 bg-gradient-to-b from-rose-50 to-amber-50 border-2 border-rose-200 rounded-3xl p-5 flex flex-col items-center text-center shadow-xs">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl shadow-md border border-rose-100 mb-2">
-                🦷👾
+            {/* 3. RIGHT TOOTH: CAVITY RISK TOOTH (3D Wobbly SVG) */}
+            <div className={`md:col-span-4 bg-gradient-to-b from-rose-50 to-amber-100/70 border-3 border-rose-300 rounded-3xl p-5 flex flex-col items-center justify-between text-center shadow-lg transition-transform ${
+              cavityAnim ? 'scale-105 ring-4 ring-rose-400' : ''
+            }`}>
+              
+              <div className="relative w-32 h-36 flex items-center justify-center">
+                {/* Cavity Tooth SVG */}
+                <svg viewBox="0 0 100 110" className="w-full h-full drop-shadow-lg">
+                  <path 
+                    d="M 25 15 C 40 10, 60 10, 75 15 C 90 20, 95 45, 90 75 C 85 95, 75 105, 65 95 C 55 85, 45 85, 35 95 C 25 105, 15 95, 10 75 C 5 45, 10 20, 25 15 Z" 
+                    fill="#fef2f2" 
+                    stroke="#f43f5e" 
+                    strokeWidth="3"
+                  />
+                  {/* Brown Cavity Spot Top Corner */}
+                  <path d="M 68 18 C 76 16, 84 25, 78 30 C 72 32, 65 24, 68 18 Z" fill="#78350f" />
+                  <circle cx="28" cy="30" r="3" fill="#78350f" opacity="0.6" />
+                  
+                  {/* Worried Eyes */}
+                  <ellipse cx="38" cy="48" rx="4" ry="5" fill="#451a03" />
+                  <ellipse cx="62" cy="48" rx="4" ry="5" fill="#451a03" />
+                  {/* Sad Mouth */}
+                  <path d="M 40 68 Q 50 58 60 68" fill="none" stroke="#991b1b" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+
+                <div className="absolute top-2 left-2 text-xl">
+                  👾
+                </div>
               </div>
-              <h4 className="text-base font-black text-rose-950">
-                {lang === 'hi' ? 'कैविटी / कीड़े का खतरा' : 'Cavity & Decay Risk'}
-              </h4>
-              <p className="text-[11px] text-rose-800 font-bold mb-3">
-                {lang === 'hi' ? 'चिपचिपा मीठा व सोडा नुकसान पहुंचाते हैं!' : 'Sugary, sticky foods create decay!'}
-              </p>
+
+              <div className="my-2">
+                <h4 className="text-base font-black text-rose-950">
+                  {lang === 'hi' ? 'कीड़ा / कैविटी का खतरा' : 'Cavity Bug Risk'}
+                </h4>
+                <p className="text-[11px] font-bold text-rose-800">
+                  {lang === 'hi' ? 'चिपचिपा मीठा व सोडा नुकसान पहुंचाते हैं!' : 'Sugars and sodas invite decay!'}
+                </p>
+              </div>
+
               <button
-                onClick={() => handleSortFood('junk')}
-                className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black transition cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                onClick={() => sortFood('cavity')}
+                className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black transition cursor-pointer shadow-md flex items-center justify-center gap-2"
               >
                 <Frown className="w-4 h-4" />
-                {lang === 'hi' ? 'कूड़े में डालें (हानिकारक)' : 'Avoid / Discard (Junk)'}
+                {lang === 'hi' ? 'रोकें / कूड़े में डालें (हानिकारक)' : 'Avoid / Junk Food Shield'}
               </button>
             </div>
 
           </div>
 
-          {/* Bottom Guide: 4-Step Proper Brushing Guide (from Book) */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-            <span className="text-[10px] font-black uppercase text-emerald-900 tracking-wider block mb-2">
-              🪥 {lang === 'hi' ? 'सही तरीके से ब्रश करने के ४ कदम (Dental Care):' : '4 Easy Steps to Proper Brushing:'}
+          {/* 4 Steps to Proper Brushing (Visual Cards from Busy Book) */}
+          <div className="bg-white rounded-3xl border-2 border-emerald-200 p-5 shadow-xs">
+            <span className="text-xs font-black uppercase text-emerald-950 tracking-wider block mb-3">
+              🪥 {lang === 'hi' ? 'सही तरीके से दाँत साफ़ करने के ४ नियम (Dental Hygiene):' : '4 Easy Steps to Proper Brushing (from Busy Book):'}
             </span>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {brushingSteps.map((step, idx) => (
-                <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { step: '1', titleEn: 'Pea-sized Paste', titleHi: 'मटर जितना पेस्ट', icon: '🪥', descEn: 'Apply soft fluoridated toothpaste.', descHi: 'ब्रश पर थोड़ा सा पेस्ट लगाएं।' },
+                { step: '2', titleEn: 'Circular Scrub', titleHi: 'गोल-गोल ब्रश', icon: '🔄', descEn: 'Brush outer and inner surfaces in circles.', descHi: 'हल्के हाथों से २ मिनट गोल-गोल घुमाएं।' },
+                { step: '3', titleEn: 'Clean Water Rinse', titleHi: 'अच्छी तरह कुल्ला', icon: '💧', descEn: 'Rinse mouth thoroughly with water.', descHi: 'साफ पानी से मुँह धोएं।' },
+                { step: '4', titleEn: 'Twice Every Day', titleHi: 'दिन में दो बार', icon: '✨', descEn: 'Morning and before bedtime for sparkle!', descHi: 'सुबह और रात को सोने से पहले!' }
+              ].map(s => (
+                <div key={s.step} className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{step.icon}</span>
+                    <span className="text-xl">{s.icon}</span>
                     <span className="text-xs font-black text-slate-900 leading-tight">
-                      {lang === 'hi' ? step.titleHi : step.titleEn}
+                      {lang === 'hi' ? s.titleHi : s.titleEn}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
-                    {lang === 'hi' ? step.textHi : step.textEn}
+                  <p className="text-[11px] font-semibold text-slate-600">
+                    {lang === 'hi' ? s.descHi : s.descEn}
                   </p>
                 </div>
               ))}
