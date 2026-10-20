@@ -130,7 +130,7 @@ const PHONICS_DATA: PhonicsItem[] = [
   },
 ];
 
-type VowelKey = "A" | "E" | "I";
+type VowelKey = "A" | "E" | "I" | "O";
 
 interface VowelLabInfo {
   label: string;
@@ -186,11 +186,40 @@ const CVC_VOWEL_LABS: Record<VowelKey, VowelLabInfo> = {
       "-ix / -iz": ["fix", "mix", "six", "biz", "fizz"],
       "-ill / -iss": ["bill", "fill", "hill", "mill", "pill", "will", "hiss", "miss"],
     }
+  },
+  O: {
+    label: "Short O",
+    sound: "/ɒ/",
+    hindiHint: "ऑ • संतरा",
+    defaultWord: "dog",
+    families: {
+      "-ob": ["bob", "cob", "gob", "job", "mob", "rob", "sob"],
+      "-od": ["cod", "god", "nod", "pod", "rod", "sod"],
+      "-og": ["bog", "cog", "dog", "fog", "hog", "jog", "log"],
+      "-om": ["mom", "pom"],
+      "-op": ["bop", "cop", "hop", "mop", "pop", "top"],
+      "-ot": ["cot", "dot", "got", "hot", "jot", "lot", "not", "pot", "rot", "tot"],
+      "-ox": ["box", "fox", "pox"],
+      "-ock": ["dock", "lock", "mock", "rock", "sock"],
+      "-oss / -off": ["boss", "loss", "moss", "toss", "doff"],
+    }
   }
 };
 
 // Common mishearings / homophones returned by Web Speech for CVC words
 const CVC_ALIASES: Record<string, string[]> = {
+  // Short A
+  cat: ["cut", "kat", "cap"],
+  bat: ["bad", "bet", "but"],
+  hat: ["hot", "hut", "had"],
+  mat: ["met", "mud", "mad"],
+
+  // Short E
+  bed: ["bad", "bid", "bet"],
+  red: ["read", "rad", "rid"],
+  pen: ["pan", "pin", "pun"],
+
+  // Short I
   bin: ["been", "bean", "ben", "in", "pin", "din"],
   bib: ["bip", "big", "b"],
   bid: ["did", "bed", "bad", "bit"],
@@ -245,13 +274,59 @@ const CVC_ALIASES: Record<string, string[]> = {
   will: ["well", "wheel", "wool"],
   hiss: ["his", "he's", "has"],
   miss: ["ms", "mrs", "mess", "mass"],
-  cat: ["cut", "kat", "cap"],
-  bat: ["bad", "bet", "but"],
-  hat: ["hot", "hut", "had"],
-  mat: ["met", "mud", "mad"],
-  bed: ["bad", "bid", "bet"],
-  red: ["read", "rad", "rid"],
-  pen: ["pan", "pin", "pun"],
+
+  // Short O
+  bob: ["bop", "bab", "bomb"],
+  cob: ["cop", "cab", "cub"],
+  gob: ["god", "gab", "job"],
+  job: ["jab", "jaw", "jock"],
+  mob: ["mop", "map", "mom"],
+  rob: ["rub", "wrap", "rap"],
+  sob: ["sub", "sap", "saw"],
+  cod: ["card", "god", "cot"],
+  god: ["guard", "gut", "got"],
+  nod: ["not", "nut", "gnat"],
+  pod: ["pot", "part", "pad"],
+  rod: ["road", "rot", "rad"],
+  sod: ["sawed", "sad", "sot"],
+  bog: ["bag", "bug", "bark"],
+  cog: ["cock", "cag", "keg"],
+  dog: ["dock", "dark", "dug"],
+  fog: ["frog", "folk", "fag"],
+  hog: ["hug", "hawk", "hot"],
+  jog: ["jug", "jag", "chalk"],
+  log: ["lock", "lag", "lug"],
+  mom: ["mum", "ma'am", "mam"],
+  pom: ["palm", "pawn", "pan"],
+  bop: ["pop", "bob", "bath"],
+  cop: ["cup", "cap", "carp"],
+  hop: ["hope", "heap", "hub"],
+  mop: ["map", "mob", "mock"],
+  pop: ["pap", "pup", "pipe"],
+  top: ["tap", "tub", "tip"],
+  cot: ["caught", "cut", "cat"],
+  dot: ["dart", "dat", "dock"],
+  got: ["gut", "gat", "god"],
+  hot: ["hut", "hat", "heart"],
+  jot: ["jet", "jut", "jolt"],
+  lot: ["load", "lat", "light"],
+  not: ["knot", "nut", "net"],
+  pot: ["part", "pet", "pat"],
+  rot: ["rat", "rut", "wrote"],
+  tot: ["tart", "tat", "taught"],
+  box: ["backs", "bucks", "barks"],
+  fox: ["foxes", "fucks", "folks"],
+  pox: ["packs", "pax", "parks"],
+  dock: ["doc", "duck", "dark"],
+  lock: ["lakh", "luck", "look"],
+  mock: ["mark", "muck", "mak"],
+  rock: ["rawk", "rack", "rug"],
+  sock: ["suck", "sack", "shock"],
+  boss: ["bus", "bass", "pause"],
+  loss: ["lost", "laws", "less"],
+  moss: ["mass", "muss", "mouse"],
+  toss: ["task", "toes", "tax"],
+  doff: ["dove", "duff", "deaf"]
 };
 
 // Simple Levenshtein distance check (tolerant to 1 char difference)
@@ -274,7 +349,7 @@ function isFuzzyMatch(a: string, b: string): boolean {
   return true;
 }
 
-// --- BROWSER WEB-AUDIO SOUND FX ---
+// Browser Web-Audio FX
 function playTriumphSound() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -353,7 +428,7 @@ export default function SpeechMasteryStudio() {
   const hasVocalizedRef = useRef<boolean>(false);
   const hasMatchedRef = useRef<boolean>(false);
 
-  // Setup Web Speech Recognition with INTERIM RESULTS
+  // Setup Web Speech Recognition with interim results
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -377,7 +452,6 @@ export default function SpeechMasteryStudio() {
             const raw = event.results[i][0].transcript.trim().toLowerCase();
             setHeardText(raw);
 
-            // Fast-path evaluation during interim stream
             const matched = evaluateInput(raw);
             if (matched) {
               hasMatchedRef.current = true;
@@ -392,7 +466,6 @@ export default function SpeechMasteryStudio() {
         recognition.onerror = () => {
           if (!hasMatchedRef.current) {
             if (hasVocalizedRef.current) {
-              // Benefit of doubt if child spoke clearly into the mic
               setSpeechStatus("success");
               playTriumphSound();
             } else {
@@ -421,24 +494,20 @@ export default function SpeechMasteryStudio() {
     }
   }, [activePhonic, selectedWord, currentStage, speechStatus]);
 
-  // Resilient Fuzzy & Phonetic Matcher
   const evaluateInput = (rawText: string): boolean => {
     const clean = rawText.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim().toLowerCase();
     const tokens = clean.split(/\s+/);
 
     if (currentStage === 1) {
-      // Stage 1: Single letter echo
       const targetId = activePhonic.id.toLowerCase();
       const hasAccepted = activePhonic.acceptedEchoes.some(
         (e) => clean === e || tokens.includes(e) || isFuzzyMatch(clean, e)
       );
       return hasAccepted || clean.includes(targetId) || tokens.some(t => t.startsWith(targetId));
     } else {
-      // Stage 2: CVC Word
       const target = selectedWord.toLowerCase();
       const aliases = CVC_ALIASES[target] || [];
 
-      // Check exact token match, alias match, substring, or 1-edit distance
       for (const token of tokens) {
         if (token === target) return true;
         if (aliases.includes(token)) return true;
@@ -455,7 +524,6 @@ export default function SpeechMasteryStudio() {
     hasVocalizedRef.current = false;
     hasMatchedRef.current = false;
 
-    // Start acoustic energy monitor
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -474,7 +542,6 @@ export default function SpeechMasteryStudio() {
         }
         const avg = sum / dataArray.length;
 
-        // Sound vocalized if volume registers above normal background room noise
         if (avg > 15) {
           hasVocalizedRef.current = true;
         }
@@ -605,9 +672,7 @@ export default function SpeechMasteryStudio() {
         </div>
       </header>
 
-      {/* ========================================================= */}
-      {/* STAGE 1: SOUND ECHO MODE                                  */}
-      {/* ========================================================= */}
+      {/* STAGE 1: SOUND ECHO */}
       {currentStage === 1 && (
         <>
           <div className="max-w-6xl mx-auto flex gap-2.5 mb-8 overflow-x-auto pb-2">
@@ -689,7 +754,6 @@ export default function SpeechMasteryStudio() {
                 {activePhonic.hindiHint}
               </div>
 
-              {/* Action 1: Play Native Phoneme */}
               <button
                 onClick={() => playSound(activePhonic)}
                 className={`w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 transition-all cursor-pointer ${
@@ -711,7 +775,6 @@ export default function SpeechMasteryStudio() {
                 )}
               </button>
 
-              {/* Action 2: Kid Repeats Sound */}
               <button
                 onClick={startListening}
                 disabled={isListening}
@@ -731,7 +794,6 @@ export default function SpeechMasteryStudio() {
                 </span>
               </button>
 
-              {/* Audiovisual Triumph Badge */}
               {speechStatus === "success" && (
                 <div className="mt-3 flex items-center gap-2 text-emerald-800 font-extrabold text-xs bg-emerald-50 border border-emerald-300 px-4 py-2 rounded-xl animate-bounce">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -812,7 +874,7 @@ export default function SpeechMasteryStudio() {
                   <div>
                     <h3 className="font-black text-zinc-950 text-sm">Next: CVC Word Blending</h3>
                     <p className="text-xs text-zinc-500 font-medium">
-                      Hear & speak blended words across Short A, E, and I
+                      Hear & speak blended words across Short A, E, I, and O
                     </p>
                   </div>
                 </div>
@@ -826,14 +888,12 @@ export default function SpeechMasteryStudio() {
         </>
       )}
 
-      {/* ========================================================= */}
-      {/* STAGE 2: CVC WORD BLENDING                                */}
-      {/* ========================================================= */}
+      {/* STAGE 2: CVC WORD BLENDING */}
       {currentStage === 2 && (
         <main className="max-w-5xl mx-auto flex flex-col items-center">
-          {/* Vowel Switcher Bar */}
+          {/* Multi-Vowel Switcher Bar */}
           <div className="flex items-center justify-center gap-3 mb-8 bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200">
-            {(["A", "E", "I"] as VowelKey[]).map((vowel) => {
+            {(["A", "E", "I", "O"] as VowelKey[]).map((vowel) => {
               const vData = CVC_VOWEL_LABS[vowel];
               const isSelected = selectedVowel === vowel;
               return (
