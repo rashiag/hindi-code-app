@@ -20,101 +20,101 @@ const PHONICS_DATA: PhonicsItem[] = [
   // Group 1
   { 
     id: "s", letter: "S s", sound: "/s/", word: "Sun", hindiHint: "स • सूरज", audio: "/audio/speak/p_s.mp3", group: 1, icon: "☀️",
-    acceptedEchoes: ["s", "es", "is", "ss", "yes", "us", "ass", "see", "स", "स।"] 
+    acceptedEchoes: ["s", "es", "is", "ss", "yes", "us", "ass", "see", "sea", "sir", "स", "स।"] 
   },
   { 
     id: "a", letter: "A a", sound: "/æ/", word: "Apple", hindiHint: "ऐ • सेब", audio: "/audio/speak/p_a.mp3", group: 1, icon: "🍎",
-    acceptedEchoes: ["a", "ae", "eh", "ah", "at", "an", "ऐ", "ए"] 
+    acceptedEchoes: ["a", "ae", "eh", "ah", "at", "an", "app", "ऐ", "ए"] 
   },
   { 
     id: "t", letter: "T t", sound: "/t/", word: "Tap", hindiHint: "ट • नल", audio: "/audio/speak/p_t.mp3", group: 1, icon: "🚰",
-    acceptedEchoes: ["t", "te", "tee", "tea", "it", "to", "at", "ट"] 
+    acceptedEchoes: ["t", "te", "tee", "tea", "it", "to", "at", "ta", "ट"] 
   },
   { 
     id: "p", letter: "P p", sound: "/p/", word: "Pan", hindiHint: "प • पैन", audio: "/audio/speak/p_p.mp3", group: 1, icon: "🍳",
-    acceptedEchoes: ["p", "pe", "pee", "pea", "up", "प"] 
+    acceptedEchoes: ["p", "pe", "pee", "pea", "up", "pa", "प"] 
   },
   { 
     id: "i", letter: "I i", sound: "/ɪ/", word: "Ink", hindiHint: "इ • स्याही", audio: "/audio/speak/p_i.mp3", group: 1, icon: "🖋️",
-    acceptedEchoes: ["i", "e", "ih", "it", "in", "ee", "इ"] 
+    acceptedEchoes: ["i", "e", "ih", "it", "in", "ee", "eye", "इ"] 
   },
   { 
     id: "n", letter: "N n", sound: "/n/", word: "Net", hindiHint: "न • जाल", audio: "/audio/speak/p_n.mp3", group: 1, icon: "🥅",
-    acceptedEchoes: ["n", "en", "an", "in", "un", "no", "न"] 
+    acceptedEchoes: ["n", "en", "an", "in", "un", "no", "na", "न"] 
   },
 
   // Group 2
   { 
     id: "c", letter: "C c", sound: "/k/", word: "Cat", hindiHint: "क • बिल्ली", audio: "/audio/speak/p_c.mp3", group: 2, icon: "🐱",
-    acceptedEchoes: ["c", "k", "ka", "kay", "ke", "क"] 
+    acceptedEchoes: ["c", "k", "ka", "kay", "ke", "see", "क"] 
   },
   { 
     id: "k", letter: "K k", sound: "/k/", word: "Kite", hindiHint: "क • पतंग", audio: "/audio/speak/p_k.mp3", group: 2, icon: "🪁",
-    acceptedEchoes: ["k", "c", "kay", "ka", "क"] 
+    acceptedEchoes: ["k", "c", "kay", "ka", "ke", "क"] 
   },
   { 
     id: "e", letter: "E e", sound: "/e/", word: "Egg", hindiHint: "ए • अंडा", audio: "/audio/speak/p_e.mp3", group: 2, icon: "🥚",
-    acceptedEchoes: ["e", "eh", "ay", "egg", "ए"] 
+    acceptedEchoes: ["e", "eh", "ay", "egg", "ee", "ए"] 
   },
   { 
     id: "h", letter: "H h", sound: "/h/", word: "Hat", hindiHint: "ह • टोपी", audio: "/audio/speak/p_h.mp3", group: 2, icon: "🎩",
-    acceptedEchoes: ["h", "ha", "huh", "he", "ह"] 
+    acceptedEchoes: ["h", "ha", "huh", "he", "each", "ह"] 
   },
   { 
     id: "r", letter: "R r", sound: "/r/", word: "Rat", hindiHint: "र • चूहा", audio: "/audio/speak/p_r.mp3", group: 2, icon: "🐀",
-    acceptedEchoes: ["r", "ar", "er", "ur", "are", "र"] 
+    acceptedEchoes: ["r", "ar", "er", "ur", "are", "our", "र"] 
   },
   { 
     id: "m", letter: "M m", sound: "/m/", word: "Mug", hindiHint: "म • मग", audio: "/audio/speak/p_m.mp3", group: 2, icon: "☕",
-    acceptedEchoes: ["m", "em", "um", "am", "hum", "म"] 
+    acceptedEchoes: ["m", "em", "um", "am", "hum", "ma", "म"] 
   },
   { 
     id: "d", letter: "D d", sound: "/d/", word: "Drum", hindiHint: "ड • ढोल", audio: "/audio/speak/p_d.mp3", group: 2, icon: "🥁",
-    acceptedEchoes: ["d", "de", "dee", "duh", "ड"] 
+    acceptedEchoes: ["d", "de", "dee", "duh", "the", "ड"] 
   },
 
   // Group 3
   { 
     id: "g", letter: "G g", sound: "/ɡ/", word: "Grapes", hindiHint: "ग • अंगूर", audio: "/audio/speak/p_g.mp3", group: 3, icon: "🍇",
-    acceptedEchoes: ["g", "ge", "gee", "guh", "ग"] 
+    acceptedEchoes: ["g", "ge", "gee", "guh", "ga", "ग"] 
   },
   { 
     id: "o", letter: "O o", sound: "/ɒ/", word: "Orange", hindiHint: "ऑ • संतरा", audio: "/audio/speak/p_o.mp3", group: 3, icon: "🍊",
-    acceptedEchoes: ["o", "oh", "aw", "or", "ऑ"] 
+    acceptedEchoes: ["o", "oh", "aw", "or", "awe", "ऑ"] 
   },
   { 
     id: "u", letter: "U u", sound: "/ʌ/", word: "Umbrella", hindiHint: "अ • छाता", audio: "/audio/speak/p_u.mp3", group: 3, icon: "☂️",
-    acceptedEchoes: ["u", "uh", "ah", "up", "अ"] 
+    acceptedEchoes: ["u", "uh", "ah", "up", "you", "अ"] 
   },
   { 
     id: "l", letter: "L l", sound: "/l/", word: "Lollipop", hindiHint: "ल • लॉलीपॉप", audio: "/audio/speak/p_l.mp3", group: 3, icon: "🍭",
-    acceptedEchoes: ["l", "el", "al", "ul", "ल"] 
+    acceptedEchoes: ["l", "el", "al", "ul", "la", "ल"] 
   },
   { 
     id: "f", letter: "F f", sound: "/f/", word: "Fan", hindiHint: "फ़ • पंखा", audio: "/audio/speak/p_f.mp3", group: 3, icon: "🪭",
-    acceptedEchoes: ["f", "ef", "if", "ph", "फ़"] 
+    acceptedEchoes: ["f", "ef", "if", "ph", "fa", "फ़"] 
   },
   { 
     id: "b", letter: "B b", sound: "/b/", word: "Ball", hindiHint: "ब • गेंद", audio: "/audio/speak/p_b.mp3", group: 3, icon: "⚽",
-    acceptedEchoes: ["b", "be", "bee", "buh", "ब"] 
+    acceptedEchoes: ["b", "be", "bee", "buh", "ba", "ब"] 
   },
 
   // Group 4
   { 
     id: "j", letter: "J j", sound: "/dʒ/", word: "Jug", hindiHint: "ज • जग", audio: "/audio/speak/p_j.mp3", group: 4, icon: "🏺",
-    acceptedEchoes: ["j", "jay", "je", "ज"] 
+    acceptedEchoes: ["j", "jay", "je", "ja", "ज"] 
   },
   { 
     id: "v", letter: "V v", sound: "/v/", word: "Van", hindiHint: "व • गाड़ी", audio: "/audio/speak/p_v.mp3", group: 4, icon: "🚐",
-    acceptedEchoes: ["v", "ve", "vee", "we", "व"] 
+    acceptedEchoes: ["v", "ve", "vee", "we", "va", "व"] 
   },
   { 
     id: "w", letter: "W w", sound: "/w/", word: "Watch", hindiHint: "व • घड़ी", audio: "/audio/speak/p_w.mp3", group: 4, icon: "⌚",
-    acceptedEchoes: ["w", "wa", "double u", "व"] 
+    acceptedEchoes: ["w", "wa", "double u", "waa", "व"] 
   },
   { 
     id: "x", letter: "X x", sound: "/ks/", word: "Box", hindiHint: "क्स • डिब्बा", audio: "/audio/speak/p_x.mp3", group: 4, icon: "📦",
-    acceptedEchoes: ["x", "ex", "ks", "क्स"] 
+    acceptedEchoes: ["x", "ex", "ks", "ax", "क्स"] 
   },
   { 
     id: "y", letter: "Y y", sound: "/j/", word: "Yak", hindiHint: "य • याक", audio: "/audio/speak/p_y.mp3", group: 4, icon: "🐂",
@@ -188,6 +188,91 @@ const CVC_VOWEL_LABS: Record<VowelKey, VowelLabInfo> = {
     }
   }
 };
+
+// Common mishearings / homophones returned by Web Speech for CVC words
+const CVC_ALIASES: Record<string, string[]> = {
+  bin: ["been", "bean", "ben", "in", "pin", "din"],
+  bib: ["bip", "big", "b"],
+  bid: ["did", "bed", "bad", "bit"],
+  did: ["dead", "deed", "bid", "dude"],
+  hid: ["head", "hit", "heed", "it"],
+  kid: ["kit", "kids", "ked"],
+  lid: ["lead", "lit", "led"],
+  rid: ["red", "read", "rit"],
+  mid: ["made", "mud", "mit"],
+  big: ["pig", "bag", "beg"],
+  dig: ["dick", "deck", "duck"],
+  fig: ["fake", "fix", "pig"],
+  gig: ["gag", "keg", "get"],
+  jig: ["jack", "jug", "zig"],
+  pig: ["pick", "peg", "pug", "big"],
+  rig: ["wreck", "rag", "rug"],
+  wig: ["wick", "wag", "wake"],
+  dim: ["them", "dam", "den"],
+  him: ["hem", "ham", "hum"],
+  rim: ["ram", "room", "ring"],
+  fin: ["thin", "fan", "fen", "pin"],
+  pin: ["pen", "pan", "pun", "bin"],
+  sin: ["seen", "scene", "sun", "tin"],
+  tin: ["ten", "tan", "thin", "din"],
+  win: ["when", "one", "won", "wind"],
+  dip: ["deep", "tip", "pip"],
+  hip: ["heap", "hit", "hop"],
+  lip: ["leap", "lap", "lit"],
+  nip: ["nap", "net", "knee"],
+  rip: ["reap", "rap", "rib"],
+  sip: ["ship", "soup", "sap", "zip"],
+  tip: ["tea", "tape", "top", "dip"],
+  zip: ["sip", "zap", "zeep"],
+  bit: ["beet", "beat", "bat", "bet", "fit"],
+  fit: ["feet", "feat", "fat", "foot", "hit"],
+  hit: ["heat", "hat", "hot", "hut", "it"],
+  kit: ["kid", "cat", "cut", "kite"],
+  lit: ["late", "let", "lot", "light"],
+  pit: ["peat", "pet", "pat", "pot"],
+  sit: ["seat", "set", "sat"],
+  wit: ["wheat", "wet", "wait", "white"],
+  fix: ["figs", "fox", "fax"],
+  mix: ["max", "mex", "makes"],
+  six: ["sex", "sax", "sicks"],
+  biz: ["bees", "busy", "base"],
+  fizz: ["fees", "phase", "face"],
+  bill: ["build", "bell", "ball"],
+  fill: ["feel", "fell", "full"],
+  hill: ["heel", "heal", "hell"],
+  mill: ["meal", "male", "melt"],
+  pill: ["peel", "pool", "pale"],
+  will: ["well", "wheel", "wool"],
+  hiss: ["his", "he's", "has"],
+  miss: ["ms", "mrs", "mess", "mass"],
+  cat: ["cut", "kat", "cap"],
+  bat: ["bad", "bet", "but"],
+  hat: ["hot", "hut", "had"],
+  mat: ["met", "mud", "mad"],
+  bed: ["bad", "bid", "bet"],
+  red: ["read", "rad", "rid"],
+  pen: ["pan", "pin", "pun"],
+};
+
+// Simple Levenshtein distance check (tolerant to 1 char difference)
+function isFuzzyMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let edits = 0;
+  let i = 0, j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] !== b[j]) {
+      edits++;
+      if (edits > 1) return false;
+      if (a.length > b.length) i++;
+      else if (b.length > a.length) j++;
+      else { i++; j++; }
+    } else {
+      i++; j++;
+    }
+  }
+  return true;
+}
 
 // --- BROWSER WEB-AUDIO SOUND FX ---
 function playTriumphSound() {
@@ -265,44 +350,69 @@ export default function SpeechMasteryStudio() {
 
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const soundVocalizedRef = useRef<boolean>(false);
+  const hasVocalizedRef = useRef<boolean>(false);
+  const hasMatchedRef = useRef<boolean>(false);
 
-  // Setup Web Speech Recognition
+  // Setup Web Speech Recognition with INTERIM RESULTS
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.lang = "en-IN";
 
         recognition.onstart = () => {
           setIsListening(true);
           setSpeechStatus("listening");
-          soundVocalizedRef.current = false;
+          hasVocalizedRef.current = false;
+          hasMatchedRef.current = false;
         };
 
         recognition.onresult = (event: any) => {
-          const raw = event.results[0][0].transcript.trim().toLowerCase();
-          setHeardText(raw);
-          handleEvaluation(raw, true);
+          if (hasMatchedRef.current) return;
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const raw = event.results[i][0].transcript.trim().toLowerCase();
+            setHeardText(raw);
+
+            // Fast-path evaluation during interim stream
+            const matched = evaluateInput(raw);
+            if (matched) {
+              hasMatchedRef.current = true;
+              setSpeechStatus("success");
+              playTriumphSound();
+              try { recognition.stop(); } catch {}
+              return;
+            }
+          }
         };
 
         recognition.onerror = () => {
-          if (currentStage === 1 && soundVocalizedRef.current) {
-            handleEvaluation(activePhonic.sound, false);
-          } else {
-            setIsListening(false);
-            setSpeechStatus("retry");
-            playRetrySound();
+          if (!hasMatchedRef.current) {
+            if (hasVocalizedRef.current) {
+              // Benefit of doubt if child spoke clearly into the mic
+              setSpeechStatus("success");
+              playTriumphSound();
+            } else {
+              setSpeechStatus("retry");
+              playRetrySound();
+            }
           }
+          setIsListening(false);
         };
 
         recognition.onend = () => {
           setIsListening(false);
-          if (currentStage === 1 && soundVocalizedRef.current && speechStatus === "listening") {
-            handleEvaluation(activePhonic.sound, false);
+          if (!hasMatchedRef.current) {
+            if (hasVocalizedRef.current) {
+              setSpeechStatus("success");
+              playTriumphSound();
+            } else if (speechStatus === "listening") {
+              setSpeechStatus("retry");
+              playRetrySound();
+            }
           }
         };
 
@@ -311,42 +421,41 @@ export default function SpeechMasteryStudio() {
     }
   }, [activePhonic, selectedWord, currentStage, speechStatus]);
 
-  // Combined Phonetic & Acoustic Evaluator
-  const handleEvaluation = (text: string, isFromEngine: boolean) => {
-    const clean = text.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim().toLowerCase();
+  // Resilient Fuzzy & Phonetic Matcher
+  const evaluateInput = (rawText: string): boolean => {
+    const clean = rawText.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim().toLowerCase();
+    const tokens = clean.split(/\s+/);
 
     if (currentStage === 1) {
-      const isAcceptedToken =
-        activePhonic.acceptedEchoes.some((echo) => echo.toLowerCase() === clean) ||
-        clean.includes(activePhonic.id.toLowerCase()) ||
-        !isFromEngine;
-
-      if (isAcceptedToken) {
-        setSpeechStatus("success");
-        playTriumphSound();
-      } else {
-        setSpeechStatus("retry");
-        playRetrySound();
-      }
+      // Stage 1: Single letter echo
+      const targetId = activePhonic.id.toLowerCase();
+      const hasAccepted = activePhonic.acceptedEchoes.some(
+        (e) => clean === e || tokens.includes(e) || isFuzzyMatch(clean, e)
+      );
+      return hasAccepted || clean.includes(targetId) || tokens.some(t => t.startsWith(targetId));
     } else {
+      // Stage 2: CVC Word
       const target = selectedWord.toLowerCase();
-      const isWordMatch = clean === target || clean.includes(target) || target.includes(clean);
+      const aliases = CVC_ALIASES[target] || [];
 
-      if (isWordMatch) {
-        setSpeechStatus("success");
-        playTriumphSound();
-      } else {
-        setSpeechStatus("retry");
-        playRetrySound();
+      // Check exact token match, alias match, substring, or 1-edit distance
+      for (const token of tokens) {
+        if (token === target) return true;
+        if (aliases.includes(token)) return true;
+        if (isFuzzyMatch(token, target)) return true;
+        if (token.includes(target) || target.includes(token)) return true;
       }
+      return isFuzzyMatch(clean, target) || aliases.includes(clean);
     }
   };
 
   const startListening = async () => {
     setSpeechStatus("listening");
     setHeardText("");
-    soundVocalizedRef.current = false;
+    hasVocalizedRef.current = false;
+    hasMatchedRef.current = false;
 
+    // Start acoustic energy monitor
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -365,8 +474,9 @@ export default function SpeechMasteryStudio() {
         }
         const avg = sum / dataArray.length;
 
-        if (avg > 18) {
-          soundVocalizedRef.current = true;
+        // Sound vocalized if volume registers above normal background room noise
+        if (avg > 15) {
+          hasVocalizedRef.current = true;
         }
 
         if (speechStatus === "listening") {
@@ -384,7 +494,9 @@ export default function SpeechMasteryStudio() {
         recognitionRef.current.start();
       } catch {
         recognitionRef.current.stop();
-        setTimeout(() => recognitionRef.current.start(), 150);
+        setTimeout(() => {
+          try { recognitionRef.current.start(); } catch {}
+        }, 150);
       }
     }
   };
