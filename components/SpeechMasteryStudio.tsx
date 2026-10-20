@@ -130,7 +130,7 @@ const PHONICS_DATA: PhonicsItem[] = [
   },
 ];
 
-type VowelKey = "A" | "E";
+type VowelKey = "A" | "E" | "I";
 
 interface VowelLabInfo {
   label: string;
@@ -168,6 +168,23 @@ const CVC_VOWEL_LABS: Record<VowelKey, VowelLabInfo> = {
       "-ed": ["bed", "fed", "led", "red", "ted", "wed", "zed"],
       "-eg": ["beg", "keg", "leg", "peg", "meg"],
       "-em / -eb / specials": ["hem", "rem", "deb", "web", "yes", "pep", "rep", "rex", "dex", "tex"],
+    }
+  },
+  I: {
+    label: "Short I",
+    sound: "/ɪ/",
+    hindiHint: "इ • स्याही",
+    defaultWord: "bin",
+    families: {
+      "-ib": ["bib", "fib", "rib", "nib"],
+      "-id": ["bid", "did", "hid", "kid", "lid", "rid", "mid"],
+      "-ig": ["big", "dig", "fig", "gig", "jig", "pig", "rig", "wig"],
+      "-im": ["dim", "him", "rim", "vim"],
+      "-in": ["bin", "din", "fin", "kin", "pin", "sin", "tin", "win"],
+      "-ip": ["dip", "hip", "lip", "nip", "rip", "sip", "tip", "zip"],
+      "-it": ["bit", "fit", "hit", "kit", "lit", "pit", "sit", "wit"],
+      "-ix / -iz": ["fix", "mix", "six", "biz", "fizz"],
+      "-ill / -iss": ["bill", "fill", "hill", "mill", "pill", "will", "hiss", "miss"],
     }
   }
 };
@@ -683,7 +700,7 @@ export default function SpeechMasteryStudio() {
                   <div>
                     <h3 className="font-black text-zinc-950 text-sm">Next: CVC Word Blending</h3>
                     <p className="text-xs text-zinc-500 font-medium">
-                      Hear & speak blended words across Short A and Short E
+                      Hear & speak blended words across Short A, E, and I
                     </p>
                   </div>
                 </div>
@@ -704,7 +721,7 @@ export default function SpeechMasteryStudio() {
         <main className="max-w-5xl mx-auto flex flex-col items-center">
           {/* Vowel Switcher Bar */}
           <div className="flex items-center justify-center gap-3 mb-8 bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200">
-            {(["A", "E"] as VowelKey[]).map((vowel) => {
+            {(["A", "E", "I"] as VowelKey[]).map((vowel) => {
               const vData = CVC_VOWEL_LABS[vowel];
               const isSelected = selectedVowel === vowel;
               return (
