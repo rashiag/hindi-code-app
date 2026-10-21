@@ -130,7 +130,7 @@ const PHONICS_DATA: PhonicsItem[] = [
   },
 ];
 
-type VowelKey = "A" | "E" | "I" | "O";
+type VowelKey = "A" | "E" | "I" | "O" | "U";
 
 interface VowelLabInfo {
   label: string;
@@ -203,10 +203,27 @@ const CVC_VOWEL_LABS: Record<VowelKey, VowelLabInfo> = {
       "-ock": ["dock", "lock", "mock", "rock", "sock"],
       "-oss / -off": ["boss", "loss", "moss", "toss", "doff"],
     }
+  },
+  U: {
+    label: "Short U",
+    sound: "/ʌ/",
+    hindiHint: "अ • छाता",
+    defaultWord: "sun",
+    families: {
+      "-ub": ["cub", "dub", "hub", "pub", "rub", "sub", "tub"],
+      "-ud": ["bud", "cud", "mud"],
+      "-ug": ["bug", "dug", "hug", "jug", "lug", "mug", "pug", "rug", "tug"],
+      "-um": ["bum", "gum", "hum", "mum", "sum"],
+      "-un": ["bun", "fun", "gun", "nun", "run", "sun"],
+      "-up": ["cup", "pup", "yup"],
+      "-us / -ux": ["bus", "plus", "tux"],
+      "-ut": ["but", "cut", "gut", "hut", "jut", "nut", "rut"],
+      "-uck": ["buck", "duck", "luck", "muck", "suck", "tuck"],
+      "-uff / -ull": ["buff", "cuff", "puff", "dull", "null"],
+    }
   }
 };
 
-// Common mishearings / homophones returned by Web Speech for CVC words
 const CVC_ALIASES: Record<string, string[]> = {
   // Short A
   cat: ["cut", "kat", "cap"],
@@ -326,10 +343,65 @@ const CVC_ALIASES: Record<string, string[]> = {
   loss: ["lost", "laws", "less"],
   moss: ["mass", "muss", "mouse"],
   toss: ["task", "toes", "tax"],
-  doff: ["dove", "duff", "deaf"]
+  doff: ["dove", "duff", "deaf"],
+
+  // Short U
+  cub: ["cup", "club", "cob"],
+  dub: ["tub", "dove", "dumb"],
+  hub: ["hug", "hop", "pub"],
+  pub: ["pup", "pop", "pud"],
+  rub: ["rob", "rug", "run"],
+  sub: ["sob", "sup", "some"],
+  tub: ["tab", "top", "tap"],
+  bud: ["bad", "bird", "but"],
+  cud: ["cut", "could", "cod"],
+  mud: ["mad", "mid", "mat"],
+  bug: ["bag", "bog", "buck"],
+  dug: ["duck", "dog", "dark"],
+  hug: ["hog", "hawk", "hut"],
+  jug: ["jog", "jack", "jolt"],
+  lug: ["log", "lock", "luck"],
+  mug: ["mag", "mock", "muck"],
+  pug: ["pig", "puck", "pack"],
+  rug: ["rag", "rock", "red"],
+  tug: ["tag", "tuck", "talk"],
+  bum: ["bomb", "bun", "ban"],
+  gum: ["gun", "game", "gam"],
+  hum: ["ham", "him", "hem"],
+  mum: ["mom", "mam", "mud"],
+  sum: ["some", "sam", "sun"],
+  bun: ["ban", "burn", "bin"],
+  fun: ["fan", "fern", "fen"],
+  gun: ["gone", "gang", "gan"],
+  nun: ["none", "nan", "noun"],
+  run: ["ran", "ran", "rug"],
+  sun: ["son", "san", "sin"],
+  cup: ["cub", "cap", "cop"],
+  pup: ["pop", "pub", "pipe"],
+  yup: ["yap", "yep", "up"],
+  bus: ["boss", "buzz", "bass"],
+  plus: ["place", "pulse", "plays"],
+  tux: ["tax", "ducks", "tucks"],
+  but: ["bat", "bet", "butt", "bought"],
+  cut: ["cot", "cat", "caught"],
+  gut: ["got", "get", "gate"],
+  hut: ["hot", "hat", "heart"],
+  jut: ["jet", "jot", "judge"],
+  nut: ["not", "net", "night"],
+  rut: ["rot", "rat", "red"],
+  buck: ["back", "book", "bark"],
+  duck: ["dock", "dark", "deck"],
+  luck: ["lock", "look", "lake"],
+  muck: ["mock", "mark", "make"],
+  suck: ["sock", "sack", "sick"],
+  tuck: ["tok", "tack", "take"],
+  buff: ["puff", "beef", "bath"],
+  cuff: ["cough", "cup", "curff"],
+  puff: ["buff", "pop", "path"],
+  dull: ["doll", "deal", "dell"],
+  null: ["gnoll", "nail", "nil"]
 };
 
-// Simple Levenshtein distance check (tolerant to 1 char difference)
 function isFuzzyMatch(a: string, b: string): boolean {
   if (a === b) return true;
   if (Math.abs(a.length - b.length) > 1) return false;
@@ -349,7 +421,6 @@ function isFuzzyMatch(a: string, b: string): boolean {
   return true;
 }
 
-// Browser Web-Audio FX
 function playTriumphSound() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -358,7 +429,7 @@ function playTriumphSound() {
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = "sine";
-    osc1.frequency.setValueAtTime(523.25, now); // C5
+    osc1.frequency.setValueAtTime(523.25, now);
     gain1.gain.setValueAtTime(0.25, now);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
     osc1.connect(gain1);
@@ -369,7 +440,7 @@ function playTriumphSound() {
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = "sine";
-    osc2.frequency.setValueAtTime(783.99, now + 0.12); // G5
+    osc2.frequency.setValueAtTime(783.99, now + 0.12);
     gain2.gain.setValueAtTime(0.3, now + 0.12);
     gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
     osc2.connect(gain2);
@@ -428,7 +499,6 @@ export default function SpeechMasteryStudio() {
   const hasVocalizedRef = useRef<boolean>(false);
   const hasMatchedRef = useRef<boolean>(false);
 
-  // Setup Web Speech Recognition with interim results
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -874,7 +944,7 @@ export default function SpeechMasteryStudio() {
                   <div>
                     <h3 className="font-black text-zinc-950 text-sm">Next: CVC Word Blending</h3>
                     <p className="text-xs text-zinc-500 font-medium">
-                      Hear & speak blended words across Short A, E, I, and O
+                      Hear & speak blended words across Short A, E, I, O, and U
                     </p>
                   </div>
                 </div>
@@ -893,7 +963,7 @@ export default function SpeechMasteryStudio() {
         <main className="max-w-5xl mx-auto flex flex-col items-center">
           {/* Multi-Vowel Switcher Bar */}
           <div className="flex items-center justify-center gap-3 mb-8 bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200">
-            {(["A", "E", "I", "O"] as VowelKey[]).map((vowel) => {
+            {(["A", "E", "I", "O", "U"] as VowelKey[]).map((vowel) => {
               const vData = CVC_VOWEL_LABS[vowel];
               const isSelected = selectedVowel === vowel;
               return (
