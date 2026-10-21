@@ -224,7 +224,54 @@ const CVC_VOWEL_LABS: Record<VowelKey, VowelLabInfo> = {
   }
 };
 
-const CVC_ALIASES: Record<string, string[]> = {
+const SIGHT_WORD_BLOCKS = [
+  {
+    block: 1,
+    title: "Block 1 (1–25)",
+    words: [
+      "the", "of", "and", "a", "to",
+      "in", "is", "you", "that", "it",
+      "he", "was", "for", "on", "are",
+      "as", "with", "his", "they", "i",
+      "at", "be", "this", "have", "from"
+    ]
+  },
+  {
+    block: 2,
+    title: "Block 2 (26–50)",
+    words: [
+      "or", "one", "had", "by", "words",
+      "but", "not", "what", "all", "were",
+      "we", "when", "your", "can", "said",
+      "there", "use", "an", "each", "which",
+      "she", "do", "how", "their", "if"
+    ]
+  },
+  {
+    block: 3,
+    title: "Block 3 (51–75)",
+    words: [
+      "will", "up", "other", "about", "out",
+      "many", "then", "them", "these", "so",
+      "some", "her", "would", "make", "like",
+      "him", "into", "time", "has", "look",
+      "two", "more", "write", "go", "see"
+    ]
+  },
+  {
+    block: 4,
+    title: "Block 4 (76–100)",
+    words: [
+      "number", "no", "way", "could", "people",
+      "my", "than", "first", "water", "been",
+      "called", "who", "am", "its", "now",
+      "find", "long", "down", "day", "did",
+      "get", "come", "made", "may", "part"
+    ]
+  }
+];
+
+const WORD_ALIASES: Record<string, string[]> = {
   // Short A
   cat: ["cut", "kat", "cap"],
   bat: ["bad", "bet", "but"],
@@ -399,7 +446,38 @@ const CVC_ALIASES: Record<string, string[]> = {
   cuff: ["cough", "cup", "curff"],
   puff: ["buff", "pop", "path"],
   dull: ["doll", "deal", "dell"],
-  null: ["gnoll", "nail", "nil"]
+  null: ["gnoll", "nail", "nil"],
+
+  // Sight Words
+  the: ["da", "duh", "dha", "thee", "de"],
+  of: ["ov", "off", "uv", "up"],
+  a: ["eh", "ah", "ay", "uh"],
+  to: ["two", "too", "tu"],
+  was: ["wuz", "woz", "vaz", "what"],
+  are: ["r", "our", "ar"],
+  they: ["day", "dey", "the"],
+  i: ["eye", "ai", "ay"],
+  one: ["won", "wan", "1"],
+  by: ["buy", "bye", "bi"],
+  words: ["birds", "word"],
+  were: ["where", "ware", "ver"],
+  said: ["sed", "set", "sad"],
+  there: ["their", "they're", "dare"],
+  use: ["youth", "ews", "yous"],
+  which: ["witch", "vic"],
+  do: ["dew", "due"],
+  how: ["hau", "cow"],
+  their: ["there", "dare"],
+  would: ["wood", "good"],
+  two: ["to", "too", "2"],
+  write: ["right", "rite"],
+  no: ["know", "nau"],
+  could: ["good", "wood"],
+  water: ["vater", "woter"],
+  been: ["bin", "bean"],
+  who: ["hoo", "whom"],
+  now: ["nau", "how"],
+  find: ["fined", "fine"]
 };
 
 function isFuzzyMatch(a: string, b: string): boolean {
@@ -476,18 +554,22 @@ function playRetrySound() {
 }
 
 export default function SpeechMasteryStudio() {
-  const [currentStage, setCurrentStage] = useState<1 | 2>(1);
+  const [currentStage, setCurrentStage] = useState<1 | 2 | 3>(1);
 
   // Stage 1 State
   const [selectedGroup, setSelectedGroup] = useState<number>(1);
   const [activePhonic, setActivePhonic] = useState<PhonicsItem>(PHONICS_DATA[0]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  // Stage 2 State (Multi-Vowel)
+  // Stage 2 State (CVC Vowels)
   const [selectedVowel, setSelectedVowel] = useState<VowelKey>("A");
   const [selectedWord, setSelectedWord] = useState<string>("cat");
   const [activeLetterIdx, setActiveLetterIdx] = useState<number | null>(null);
   const [isBlending, setIsBlending] = useState<boolean>(false);
+
+  // Stage 3 State (Sight Words)
+  const [selectedBlock, setSelectedBlock] = useState<number>(1);
+  const [selectedSightWord, setSelectedSightWord] = useState<string>("the");
 
   // Speech Recognition & Sound Status
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -562,7 +644,7 @@ export default function SpeechMasteryStudio() {
         recognitionRef.current = recognition;
       }
     }
-  }, [activePhonic, selectedWord, currentStage, speechStatus]);
+  }, [activePhonic, selectedWord, selectedSightWord, currentStage, speechStatus]);
 
   const evaluateInput = (rawText: string): boolean => {
     const clean = rawText.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim().toLowerCase();
@@ -575,8 +657,8 @@ export default function SpeechMasteryStudio() {
       );
       return hasAccepted || clean.includes(targetId) || tokens.some(t => t.startsWith(targetId));
     } else {
-      const target = selectedWord.toLowerCase();
-      const aliases = CVC_ALIASES[target] || [];
+      const target = (currentStage === 2 ? selectedWord : selectedSightWord).toLowerCase();
+      const aliases = WORD_ALIASES[target] || [];
 
       for (const token of tokens) {
         if (token === target) return true;
@@ -689,9 +771,16 @@ export default function SpeechMasteryStudio() {
     setIsBlending(false);
   };
 
+  const handlePlaySightWord = async () => {
+    setIsPlaying(true);
+    await playAudioClip(`/audio/words/sw_${selectedSightWord.toLowerCase()}.mp3`);
+    setIsPlaying(false);
+  };
+
   const currentGroupItems = PHONICS_DATA.filter((item) => item.group === selectedGroup);
   const activeVowelData = CVC_VOWEL_LABS[selectedVowel];
   const allCurrentWords = Object.values(activeVowelData.families).flat();
+  const activeSightBlock = SIGHT_WORD_BLOCKS.find((b) => b.block === selectedBlock) || SIGHT_WORD_BLOCKS[0];
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] text-zinc-900 p-4 md:p-8 font-sans selection:bg-amber-400 selection:text-zinc-950">
@@ -716,33 +805,44 @@ export default function SpeechMasteryStudio() {
           <p className="text-zinc-500 text-sm md:text-base mt-1">
             {currentStage === 1
               ? "Hear the pure letter sound, then repeat that exact sound into the mic!"
-              : `Listen to the blended ${activeVowelData.label} word, then say the full word!`}
+              : currentStage === 2
+              ? `Listen to the blended ${activeVowelData.label} word, then say the full word!`
+              : "Hear the authentic sight word pronunciation, then speak it naturally!"}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {currentStage === 2 && (
-            <button
-              onClick={() => {
-                setCurrentStage(1);
-                setSpeechStatus("idle");
-              }}
-              className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-zinc-200 shadow-sm text-xs font-black text-zinc-800 hover:bg-zinc-50 transition cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Stage 1: Letters</span>
-            </button>
-          )}
-          <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-zinc-200 shadow-sm">
-            <Award className="w-5 h-5 text-amber-500" />
-            <span className="text-xs font-black text-zinc-800 uppercase tracking-wide">
-              {currentStage === 1 ? "Stage 1: Sound Echo" : `Stage 2: ${activeVowelData.label}`}
-            </span>
-          </div>
+        {/* Global Navigation between Stages */}
+        <div className="flex items-center gap-2 bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200">
+          <button
+            onClick={() => { setCurrentStage(1); setSpeechStatus("idle"); }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+              currentStage === 1 ? "bg-zinc-950 text-white shadow-sm" : "text-zinc-600 hover:text-zinc-950"
+            }`}
+          >
+            Stage 1: Letters
+          </button>
+          <button
+            onClick={() => { setCurrentStage(2); setSpeechStatus("idle"); }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+              currentStage === 2 ? "bg-zinc-950 text-white shadow-sm" : "text-zinc-600 hover:text-zinc-950"
+            }`}
+          >
+            Stage 2: CVC
+          </button>
+          <button
+            onClick={() => { setCurrentStage(3); setSpeechStatus("idle"); }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+              currentStage === 3 ? "bg-zinc-950 text-white shadow-sm" : "text-zinc-600 hover:text-zinc-950"
+            }`}
+          >
+            Stage 3: Sight Words
+          </button>
         </div>
       </header>
 
-      {/* STAGE 1: SOUND ECHO */}
+      {/* ========================================================= */}
+      {/* STAGE 1: SOUND ECHO                                       */}
+      {/* ========================================================= */}
       {currentStage === 1 && (
         <>
           <div className="max-w-6xl mx-auto flex gap-2.5 mb-8 overflow-x-auto pb-2">
@@ -958,10 +1058,11 @@ export default function SpeechMasteryStudio() {
         </>
       )}
 
-      {/* STAGE 2: CVC WORD BLENDING */}
+      {/* ========================================================= */}
+      {/* STAGE 2: CVC WORD BLENDING                                */}
+      {/* ========================================================= */}
       {currentStage === 2 && (
         <main className="max-w-5xl mx-auto flex flex-col items-center">
-          {/* Multi-Vowel Switcher Bar */}
           <div className="flex items-center justify-center gap-3 mb-8 bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200">
             {(["A", "E", "I", "O", "U"] as VowelKey[]).map((vowel) => {
               const vData = CVC_VOWEL_LABS[vowel];
@@ -989,16 +1090,9 @@ export default function SpeechMasteryStudio() {
           </div>
 
           <div className="w-full max-w-2xl bg-white rounded-3xl p-6 md:p-8 border-2 border-zinc-200/90 shadow-sm flex flex-col items-center">
-            {/* Mascot Banner */}
             <div className="w-full flex items-center gap-4 bg-amber-50/90 border-2 border-amber-200/90 rounded-2xl p-3.5 mb-8 shadow-sm">
               <div className="relative w-12 h-16 flex-shrink-0">
-                <Image
-                  src="/tara.png"
-                  alt="Tara"
-                  fill
-                  sizes="48px"
-                  className="object-contain object-bottom"
-                />
+                <Image src="/tara.png" alt="Tara" fill sizes="48px" className="object-contain object-bottom" />
               </div>
               <div className="flex-1">
                 <span className="text-[11px] font-black uppercase tracking-wider text-amber-950 block">
@@ -1006,11 +1100,11 @@ export default function SpeechMasteryStudio() {
                 </span>
                 <span className="text-sm font-bold text-amber-900 leading-tight block mt-0.5">
                   {speechStatus === "listening"
-                    ? `I'm listening! Say the full word "${selectedWord}"! 🎙️`
+                    ? `Say the full word "${selectedWord}"! 🎙️`
                     : speechStatus === "success"
-                    ? `Shaabaash! You said the whole word "${selectedWord}"! 🎉`
+                    ? `Shaabaash! You said "${selectedWord}"! 🎉`
                     : speechStatus === "retry"
-                    ? `Try again! Say the whole word: "${selectedWord}" 🔁`
+                    ? `Try again! Say "${selectedWord}" 🔁`
                     : `Blend the sounds together, then speak "${selectedWord}"!`}
                 </span>
               </div>
@@ -1036,7 +1130,6 @@ export default function SpeechMasteryStudio() {
               ))}
             </div>
 
-            {/* Blended Audio Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
               <button
                 onClick={handleSayBlendedWord}
@@ -1057,11 +1150,129 @@ export default function SpeechMasteryStudio() {
               </button>
             </div>
 
-            {/* Whole Word Speech Practice */}
-            <div className="w-full bg-zinc-50 rounded-2xl border-2 border-zinc-200 p-5 flex flex-col items-center">
-              <div className="text-xs font-black uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-1.5">
-                <span>Kid's Word Practice (पूरा शब्द बोलो)</span>
+            <button
+              onClick={startListening}
+              disabled={isListening}
+              className={`w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 transition-all cursor-pointer shadow-md ${
+                isListening
+                  ? "bg-red-500 text-white animate-pulse ring-4 ring-red-200 scale-102"
+                  : speechStatus === "success"
+                  ? "bg-amber-400 hover:bg-amber-500 text-amber-950"
+                  : "bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-[1.01]"
+              }`}
+            >
+              <Mic className="w-6 h-6" />
+              <span>{isListening ? `Listening... Say "${selectedWord}"! 🎙️` : `Say the Word: "${selectedWord}"`}</span>
+            </button>
+
+            {speechStatus === "success" && (
+              <div className="mt-3.5 flex items-center gap-2 text-emerald-800 font-extrabold text-sm bg-emerald-50 border border-emerald-300 px-4 py-2 rounded-xl animate-bounce">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Shaabaash! Tara heard: <b>"{heardText || selectedWord}"</b> 🔔✨</span>
               </div>
+            )}
+          </div>
+
+          {/* Word Selector Tray */}
+          <section className="w-full max-w-4xl mt-10">
+            <div className="bg-white rounded-3xl border-2 border-zinc-200 p-6 shadow-sm space-y-4">
+              {Object.entries(activeVowelData.families).map(([family, words]) => (
+                <div key={family} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-3 border-b border-zinc-100 last:border-b-0 last:pb-0">
+                  <span className="w-28 text-xs font-black uppercase text-amber-950 bg-amber-100 px-3 py-1.5 rounded-xl text-center flex-shrink-0">
+                    {family}
+                  </span>
+                  <div className="flex flex-wrap gap-2 flex-1">
+                    {words.map((w) => (
+                      <button
+                        key={w}
+                        onClick={() => { setSelectedWord(w); setSpeechStatus("idle"); setHeardText(""); }}
+                        className={`px-3.5 py-1.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
+                          selectedWord === w ? "bg-zinc-950 text-white shadow-md scale-105" : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700"
+                        }`}
+                      >
+                        {w}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </main>
+      )}
+
+      {/* ========================================================= */}
+      {/* STAGE 3: SIGHT WORDS STUDIO                               */}
+      {/* ========================================================= */}
+      {currentStage === 3 && (
+        <main className="max-w-5xl mx-auto flex flex-col items-center">
+          {/* Block Selector */}
+          <div className="flex items-center justify-center gap-2 mb-8 bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200">
+            {SIGHT_WORD_BLOCKS.map((b) => (
+              <button
+                key={b.block}
+                onClick={() => {
+                  setSelectedBlock(b.block);
+                  setSelectedSightWord(b.words[0]);
+                  setSpeechStatus("idle");
+                  setHeardText("");
+                }}
+                className={`px-4 py-2 rounded-xl font-black text-xs md:text-sm transition-all flex items-center gap-2 cursor-pointer ${
+                  selectedBlock === b.block
+                    ? "bg-amber-400 text-amber-950 shadow-sm scale-102"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-white/60"
+                }`}
+              >
+                <span>{b.title}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-6 md:p-8 border-2 border-zinc-200/90 shadow-sm flex flex-col items-center">
+            {/* Mascot Banner */}
+            <div className="w-full flex items-center gap-4 bg-amber-50/90 border-2 border-amber-200/90 rounded-2xl p-3.5 mb-8 shadow-sm">
+              <div className="relative w-12 h-16 flex-shrink-0">
+                <Image src="/tara.png" alt="Tara" fill sizes="48px" className="object-contain object-bottom" />
+              </div>
+              <div className="flex-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-amber-950 block">
+                  Tara's Sight Words Studio (Instant Recognition):
+                </span>
+                <span className="text-sm font-bold text-amber-900 leading-tight block mt-0.5">
+                  {speechStatus === "listening"
+                    ? `I'm listening! Say "${selectedSightWord}"! 🎙️`
+                    : speechStatus === "success"
+                    ? `Shaabaash! You spoke "${selectedSightWord}" perfectly! 🎉`
+                    : speechStatus === "retry"
+                    ? `Try again! Say "${selectedSightWord}" 🔁`
+                    : `Listen to the authentic pronunciation, then speak "${selectedSightWord}"!`}
+                </span>
+              </div>
+            </div>
+
+            {/* Whole Word Card */}
+            <div className="w-full bg-zinc-50 rounded-3xl border-2 border-zinc-200 p-8 flex flex-col items-center justify-center my-2 shadow-inner">
+              <span className="text-xs font-black uppercase text-amber-900 bg-amber-100 px-3.5 py-1 rounded-full mb-3 tracking-wider">
+                Sight Word #{activeSightBlock.words.indexOf(selectedSightWord) + 1 + (selectedBlock - 1) * 25}
+              </span>
+              <div className="text-6xl md:text-7xl font-black text-zinc-950 tracking-tight lowercase">
+                {selectedSightWord}
+              </div>
+            </div>
+
+            {/* Actions: Hear Word & Say Word */}
+            <div className="flex flex-col gap-3 w-full mt-6">
+              <button
+                onClick={handlePlaySightWord}
+                className={`w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 transition-all cursor-pointer shadow-md ${
+                  isPlaying
+                    ? "bg-emerald-500 text-white shadow-lg scale-102 animate-pulse"
+                    : "bg-zinc-950 hover:bg-zinc-800 text-white active:scale-[0.98]"
+                }`}
+              >
+                <Volume2 className="w-5 h-5 text-amber-400" />
+                <span>1. Hear Pronunciation: "{selectedSightWord}"</span>
+              </button>
 
               <button
                 onClick={startListening}
@@ -1074,71 +1285,53 @@ export default function SpeechMasteryStudio() {
                     : "bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-[1.01]"
                 }`}
               >
-                {isListening ? (
-                  <>
-                    <Mic className="w-6 h-6 animate-bounce" />
-                    <span>Listening... Say "{selectedWord}"! 🎙️</span>
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-6 h-6" />
-                    <span>Say the Word: "{selectedWord}"</span>
-                  </>
-                )}
+                <Mic className="w-5 h-5" />
+                <span>{isListening ? `Listening... Say "${selectedSightWord}"! 🎙️` : `2. Speak the Word: "${selectedSightWord}"`}</span>
               </button>
-
-              {speechStatus === "success" && (
-                <div className="mt-3.5 flex items-center gap-2 text-emerald-800 font-extrabold text-sm bg-emerald-50 border border-emerald-300 px-4 py-2 rounded-xl animate-bounce">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  <span>Shaabaash! Tara heard: <b>"{heardText || selectedWord}"</b> 🔔✨</span>
-                </div>
-              )}
-
-              {speechStatus === "retry" && (
-                <div className="mt-3.5 flex items-center gap-2 text-amber-900 font-bold text-sm bg-amber-50 border border-amber-300 px-4 py-2 rounded-xl">
-                  <RotateCcw className="w-4 h-4 text-amber-600" />
-                  <span>Heard: "{heardText || '...'}" — Say "{selectedWord}" again! 🔁</span>
-                </div>
-              )}
             </div>
+
+            {speechStatus === "success" && (
+              <div className="mt-3.5 flex items-center gap-2 text-emerald-800 font-extrabold text-sm bg-emerald-50 border border-emerald-300 px-4 py-2 rounded-xl animate-bounce">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Shaabaash! Tara heard: <b>"{heardText || selectedSightWord}"</b> 🔔✨</span>
+              </div>
+            )}
+
+            {speechStatus === "retry" && (
+              <div className="mt-3.5 flex items-center gap-2 text-amber-900 font-bold text-sm bg-amber-50 border border-amber-300 px-4 py-2 rounded-xl">
+                <RotateCcw className="w-4 h-4 text-amber-600" />
+                <span>Heard: "{heardText || '...'}" — Say "${selectedSightWord}" again! 🔁</span>
+              </div>
+            )}
           </div>
 
-          {/* Dynamic Word Selector Tray */}
+          {/* Sight Word Grid Selector */}
           <section className="w-full max-w-4xl mt-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 flex items-center gap-2">
-                <span>Select {activeVowelData.label} Word</span>
+                <span>Select {activeSightBlock.title} Word</span>
                 <span className="text-amber-500">•</span>
-                <span>{allCurrentWords.length} Words Available</span>
+                <span>25 Words</span>
               </h3>
             </div>
 
-            <div className="bg-white rounded-3xl border-2 border-zinc-200 p-6 shadow-sm space-y-4">
-              {Object.entries(activeVowelData.families).map(([family, words]) => (
-                <div key={family} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-3 border-b border-zinc-100 last:border-b-0 last:pb-0">
-                  <span className="w-28 text-xs font-black uppercase text-amber-950 bg-amber-100 px-3 py-1.5 rounded-xl text-center flex-shrink-0">
-                    {family}
-                  </span>
-                  <div className="flex flex-wrap gap-2 flex-1">
-                    {words.map((w) => (
-                      <button
-                        key={w}
-                        onClick={() => {
-                          setSelectedWord(w);
-                          setSpeechStatus("idle");
-                          setHeardText("");
-                        }}
-                        className={`px-3.5 py-1.5 rounded-xl font-black text-sm transition-all cursor-pointer ${
-                          selectedWord === w
-                            ? "bg-zinc-950 text-white shadow-md scale-105"
-                            : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700"
-                        }`}
-                      >
-                        {w}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            <div className="bg-white rounded-3xl border-2 border-zinc-200 p-6 shadow-sm grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+              {activeSightBlock.words.map((w) => (
+                <button
+                  key={w}
+                  onClick={() => {
+                    setSelectedSightWord(w);
+                    setSpeechStatus("idle");
+                    setHeardText("");
+                  }}
+                  className={`py-3 px-2 rounded-xl font-black text-sm text-center transition-all cursor-pointer ${
+                    selectedSightWord === w
+                      ? "bg-zinc-950 text-white shadow-md scale-105"
+                      : "bg-zinc-100 hover:bg-zinc-200 text-zinc-800"
+                  }`}
+                >
+                  {w}
+                </button>
               ))}
             </div>
           </section>
